@@ -1,7 +1,8 @@
 
-#include <Arduino.h>
 //#include <Encoder.h>
-#include <HardwareSerial.h>
+#include <stdint.h>
+
+#include "arduino_interface.hpp"
 
 #include "argo_rc_lib.hpp"
 
@@ -40,7 +41,7 @@ long right_oldPosition  = -999;
 
 // --- RC PWM input ---------------------------------
 typedef struct {
-  byte edge;
+  uint8_t edge;
   unsigned long riseTime;
   unsigned long fallTime;
   unsigned int  lastGoodWidth;
