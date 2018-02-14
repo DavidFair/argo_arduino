@@ -10,11 +10,14 @@
 # argo_rc, argo_rc-serial, argo_rc-upload
 
 
-set(CMAKE_TOOLCHAIN_FILE cmake/ArduinoToolchain.cmake)
+execute_process(COMMAND git submodule update --init
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake/cmake/ArduinoToolchain.cmake)
 
 # Set default options for the ARGO
 set(BOARD_TYPE mega2560 CACHE STRING "The target Arduino board")
-set(PORT_PATH /dev/ttyUSB0 CACHE STRING "The path to the Arduino TTY device")
+set(PORT_PATH /dev/ttyACM0 CACHE STRING "The path to the Arduino TTY device")
 set(BAUD_RATE 115200 CACHE STRING "The baud rate of the serial device")
 
 cmake_minimum_required(VERSION 2.8)
@@ -23,9 +26,7 @@ cmake_minimum_required(VERSION 2.8)
 project(ARGO C CXX)
 
 # Add external library files
-add_subdirectory(lib)
+add_subdirectory(ext)
 
 # Add source files
 add_subdirectory(src)
-
-message("test")

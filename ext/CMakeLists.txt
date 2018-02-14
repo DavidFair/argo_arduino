@@ -13,4 +13,5 @@ set(ENCODER_HDR
 generate_arduino_library(encoder
     SRCS ${ENCODER_SRC}
     HDRS ${ENCODER_HDR}
-    BOARD ${BOARD_TYPE})
+    BOARD mega2560
+)

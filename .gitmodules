@@ -1,0 +1,12 @@
+[submodule "ext/encoder"]
+	path = ext/encoder
+	url = https://github.com/PaulStoffregen/Encoder.git
+[submodule "ext/arduino-cmake"]
+	path = ext/arduino-cmake
+	url = https://github.com/queezythegreat/arduino-cmake.git
+[submodule "ext/rfm69"]
+	path = ext/rfm69
+	url = https://www.github.com/lowpowerlab/rfm69
+[submodule "ext/spiflash"]
+	path = ext/spiflash
+	url = https://www.github.com/lowpowerlab/spiflash
