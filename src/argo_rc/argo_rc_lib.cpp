@@ -7,31 +7,31 @@
 #include "argo_rc_lib.hpp"
 
 //#define TEST_POT_ENABLED 
-#define RC_PWM_ENABLED
-
-#define LEFT_FORWARD_RELAY 23
-#define LEFT_REVERSE_RELAY 25
-#define RIGHT_FORWARD_RELAY 27
-#define RIGHT_REVERSE_RELAY 29
-
-#define LEFT_FOOTSWITCH_RELAY 42
-#define RIGHT_FOOTSWITCH_RELAY 40
-
-
-#define LEFT_PWM_OUTPUT 44
-#define RIGHT_PWM_OUTPUT 46
-
-#define LEFT_ENCODER_1 19
-#define LEFT_ENCODER_2 18
-#define RIGHT_ENCODER_1 20
-#define RIGHT_ENCODER_2 21
-
-#define TEST_POT_POSITIVE A6
-#define TEST_POT_WIPER A7
-
-//#define RC_PWM_IN_L A10
-#define RC_PWM_IN_L A11
-#define RC_DEADMAN 2
+//#define RC_PWM_ENABLED
+//
+//#define LEFT_FORWARD_RELAY 23
+//#define LEFT_REVERSE_RELAY 25
+//#define RIGHT_FORWARD_RELAY 27
+//#define RIGHT_REVERSE_RELAY 29
+//
+//#define LEFT_FOOTSWITCH_RELAY 42
+//#define RIGHT_FOOTSWITCH_RELAY 40
+//
+//
+//#define LEFT_PWM_OUTPUT 44
+//#define RIGHT_PWM_OUTPUT 46
+//
+//#define LEFT_ENCODER_1 19
+//#define LEFT_ENCODER_2 18
+//#define RIGHT_ENCODER_1 20
+//#define RIGHT_ENCODER_2 21
+//
+//#define TEST_POT_POSITIVE A6
+//#define TEST_POT_WIPER A7
+//
+////#define RC_PWM_IN_L A10
+//#define RC_PWM_IN_L A11
+//#define RC_DEADMAN 2
 
 //Encoder left_encoder(LEFT_ENCODER_1,LEFT_ENCODER_2);
 //Encoder right_encoder(RIGHT_ENCODER_1,RIGHT_ENCODER_2);
@@ -51,35 +51,41 @@ volatile static uint8_t PCintLast;
 // --- RC PWM input ---------------------------------
 
 
-void setup() 
+ArgoRc::ArgoRc(ArduinoInterface &hardwareInterface) : 
+  m_hardwareInterface(hardwareInterface)
+  {}
+
+
+
+void ArgoRc::setup() 
 {
-  Serial.begin(115200);
+  m_hardwareInterface.serialBegin(115200);
 
-  pinMode(LEFT_ENCODER_1, INPUT_PULLUP);
-  pinMode(LEFT_ENCODER_2, INPUT_PULLUP);
+  m_hardwareInterface.pinMode(LEFT_ENCODER_1, digitalIO::INPUT_PULLUP);
+  m_hardwareInterface.pinMode(LEFT_ENCODER_2, digitalIO::INPUT_PULLUP);
 
-  pinMode(RIGHT_ENCODER_1, INPUT_PULLUP);
-  pinMode(RIGHT_ENCODER_2, INPUT_PULLUP);
+  m_hardwareInterface.pinMode(RIGHT_ENCODER_1, digitalIO::INPUT_PULLUP);
+  m_hardwareInterface.pinMode(RIGHT_ENCODER_2, digitalIO::INPUT_PULLUP);
 
   
   // put your setup code here, to run once:
-  pinMode(LEFT_FORWARD_RELAY, OUTPUT);
-  pinMode(LEFT_REVERSE_RELAY, OUTPUT);
-  pinMode(RIGHT_FORWARD_RELAY, OUTPUT);
-  pinMode(RIGHT_REVERSE_RELAY, OUTPUT);
+  m_hardwareInterface.pinMode(LEFT_FORWARD_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(LEFT_REVERSE_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(RIGHT_FORWARD_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(RIGHT_REVERSE_RELAY, digitalIO::OUTPUT);
 
-  pinMode(LEFT_FOOTSWITCH_RELAY, OUTPUT);
-  pinMode(RIGHT_FOOTSWITCH_RELAY, OUTPUT);
+  m_hardwareInterface.pinMode(LEFT_FOOTSWITCH_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(RIGHT_FOOTSWITCH_RELAY, digitalIO::OUTPUT);
   footswitch_off(); 
   
 
-  pinMode(TEST_POT_POSITIVE, OUTPUT);
+  m_hardwareInterface.pinMode(TEST_POT_POSITIVE, digitalIO::OUTPUT);
   digitalWrite(TEST_POT_POSITIVE,HIGH);
 
   direction_relays_off();
 
 #ifdef RC_PWM_ENABLED
-  pinMode(RC_DEADMAN, INPUT);
+  m_hardwareInterface.pinMode(RC_DEADMAN, digitalIO::INPUT);
   setup_rc();
 #endif
 
