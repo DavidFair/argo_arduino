@@ -11,31 +11,30 @@ enum class digitalIO{
     LOW
 };
 
-struct pinMapping {
-    uint8_t LEFT_FORWARD_RELAY;
-    uint8_t LEFT_REVERSE_RELAY;
+enum class pinMapping {
+    LEFT_FORWARD_RELAY,
+    LEFT_REVERSE_RELAY,
 
-    uint8_t RIGHT_FORWARD_RELAY;
-    uint8_t RIGHT_REVERSE_RELAY;
+    RIGHT_FORWARD_RELAY,
+    RIGHT_REVERSE_RELAY,
 
-    uint8_t LEFT_FOOTSWITCH_RELAY;
-    uint8_t RIGHT_FOOTSWITCH_RELAY;
+    LEFT_FOOTSWITCH_RELAY,
+    RIGHT_FOOTSWITCH_RELAY,
 
-    uint8_t LEFT_PWM_OUTPUT;
-    uint8_t RIGHT_PWM_OUTPUT;
+    LEFT_PWM_OUTPUT,
+    RIGHT_PWM_OUTPUT,
 
-    uint8_t LEFT_ENCODER_1;
-    uint8_t LEFT_ENCODER_2;
+    LEFT_ENCODER_1,
+    LEFT_ENCODER_2,
 
-    uint8_t RIGHT_ENCODER_1;
-    uint8_t RIGHT_ENCODER_2;
+    RIGHT_ENCODER_1,
+    RIGHT_ENCODER_2,
 
-    uint8_t TEST_POT_POSITIVE;
-    uint8_t TEST_POT_WIPER;
+    TEST_POT_POSITIVE,
+    TEST_POT_WIPER,
 
-    uint8_t RC_PWM_IN_L;
-    uint8_t RC_DEADMAN;
-
+    RC_PWM_IN_L,
+    RC_DEADMAN
 };
 
 class ArduinoInterface {
@@ -47,8 +46,8 @@ public:
     virtual ~ArduinoInterface() = default;
 
     virtual int analogRead(pinMapping pin);
-    virtual void digitalWrite(uint8_t pin, digitalIO mode);
-    virtual void pinMode(uint8_t pin, digitalIO mode);
+    virtual void digitalWrite(pinMapping pin, digitalIO mode);
+    virtual void pinMode(pinMapping pin, digitalIO mode);
     
     virtual void serialBegin(unsigned long baudRate);
     virtual void serialPrintln(const std::string &s);

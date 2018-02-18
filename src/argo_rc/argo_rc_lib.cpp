@@ -9,32 +9,32 @@
 //#define TEST_POT_ENABLED 
 //#define RC_PWM_ENABLED
 //
-//#define LEFT_FORWARD_RELAY 23
+//#define pinMapping::LEFT_FORWARD_RELAY 23
 //#define LEFT_REVERSE_RELAY 25
-//#define RIGHT_FORWARD_RELAY 27
-//#define RIGHT_REVERSE_RELAY 29
+//#define pinMapping::RIGHT_FORWARD_RELAY 27
+//#define pinMapping::RIGHT_REVERSE_RELAY 29
 //
-//#define LEFT_FOOTSWITCH_RELAY 42
-//#define RIGHT_FOOTSWITCH_RELAY 40
+//#define pinMapping::LEFT_FOOTSWITCH_RELAY 42
+//#define pinMapping::RIGHT_FOOTSWITCH_RELAY 40
 //
 //
-//#define LEFT_PWM_OUTPUT 44
-//#define RIGHT_PWM_OUTPUT 46
+//#define pinMapping::LEFT_PWM_OUTPUT 44
+//#define pinMapping::RIGHT_PWM_OUTPUT 46
 //
-//#define LEFT_ENCODER_1 19
-//#define LEFT_ENCODER_2 18
-//#define RIGHT_ENCODER_1 20
-//#define RIGHT_ENCODER_2 21
+//#define pinMapping.LEFT_ENCODER_1 19
+//#define pinMapping.LEFT_ENCODER_2 18
+//#define pinMapping::RIGHT_ENCODER_1 20
+//#define pinMapping::RIGHT_ENCODER_2 21
 //
-//#define TEST_POT_POSITIVE A6
-//#define TEST_POT_WIPER A7
+//#define pinMapping::TEST_POT_POSITIVE A6
+//#define pinMapping::TEST_POT_WIPER A7
 //
-////#define RC_PWM_IN_L A10
-//#define RC_PWM_IN_L A11
-//#define RC_DEADMAN 2
+////#define pinMapping::RC_PWM_IN_L A10
+//#define pinMapping::RC_PWM_IN_L A11
+//#define pinMapping::RC_DEADMAN 2
 
-//Encoder left_encoder(LEFT_ENCODER_1,LEFT_ENCODER_2);
-//Encoder right_encoder(RIGHT_ENCODER_1,RIGHT_ENCODER_2);
+//Encoder left_encoder(pinMapping.LEFT_ENCODER_1,pinMapping.LEFT_ENCODER_2);
+//Encoder right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
 
 long left_oldPosition  = -999;
 long right_oldPosition  = -999;
@@ -61,31 +61,31 @@ void ArgoRc::setup()
 {
   m_hardwareInterface.serialBegin(115200);
 
-  m_hardwareInterface.pinMode(LEFT_ENCODER_1, digitalIO::INPUT_PULLUP);
-  m_hardwareInterface.pinMode(LEFT_ENCODER_2, digitalIO::INPUT_PULLUP);
+  m_hardwareInterface.pinMode(pinMapping::LEFT_ENCODER_1, digitalIO::INPUT_PULLUP);
+  m_hardwareInterface.pinMode(pinMapping::LEFT_ENCODER_2, digitalIO::INPUT_PULLUP);
 
-  m_hardwareInterface.pinMode(RIGHT_ENCODER_1, digitalIO::INPUT_PULLUP);
-  m_hardwareInterface.pinMode(RIGHT_ENCODER_2, digitalIO::INPUT_PULLUP);
+  m_hardwareInterface.pinMode(pinMapping::RIGHT_ENCODER_1, digitalIO::INPUT_PULLUP);
+  m_hardwareInterface.pinMode(pinMapping::RIGHT_ENCODER_2, digitalIO::INPUT_PULLUP);
 
   
   // put your setup code here, to run once:
-  m_hardwareInterface.pinMode(LEFT_FORWARD_RELAY, digitalIO::OUTPUT);
-  m_hardwareInterface.pinMode(LEFT_REVERSE_RELAY, digitalIO::OUTPUT);
-  m_hardwareInterface.pinMode(RIGHT_FORWARD_RELAY, digitalIO::OUTPUT);
-  m_hardwareInterface.pinMode(RIGHT_REVERSE_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(pinMapping::LEFT_FORWARD_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(pinMapping::LEFT_REVERSE_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::OUTPUT);
 
-  m_hardwareInterface.pinMode(LEFT_FOOTSWITCH_RELAY, digitalIO::OUTPUT);
-  m_hardwareInterface.pinMode(RIGHT_FOOTSWITCH_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(pinMapping::LEFT_FOOTSWITCH_RELAY, digitalIO::OUTPUT);
+  m_hardwareInterface.pinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::OUTPUT);
   footswitch_off(); 
   
 
-  m_hardwareInterface.pinMode(TEST_POT_POSITIVE, digitalIO::OUTPUT);
-  digitalWrite(TEST_POT_POSITIVE,HIGH);
+  m_hardwareInterface.pinMode(pinMapping::TEST_POT_POSITIVE, digitalIO::OUTPUT);
+  m_hardwareInterface.digitalWrite(pinMapping::TEST_POT_POSITIVE, digitalIO::HIGH);
 
   direction_relays_off();
 
 #ifdef RC_PWM_ENABLED
-  m_hardwareInterface.pinMode(RC_DEADMAN, digitalIO::INPUT);
+  m_hardwareInterface.pinMode(pinMapping::RC_DEADMAN, digitalIO::INPUT);
   setup_rc();
 #endif
 
@@ -93,8 +93,8 @@ delay(1000);
 
   // Hardwire direction relays to forward
 //#ifdef RC_PWM_ENABLED
-//      digitalWrite(RIGHT_FORWARD_RELAY,LOW);
-//      digitalWrite(LEFT_FORWARD_RELAY,LOW);
+//      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,LOW);
+//      m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,LOW);
 //#endif
 
 //forward_left();
@@ -107,8 +107,8 @@ void forward_left()
 {
   footswitch_on();
   Serial.println("forward_left");
-      digitalWrite(LEFT_FORWARD_RELAY,LOW);
-      digitalWrite(LEFT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(LEFT_REVERSE_RELAY,HIGH);
   
 }
 
@@ -116,8 +116,8 @@ void forward_right()
 {
   footswitch_on();
   Serial.println("                  forward_right");
-      digitalWrite(RIGHT_FORWARD_RELAY,LOW);
-      digitalWrite(RIGHT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,HIGH);
   
 }
 
@@ -125,29 +125,29 @@ void reverse_left()
 {
   footswitch_on();
   Serial.println("                                    reverse_left");
-      digitalWrite(LEFT_FORWARD_RELAY,HIGH);
-      digitalWrite(LEFT_REVERSE_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(LEFT_REVERSE_RELAY,LOW);
 }
 
 void reverse_right()
 {
   footswitch_on();
   Serial.println("                                                      reverse_right");
-      digitalWrite(RIGHT_FORWARD_RELAY,HIGH);
-      digitalWrite(RIGHT_REVERSE_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,LOW);
   
 }
 
 void footswitch_on()
 {
-     digitalWrite(LEFT_FOOTSWITCH_RELAY,LOW);
-     digitalWrite(RIGHT_FOOTSWITCH_RELAY,LOW);
+     m_hardwareInterface.digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,LOW);
+     m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,LOW);
 }
 
 void footswitch_off()
 {
-     digitalWrite(LEFT_FOOTSWITCH_RELAY,HIGH);
-     digitalWrite(RIGHT_FOOTSWITCH_RELAY,HIGH);
+     m_hardwareInterface.digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,HIGH);
+     m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,HIGH);
 }
 
 //#define DEBUG_OUTPUT
@@ -163,10 +163,10 @@ void loop()
   int left_pwm = 0;  
   int right_pwm = 0;  
   
-  int test_pot_value = analogRead(TEST_POT_WIPER);
+  int test_pot_value = m_hardwareInterface.analogRead(pinMapping::TEST_POT_WIPER);
 
 #ifdef RC_PWM_ENABLED
-  if(digitalRead(RC_DEADMAN) == HIGH)
+  if(digitalRead(pinMapping::RC_DEADMAN) == HIGH)
   {
     rc_pwm_left = pinData[0].lastGoodWidth;
     rc_pwm_right = pinData[1].lastGoodWidth;
@@ -201,8 +201,8 @@ void loop()
     pinData[1].lastGoodWidth = 0;
     left_pwm = 0;
     right_pwm = 0;
-    analogWrite(LEFT_PWM_OUTPUT, left_pwm);
-    analogWrite(RIGHT_PWM_OUTPUT, right_pwm);
+     m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
+     m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
     // turn off all direction relays and footswitch
     footswitch_off(); 
     direction_relays_off();
@@ -226,7 +226,7 @@ void loop()
 
 
 #ifdef DEBUG_OUTPUT_PWM
-  if(digitalRead(RC_DEADMAN) == HIGH)
+  if(digitalRead(pinMapping::RC_DEADMAN) == HIGH)
       Serial.print("ENABLED  ");
   Serial.print("LEFT PWM: ");
   Serial.print(left_pwm);
@@ -234,8 +234,8 @@ void loop()
   Serial.println(right_pwm);
 #endif
 
-  analogWrite(LEFT_PWM_OUTPUT, left_pwm);
-  analogWrite(RIGHT_PWM_OUTPUT, right_pwm);
+   m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
+   m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
 
 /*
   long left_newPosition = left_encoder.read();
@@ -265,25 +265,25 @@ void loop()
   {
     byte c = Serial.read();
     if(c == 'l')
-      digitalWrite(RIGHT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,HIGH);
     else if(c == 'p')
-      digitalWrite(RIGHT_FORWARD_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,LOW);
 
     if(c == 'k')
-      digitalWrite(RIGHT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,HIGH);
     else if(c == 'o')
-      digitalWrite(RIGHT_REVERSE_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,LOW);
     
 
     if(c == 'a')
-      digitalWrite(LEFT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,HIGH);
     else if(c == 'q')
-      digitalWrite(LEFT_FORWARD_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,LOW);
 
     if(c == 's')
-      digitalWrite(LEFT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(LEFT_REVERSE_RELAY,HIGH);
     else if(c == 'w')
-      digitalWrite(LEFT_REVERSE_RELAY,LOW);
+      m_hardwareInterface.digitalWrite(LEFT_REVERSE_RELAY,LOW);
   
   
   }    
@@ -298,10 +298,10 @@ void direction_relays_off()
 {
 
       Serial.println("RELAYS OFF");
-      digitalWrite(RIGHT_FORWARD_RELAY,HIGH);
-      digitalWrite(RIGHT_REVERSE_RELAY,HIGH);
-      digitalWrite(LEFT_REVERSE_RELAY,HIGH);
-      digitalWrite(LEFT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(LEFT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,HIGH);
 }
 
 
