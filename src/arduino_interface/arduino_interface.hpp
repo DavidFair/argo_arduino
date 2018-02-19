@@ -4,38 +4,7 @@
 #include <stdint.h>
 #include <string>
 
-enum class digitalIO{
-    INPUT_PULLUP,
-    OUTPUT,
-    HIGH,
-    LOW
-};
-
-enum class pinMapping {
-    LEFT_FORWARD_RELAY,
-    LEFT_REVERSE_RELAY,
-
-    RIGHT_FORWARD_RELAY,
-    RIGHT_REVERSE_RELAY,
-
-    LEFT_FOOTSWITCH_RELAY,
-    RIGHT_FOOTSWITCH_RELAY,
-
-    LEFT_PWM_OUTPUT,
-    RIGHT_PWM_OUTPUT,
-
-    LEFT_ENCODER_1,
-    LEFT_ENCODER_2,
-
-    RIGHT_ENCODER_1,
-    RIGHT_ENCODER_2,
-
-    TEST_POT_POSITIVE,
-    TEST_POT_WIPER,
-
-    RC_PWM_IN_L,
-    RC_DEADMAN
-};
+#include "arduino_enums.hpp"
 
 class ArduinoInterface {
     // Abstract class which defines the methods that we use on our Arduino
@@ -45,12 +14,29 @@ public:
 
     virtual ~ArduinoInterface() = default;
 
-    virtual int analogRead(pinMapping pin);
-    virtual void digitalWrite(pinMapping pin, digitalIO mode);
-    virtual void pinMode(pinMapping pin, digitalIO mode);
+    virtual int analogRead(pinMapping pin) = 0;
+
+    virtual void analogWrite(pinMapping pin, int value) = 0;
+
+    virtual void delay(unsigned long milliseconds) = 0;
     
-    virtual void serialBegin(unsigned long baudRate);
-    virtual void serialPrintln(const std::string &s);
+    virtual digitalIO digitalRead(pinMapping pin) = 0;
+
+    virtual void digitalWrite(pinMapping pin, digitalIO mode) = 0;
+
+    virtual void pinMode(pinMapping pin, digitalIO mode) = 0;
+    
+    virtual void serialBegin(unsigned long baudRate) = 0;
+    
+    virtual void serialPrint(const std::string &s) = 0;
+    virtual void serialPrint(int i) = 0;
+    
+    virtual void serialPrintln(const std::string &s) = 0;
+    virtual void serialPrintln(int i) = 0;
+
+    virtual void setPortBitmask(portMapping port, uint8_t bitmask);
+    virtual void orPortBitmask(portMapping port, uint8_t bitmask);
+
 
 };
 

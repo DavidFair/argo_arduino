@@ -45,3 +45,5 @@ uint8_t ArduinoHardware::assignPinMapping(pinMapping pinToConvert){
         case RC_DEADMAN: return 2;
     }
 }
+
+

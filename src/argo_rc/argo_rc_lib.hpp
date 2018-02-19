@@ -16,6 +16,25 @@ public:
     
     void setup();
 
+    void forward_left();
+
+    void forward_right();
+
+    void reverse_left();
+
+    void reverse_right();
+
+    void footswitch_on();
+
+    void footswitch_off();
+
+    void loop();
+
+    void direction_relays_off();
+
+    void setup_rc();
+
+
 private:
     ArduinoInterface m_hardwareInterface;
 
