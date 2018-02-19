@@ -48,31 +48,31 @@ void ArgoRc::setup(ArduinoInterface *hardwareInterface)
   m_hardwareInterface = hardwareInterface;
   m_hardwareInterface->serialBegin(115200);
 
-  m_hardwareInterface->pinMode(pinMapping::LEFT_ENCODER_1, digitalIO::E_INPUT_PULLUP);
-  m_hardwareInterface->pinMode(pinMapping::LEFT_ENCODER_2, digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_1, digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_2, digitalIO::E_INPUT_PULLUP);
 
-  m_hardwareInterface->pinMode(pinMapping::RIGHT_ENCODER_1, digitalIO::E_INPUT_PULLUP);
-  m_hardwareInterface->pinMode(pinMapping::RIGHT_ENCODER_2, digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_1, digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_2, digitalIO::E_INPUT_PULLUP);
 
   
   // put your setup code here, to run once:
-  m_hardwareInterface->pinMode(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_OUTPUT);
-  m_hardwareInterface->pinMode(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_OUTPUT);
-  m_hardwareInterface->pinMode(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_OUTPUT);
-  m_hardwareInterface->pinMode(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_OUTPUT);
 
-  m_hardwareInterface->pinMode(pinMapping::LEFT_FOOTSWITCH_RELAY, digitalIO::E_OUTPUT);
-  m_hardwareInterface->pinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_FOOTSWITCH_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_OUTPUT);
   footswitch_off(); 
   
 
-  m_hardwareInterface->pinMode(pinMapping::TEST_POT_POSITIVE, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE, digitalIO::E_OUTPUT);
   m_hardwareInterface->digitalWrite(pinMapping::TEST_POT_POSITIVE, digitalIO::E_HIGH);
 
   direction_relays_off();
 
 #ifdef RC_PWM_ENABLED
-  m_hardwareInterface->pinMode(pinMapping::RC_DEADMAN, digitalIO::INPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::INPUT);
   setup_rc();
 #endif
 
@@ -298,52 +298,11 @@ void ArgoRc::setup_rc()
 
   // enable PCINT which allows us to use the PCMSK register by bitshifting
   // 1 into the correct register location
-  const auto pcie2EnableBitmask = 1 << static_cast<std::underlying_type<portControlValues>::type>(portControlValues::E_PCIE2);
+  const auto pcie2EnableBitmask = 1 << static_cast<uint8_t>(portControlValues::E_PCIE2);
   m_hardwareInterface->orPortBitmask(portMapping::E_PCICR, pcie2EnableBitmask);
   
   // Set pins 18 to 23 as ISR triggers
   m_hardwareInterface->setPortBitmask(portMapping::E_PCMSK2, 0xFC);
 
-  isrFuncPtr isrRoutine = &pcint2IsrRoutine;
-  m_hardwareInterface->createIsr(portMapping::E_PCINT2_vect, isrRoutine);
-}
-
-void pcint2IsrRoutine(ArduinoInterface &hardwareInterface){
-
-  uint8_t bit;
-  uint8_t curr;
-  uint8_t mask;
-  uint32_t currentTime;
-  uint32_t time;
-  
-  // get the pin states for the indicated port.
-  curr = hardwareInterface.readPortBits(portMapping::E_PINK) & 0xFC;
-  mask = curr ^ hardwareInterface.m_PCintLast;
-  hardwareInterface.m_PCintLast = curr;
-  
-  currentTime = hardwareInterface.micros();
-  
-  // mask is pcint pins that have changed.
-  for (uint8_t i=0; i < 6; i++) {
-    bit = 0x04 << i;
-    if (bit & mask) {
-      // for each pin changed, record time of change
-      if (bit & hardwareInterface.m_PCintLast) {
-        time = currentTime - hardwareInterface.m_pinData[i].fallTime;
-        hardwareInterface.m_pinData[i].riseTime = currentTime;
-        if ((time >= 10000) && (time <= 26000))
-          hardwareInterface.m_pinData[i].edge = 1;
-        else
-          hardwareInterface.m_pinData[i].edge = 0; // invalid rising edge detected
-      }
-      else {
-        time = currentTime - hardwareInterface.m_pinData[i].riseTime;
-        hardwareInterface.m_pinData[i].fallTime = currentTime;
-        if ((time >= 800) && (time <= 2200) && (hardwareInterface.m_pinData[i].edge == 1)) {
-          hardwareInterface.m_pinData[i].lastGoodWidth = time;
-          hardwareInterface.m_pinData[i].edge = 0;
-        }
-      }
-    }
-  }
+  // The ISR is defined in the hardware implementation
 }

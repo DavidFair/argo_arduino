@@ -21,7 +21,7 @@ else()
 
     generate_arduino_firmware(argo_rc
     SRCS argo_rc.cpp
-    LIBS argo_lib
+    LIBS argo_lib arduino_hardware
     BOARD ${BOARD_TYPE}
     PORT ${PORT_PATH}
     # -l Prevents picocom from attempting to lock the port

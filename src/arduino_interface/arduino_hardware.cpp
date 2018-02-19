@@ -1,8 +1,148 @@
+#include <stdint.h>
+
 #include <Arduino.h>
+
 
 #include "arduino_hardware.hpp"
 
 using namespace ArduinoEnums;
+
+volatile static tPinTimingData pinData[6 + 1];
+volatile static uint8_t PCintLast;
+
+// Due to the nature of an ISR we cannot unit test it. Place it within this file
+// as it is hardware specific
+ISR(PCINT2_vect)
+{
+  uint8_t bit;
+  uint8_t curr;
+  uint8_t mask;
+  uint32_t currentTime;
+  uint32_t time;
+  
+  // get the pin states for the indicated port.
+  curr = PINK & 0xFC;
+  mask = curr ^ PCintLast;
+  PCintLast = curr;
+  
+  currentTime = micros();
+  
+  // mask is pcint pins that have changed.
+  for (uint8_t i=0; i < 6; i++) {
+    bit = 0x04 << i;
+    if (bit & mask) {
+      // for each pin changed, record time of change
+      if (bit & PCintLast) {
+        time = currentTime - pinData[i].fallTime;
+        pinData[i].riseTime = currentTime;
+        if ((time >= 10000) && (time <= 26000))
+          pinData[i].edge = 1;
+        else
+          pinData[i].edge = 0; // invalid rising edge detected
+      }
+      else {
+        time = currentTime - pinData[i].riseTime;
+        pinData[i].fallTime = currentTime;
+        if ((time >= 800) && (time <= 2200) && (pinData[i].edge == 1)) {
+          pinData[i].lastGoodWidth = time;
+          pinData[i].edge = 0;
+        }
+      }
+    }
+  }
+}
+
+
+int ArduinoHardware::analogRead(pinMapping pin) const{
+    return ::analogRead(convertPinEnumToArduino(pin));
+}
+
+void ArduinoHardware::analogWrite(pinMapping pin, int value) const{
+    ::analogWrite(convertPinEnumToArduino(pin), value);
+}
+
+void ArduinoHardware::delay(unsigned long milliseconds) const{
+    ::delay(milliseconds);
+}
+
+digitalIO ArduinoHardware::digitalRead(pinMapping pin) const{
+    int result = ::digitalRead(convertPinEnumToArduino(pin));
+
+    switch (result){
+        case HIGH: return digitalIO::E_HIGH;
+        case LOW: return digitalIO::E_LOW;
+    }
+}
+
+void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const{
+    const auto outputPin = convertPinEnumToArduino(pin);
+
+    switch (mode){
+        case digitalIO::E_HIGH: return ::digitalWrite(outputPin, HIGH);
+        case digitalIO::E_LOW: return ::digitalWrite(outputPin, LOW);
+        default:
+            serialPrintln("Attempted to use a pin state as output");
+            break;
+    }
+}
+
+void ArduinoHardware::orPortBitmask(portMapping port, uint8_t bitmask) const{
+    switch(port){
+        case portMapping::E_DDRK:
+            DDRK |= bitmask;
+            break;
+        case portMapping::E_PCICR:
+            PCICR |= bitmask;
+            break;
+        case portMapping::E_PCMSK2:
+            PCMSK2 |= bitmask;
+            break;
+        case portMapping::E_PINK:
+            PINK |= bitmask;
+            break;
+    }
+}
+
+uint8_t ArduinoHardware::readPortBits(portMapping port) const{
+    switch(port){
+        case portMapping::E_DDRK: return DDRK;
+        case portMapping::E_PCICR: return PCICR;
+        case portMapping::E_PCMSK2: return PCMSK2;
+        case portMapping::E_PINK: return PINK;
+    }
+}
+
+void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const{
+    switch(port){
+        case portMapping::E_DDRK:
+            DDRK = bitmask;
+            break;
+        case portMapping::E_PCICR:
+            PCICR = bitmask;
+            break;
+        case portMapping::E_PCMSK2:
+            PCMSK2 = bitmask;
+            break;
+        case portMapping::E_PINK:
+            PINK = bitmask;
+            break;
+    }
+}
+
+void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const{
+    const auto destPin = convertPinEnumToArduino(pin);
+    switch (mode){
+        case digitalIO::E_INPUT_PULLUP:
+            ::pinMode(destPin, INPUT_PULLUP);
+            break;
+        case digitalIO::E_OUTPUT:
+            ::pinMode(destPin, OUTPUT);
+            break;
+        default:
+            serialPrintln("Attempted to set a pin to a state instead of a mode");
+            break;
+    }
+}
 
 
 uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert){
@@ -18,6 +158,7 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert){
      */ 
     
     // GCC will warn us if we miss a case off the enum
+    
     
     switch(pinToConvert){
         case pinMapping::LEFT_FORWARD_RELAY : return 23;

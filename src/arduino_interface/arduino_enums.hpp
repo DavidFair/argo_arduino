@@ -11,6 +11,7 @@ namespace ArduinoEnums{
 enum class digitalIO{
     E_INPUT_PULLUP,
     E_OUTPUT,
+
     E_HIGH,
     E_LOW
 };
@@ -44,7 +45,6 @@ enum class pinMapping {
 enum class portMapping {
     E_DDRK, // DDRK controls ADC8-ADC15 direction
     E_PCICR, // Controls interrupt enable pins
-    E_PCINT2_vect, // Controls pin change interrupt for pins D0 - D7
     E_PCMSK2, // Bitwise controls PCINT 23 - 16 to trigger interupts
     E_PINK // PIN K which is A8-A15 on the Mega 2560
 };

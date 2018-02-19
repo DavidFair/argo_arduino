@@ -8,6 +8,7 @@ namespace ArgoRcLib{
 class ArgoRc {
 public:
     ArgoRc() = default;
+    ~ArgoRc() = default;
     
     void setup(ArduinoInterface *hardwareInterface);
 
@@ -33,8 +34,6 @@ private:
 
     ArduinoInterface *m_hardwareInterface {nullptr};
 };
-
-    void pcint2IsrRoutine(ArduinoInterface &hardwareInterface);
 
 }
 
