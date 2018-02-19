@@ -35,6 +35,7 @@ project(ARGO C CXX)
 if(UNIT_TESTING)
     # Use native compiler and add test directory
     add_subdirectory(test)
+    add_definitions(-DUNIT_TESTING)
 else()
     # Add external library files
     add_subdirectory(ext)

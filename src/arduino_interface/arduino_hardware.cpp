@@ -2,11 +2,10 @@
 
 #include "arduino_hardware.hpp"
 
-ArduinoHardware::ArduinoHardware(){
-    assignPinMapping();
-}
+using namespace ArduinoEnums;
 
-uint8_t ArduinoHardware::assignPinMapping(pinMapping pinToConvert){
+
+uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert){
     /* It is not possible to assign a value to an enum class after
      * the definition. However to pull in pins A6/A7 we must include
      * the Arduino header which means we must target the Mega.
@@ -21,28 +20,28 @@ uint8_t ArduinoHardware::assignPinMapping(pinMapping pinToConvert){
     // GCC will warn us if we miss a case off the enum
     
     switch(pinToConvert){
-        case LEFT_FORWARD_RELAY : return 23;
-        case LEFT_REVERSE_RELAY : return 25;
+        case pinMapping::LEFT_FORWARD_RELAY : return 23;
+        case pinMapping::LEFT_REVERSE_RELAY : return 25;
         
-        case RIGHT_FORWARD_RELAY : return 27;
-        case RIGHT_REVERSE_RELAY : return 29;
+        case pinMapping::RIGHT_FORWARD_RELAY : return 27;
+        case pinMapping::RIGHT_REVERSE_RELAY : return 29;
 
-        case LEFT_FOOTSWITCH_RELAY : return 42;
-        case RIGHT_FOOTSWITCH_RELAY : return 40;
+        case pinMapping::LEFT_FOOTSWITCH_RELAY : return 42;
+        case pinMapping::RIGHT_FOOTSWITCH_RELAY : return 40;
 
-        case LEFT_PWM_OUTPUT : return 44;
-        case RIGHT_PWM_OUTPUT : return 46;
+        case pinMapping::LEFT_PWM_OUTPUT : return 44;
+        case pinMapping::RIGHT_PWM_OUTPUT : return 46;
 
-        case LEFT_ENCODER_1: return 19;
-        case LEFT_ENCODER_2: return 18;
-        case RIGHT_ENCODER_1: return 20;
-        case RIGHT_ENCODER_2: return 21;
+        case pinMapping::LEFT_ENCODER_1: return 19;
+        case pinMapping::LEFT_ENCODER_2: return 18;
+        case pinMapping::RIGHT_ENCODER_1: return 20;
+        case pinMapping::RIGHT_ENCODER_2: return 21;
 
-        case TEST_POT_POSITIVE: return A6;
-        case TEST_POT_WIPER: return A7;
+        case pinMapping::TEST_POT_POSITIVE: return A6;
+        case pinMapping::TEST_POT_WIPER: return A7;
 
-        case RC_PWM_IN_L: return A11;
-        case RC_DEADMAN: return 2;
+        case pinMapping::RC_PWM_IN_L: return A11;
+        case pinMapping::RC_DEADMAN: return 2;
     }
 }
 

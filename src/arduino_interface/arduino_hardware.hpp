@@ -5,18 +5,17 @@
 
 #include "arduino_interface.hpp"
 
-
-
 class ArduinoHardware : ArduinoInterface {
 
 public:
-    ArduinoHardware();
+    ArduinoHardware() = default;
+    virtual ~ArduinoHardware() override = default;
 
 private:
 
-    pinMapping m_pinMapping;
+    ArduinoEnums::pinMapping m_pinMapping;
 
-    uint8_t assignPinMapping(pinMapping pinToConvert);
+    uint8_t convertPinEnumToArduino(ArduinoEnums::pinMapping pinToConvert);
 
 };
 

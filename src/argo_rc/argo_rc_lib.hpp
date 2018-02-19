@@ -3,18 +3,13 @@
 
 #include "arduino_interface.hpp"
 
-void direction_relays_off();
-
-void footswitch_on();
-void footswitch_off();
-
-void setup_rc();
+namespace ArgoRcLib{
 
 class ArgoRc {
 public:
-    ArgoRc(ArduinoInterface &hardwareInterface);
+    ArgoRc() = default;
     
-    void setup();
+    void setup(ArduinoInterface *hardwareInterface);
 
     void forward_left();
 
@@ -34,10 +29,13 @@ public:
 
     void setup_rc();
 
-
 private:
-    ArduinoInterface m_hardwareInterface;
 
+    ArduinoInterface *m_hardwareInterface {nullptr};
 };
+
+    void pcint2IsrRoutine(ArduinoInterface &hardwareInterface);
+
+}
 
 #endif //ARGO_RC_LIB_H_
