@@ -4,35 +4,12 @@
 
 #include "arduino_enums.hpp"
 #include "arduino_interface.hpp"
+#include "pinTimingData.hpp"
 
 #include "argo_rc_lib.hpp"
 
 //#define TEST_POT_ENABLED 
-//#define RC_PWM_ENABLED
-//
-//#define pinMapping::LEFT_FORWARD_RELAY 23
-//#define LEFT_REVERSE_RELAY 25
-//#define pinMapping::RIGHT_FORWARD_RELAY 27
-//#define pinMapping::RIGHT_REVERSE_RELAY 29
-//
-//#define pinMapping::LEFT_FOOTSWITCH_RELAY 42
-//#define pinMapping::RIGHT_FOOTSWITCH_RELAY 40
-//
-//
-//#define pinMapping::LEFT_PWM_OUTPUT 44
-//#define pinMapping::RIGHT_PWM_OUTPUT 46
-//
-//#define pinMapping.LEFT_ENCODER_1 19
-//#define pinMapping.LEFT_ENCODER_2 18
-//#define pinMapping::RIGHT_ENCODER_1 20
-//#define pinMapping::RIGHT_ENCODER_2 21
-//
-//#define pinMapping::TEST_POT_POSITIVE A6
-//#define pinMapping::TEST_POT_WIPER A7
-//
-////#define pinMapping::RC_PWM_IN_L A10
-//#define pinMapping::RC_PWM_IN_L A11
-//#define pinMapping::RC_DEADMAN 2
+#define RC_PWM_ENABLED
 
 //Encoder left_encoder(pinMapping.LEFT_ENCODER_1,pinMapping.LEFT_ENCODER_2);
 //Encoder right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
@@ -72,7 +49,7 @@ void ArgoRc::setup(ArduinoInterface *hardwareInterface)
   direction_relays_off();
 
 #ifdef RC_PWM_ENABLED
-  m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::INPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
   setup_rc();
 #endif
 
@@ -155,8 +132,8 @@ void ArgoRc::loop()
 #ifdef RC_PWM_ENABLED
   if(m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) == digitalIO::E_HIGH)
   {
-    rc_pwm_left = pinData[0].lastGoodWidth;
-    rc_pwm_right = pinData[1].lastGoodWidth;
+    rc_pwm_left = timingData::g_pinData[0].lastGoodWidth;
+    rc_pwm_right = timingData::g_pinData[1].lastGoodWidth;
 //    if(rc_pwm_left < 1520 || rc_pwm_left > 1850)
   //    left_pwm = 0;
   //  else
@@ -183,13 +160,13 @@ void ArgoRc::loop()
   else
   {
     rc_pwm_left = 0;
-    pinData[0].lastGoodWidth = 0;
+    timingData::g_pinData[0].lastGoodWidth = 0;
     rc_pwm_right = 0;
-    pinData[1].lastGoodWidth = 0;
+    timingData::g_pinData[1].lastGoodWidth = 0;
     left_pwm = 0;
     right_pwm = 0;
-     m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
-     m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
+    m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
+    m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
     // turn off all direction relays and footswitch
     footswitch_off(); 
     direction_relays_off();

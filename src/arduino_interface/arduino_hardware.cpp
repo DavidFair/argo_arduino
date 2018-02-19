@@ -1,14 +1,10 @@
 #include <stdint.h>
-
 #include <Arduino.h>
 
-
 #include "arduino_hardware.hpp"
+#include "pinTimingData.hpp"
 
 using namespace ArduinoEnums;
-
-volatile static tPinTimingData pinData[6 + 1];
-volatile static uint8_t PCintLast;
 
 // Due to the nature of an ISR we cannot unit test it. Place it within this file
 // as it is hardware specific
@@ -22,8 +18,8 @@ ISR(PCINT2_vect)
   
   // get the pin states for the indicated port.
   curr = PINK & 0xFC;
-  mask = curr ^ PCintLast;
-  PCintLast = curr;
+  mask = curr ^ timingData::g_pcIntLast;
+  timingData::g_pcIntLast = curr;
   
   currentTime = micros();
   
@@ -32,20 +28,20 @@ ISR(PCINT2_vect)
     bit = 0x04 << i;
     if (bit & mask) {
       // for each pin changed, record time of change
-      if (bit & PCintLast) {
-        time = currentTime - pinData[i].fallTime;
-        pinData[i].riseTime = currentTime;
+      if (bit & timingData::g_pcIntLast) {
+        time = currentTime - timingData::g_pinData[i].fallTime;
+        timingData::g_pinData[i].riseTime = currentTime;
         if ((time >= 10000) && (time <= 26000))
-          pinData[i].edge = 1;
+          timingData::g_pinData[i].edge = 1;
         else
-          pinData[i].edge = 0; // invalid rising edge detected
+          timingData::g_pinData[i].edge = 0; // invalid rising edge detected
       }
       else {
-        time = currentTime - pinData[i].riseTime;
-        pinData[i].fallTime = currentTime;
-        if ((time >= 800) && (time <= 2200) && (pinData[i].edge == 1)) {
-          pinData[i].lastGoodWidth = time;
-          pinData[i].edge = 0;
+        time = currentTime - timingData::g_pinData[i].riseTime;
+        timingData::g_pinData[i].fallTime = currentTime;
+        if ((time >= 800) && (time <= 2200) && (timingData::g_pinData[i].edge == 1)) {
+          timingData::g_pinData[i].lastGoodWidth = time;
+          timingData::g_pinData[i].edge = 0;
         }
       }
     }
@@ -132,6 +128,9 @@ void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const{
 void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const{
     const auto destPin = convertPinEnumToArduino(pin);
     switch (mode){
+        case digitalIO::E_INPUT:
+            ::pinMode(destPin, INPUT);
+            break;
         case digitalIO::E_INPUT_PULLUP:
             ::pinMode(destPin, INPUT_PULLUP);
             break;

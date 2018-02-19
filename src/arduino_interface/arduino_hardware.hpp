@@ -7,13 +7,6 @@
 
 #include "arduino_interface.hpp"
 
-// --- RC PWM input ---------------------------------
-struct tPinTimingData{
-  uint8_t edge;
-  unsigned long riseTime;
-  unsigned long fallTime;
-  unsigned int  lastGoodWidth;
-};
 
 class ArduinoHardware : public ArduinoInterface {
 

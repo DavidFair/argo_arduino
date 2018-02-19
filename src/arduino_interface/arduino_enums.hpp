@@ -9,6 +9,7 @@ namespace ArduinoEnums{
      */
 
 enum class digitalIO{
+    E_INPUT,
     E_INPUT_PULLUP,
     E_OUTPUT,
 
