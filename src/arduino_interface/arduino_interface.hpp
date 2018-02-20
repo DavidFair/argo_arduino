@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "arduino_enums.hpp"
-#include "arduino_string.hpp"
+#include "arduino_lib_wrapper.hpp"
 
 namespace Hardware {
 

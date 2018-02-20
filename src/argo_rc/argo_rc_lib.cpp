@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "arduino_enums.hpp"
+#include "arduino_lib_wrapper.hpp"
 #include "arduino_interface.hpp"
 #include "pinTimingData.hpp"
 
@@ -137,14 +138,9 @@ void ArgoRc::loop()
   {
     rc_pwm_left = timingData::g_pinData[0].lastGoodWidth;
     rc_pwm_right = timingData::g_pinData[1].lastGoodWidth;
-//    if(rc_pwm_left < 1520 || rc_pwm_left > 1850)
-  //    left_pwm = 0;
-  //  else
-      left_pwm = map(rc_pwm_left,1520,1850,0,255);
- //   if(rc_pwm_right < 1520 || rc_pwm_right > 1850)
-  //    right_pwm = 0;
-  //  else
-      right_pwm = map(rc_pwm_right,1520,1850,0,255);
+    
+    left_pwm = map(rc_pwm_left,1520,1850,0,255);
+    right_pwm = map(rc_pwm_right,1520,1850,0,255);
 
     if(left_pwm > -40 && left_pwm < 40 & right_pwm > -40 & right_pwm < 40)
       footswitch_off();
@@ -177,7 +173,7 @@ void ArgoRc::loop()
     {
       // wait here forever - requires a reset
        m_hardwareInterface->serialPrintln(" DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
-       delay(500);
+       m_hardwareInterface->delay(500);
     }
   }
 #endif

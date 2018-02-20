@@ -1,9 +1,20 @@
+set(SRC_FILES
+    arduino_hardware.cpp 
+    pinTimingData.cpp
+)
+
+set(HDR_FILES
+    arduino_hardware.hpp
+    arduino_interface.hpp
+    arduino_lib_wrapper.hpp
+    pinTimingData.hpp
+)
 
 if (NOT UNIT_TESTING)
     generate_arduino_library(
     arduino_hardware
-    SRCS arduino_hardware.cpp pinTimingData.cpp
-    HDRS arduino_hardware.hpp arduino_interface.hpp pinTimingData.hpp
+    SRCS ${SRC_FILES}
+    HDRS ${HDR_FILES}
     BOARD ${BOARD_TYPE}
     )
 endif()
