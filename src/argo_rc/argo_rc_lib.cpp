@@ -1,93 +1,68 @@
 
-#include <Arduino.h>
 //#include <Encoder.h>
-#include <HardwareSerial.h>
+#include <stdint.h>
+
+#include "arduino_enums.hpp"
+#include "arduino_lib_wrapper.hpp"
+#include "arduino_interface.hpp"
+#include "pinTimingData.hpp"
 
 #include "argo_rc_lib.hpp"
 
 //#define TEST_POT_ENABLED 
 #define RC_PWM_ENABLED
 
-#define LEFT_FORWARD_RELAY 23
-#define LEFT_REVERSE_RELAY 25
-#define RIGHT_FORWARD_RELAY 27
-#define RIGHT_REVERSE_RELAY 29
+//Encoder left_encoder(pinMapping.LEFT_ENCODER_1,pinMapping.LEFT_ENCODER_2);
+//Encoder right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
 
-#define LEFT_FOOTSWITCH_RELAY 42
-#define RIGHT_FOOTSWITCH_RELAY 40
+using namespace ArduinoEnums;
+using namespace Hardware;
 
-
-#define LEFT_PWM_OUTPUT 44
-#define RIGHT_PWM_OUTPUT 46
-
-#define LEFT_ENCODER_1 19
-#define LEFT_ENCODER_2 18
-#define RIGHT_ENCODER_1 20
-#define RIGHT_ENCODER_2 21
-
-#define TEST_POT_POSITIVE A6
-#define TEST_POT_WIPER A7
-
-//#define RC_PWM_IN_L A10
-#define RC_PWM_IN_L A11
-#define RC_DEADMAN 2
-
-//Encoder left_encoder(LEFT_ENCODER_1,LEFT_ENCODER_2);
-//Encoder right_encoder(RIGHT_ENCODER_1,RIGHT_ENCODER_2);
+namespace ArgoRcLib{
 
 long left_oldPosition  = -999;
 long right_oldPosition  = -999;
 
-// --- RC PWM input ---------------------------------
-typedef struct {
-  byte edge;
-  unsigned long riseTime;
-  unsigned long fallTime;
-  unsigned int  lastGoodWidth;
-} tPinTimingData;
-volatile static tPinTimingData pinData[6 + 1];
-volatile static uint8_t PCintLast;
-// --- RC PWM input ---------------------------------
 
-
-void setup() 
+void ArgoRc::setup(ArduinoInterface *hardwareInterface) 
 {
-  Serial.begin(115200);
+  m_hardwareInterface = hardwareInterface;
+  m_hardwareInterface->serialBegin(115200);
 
-  pinMode(LEFT_ENCODER_1, INPUT_PULLUP);
-  pinMode(LEFT_ENCODER_2, INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_1, digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_2, digitalIO::E_INPUT_PULLUP);
 
-  pinMode(RIGHT_ENCODER_1, INPUT_PULLUP);
-  pinMode(RIGHT_ENCODER_2, INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_1, digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_2, digitalIO::E_INPUT_PULLUP);
 
   
   // put your setup code here, to run once:
-  pinMode(LEFT_FORWARD_RELAY, OUTPUT);
-  pinMode(LEFT_REVERSE_RELAY, OUTPUT);
-  pinMode(RIGHT_FORWARD_RELAY, OUTPUT);
-  pinMode(RIGHT_REVERSE_RELAY, OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_OUTPUT);
 
-  pinMode(LEFT_FOOTSWITCH_RELAY, OUTPUT);
-  pinMode(RIGHT_FOOTSWITCH_RELAY, OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_FOOTSWITCH_RELAY, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_OUTPUT);
   footswitch_off(); 
   
 
-  pinMode(TEST_POT_POSITIVE, OUTPUT);
-  digitalWrite(TEST_POT_POSITIVE,HIGH);
+  m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE, digitalIO::E_OUTPUT);
+  m_hardwareInterface->digitalWrite(pinMapping::TEST_POT_POSITIVE, digitalIO::E_HIGH);
 
   direction_relays_off();
 
 #ifdef RC_PWM_ENABLED
-  pinMode(RC_DEADMAN, INPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
   setup_rc();
 #endif
 
-delay(1000);
+  m_hardwareInterface->delay(1000);
 
   // Hardwire direction relays to forward
 //#ifdef RC_PWM_ENABLED
-//      digitalWrite(RIGHT_FORWARD_RELAY,LOW);
-//      digitalWrite(LEFT_FORWARD_RELAY,LOW);
+//      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_LOW);
+//      m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_LOW);
 //#endif
 
 //forward_left();
@@ -96,51 +71,51 @@ delay(1000);
 }
 
 
-void forward_left()
+void ArgoRc::forward_left()
 {
   footswitch_on();
-  Serial.println("forward_left");
-      digitalWrite(LEFT_FORWARD_RELAY,LOW);
-      digitalWrite(LEFT_REVERSE_RELAY,HIGH);
+  m_hardwareInterface->serialPrintln("forward_left");
+  m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_LOW);
+  m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_HIGH);
   
 }
 
-void forward_right()
+void ArgoRc::forward_right()
 {
   footswitch_on();
-  Serial.println("                  forward_right");
-      digitalWrite(RIGHT_FORWARD_RELAY,LOW);
-      digitalWrite(RIGHT_REVERSE_RELAY,HIGH);
+  m_hardwareInterface->serialPrintln("                  forward_right");
+  m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_LOW);
+  m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_HIGH);
   
 }
 
-void reverse_left()
+void ArgoRc::reverse_left()
 {
   footswitch_on();
-  Serial.println("                                    reverse_left");
-      digitalWrite(LEFT_FORWARD_RELAY,HIGH);
-      digitalWrite(LEFT_REVERSE_RELAY,LOW);
+  m_hardwareInterface->serialPrintln("                                    reverse_left");
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_LOW);
 }
 
-void reverse_right()
+void ArgoRc::reverse_right()
 {
   footswitch_on();
-  Serial.println("                                                      reverse_right");
-      digitalWrite(RIGHT_FORWARD_RELAY,HIGH);
-      digitalWrite(RIGHT_REVERSE_RELAY,LOW);
+  m_hardwareInterface->serialPrintln("                                                      reverse_right");
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_LOW);
   
 }
 
-void footswitch_on()
+void ArgoRc::footswitch_on()
 {
-     digitalWrite(LEFT_FOOTSWITCH_RELAY,LOW);
-     digitalWrite(RIGHT_FOOTSWITCH_RELAY,LOW);
+     m_hardwareInterface->digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,digitalIO::E_LOW);
+     m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,digitalIO::E_LOW);
 }
 
-void footswitch_off()
+void ArgoRc::footswitch_off()
 {
-     digitalWrite(LEFT_FOOTSWITCH_RELAY,HIGH);
-     digitalWrite(RIGHT_FOOTSWITCH_RELAY,HIGH);
+     m_hardwareInterface->digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,digitalIO::E_HIGH);
+     m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,digitalIO::E_HIGH);
 }
 
 //#define DEBUG_OUTPUT
@@ -150,27 +125,22 @@ int rc_pwm_left = 0;
 int rc_pwm_right = 0;
 
 
-void loop() 
+void ArgoRc::loop() 
 {
   // put your main code here, to run repeatedly:
   int left_pwm = 0;  
   int right_pwm = 0;  
   
-  int test_pot_value = analogRead(TEST_POT_WIPER);
+  int test_pot_value = m_hardwareInterface->analogRead(pinMapping::TEST_POT_WIPER);
 
 #ifdef RC_PWM_ENABLED
-  if(digitalRead(RC_DEADMAN) == HIGH)
+  if(m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) == digitalIO::E_HIGH)
   {
-    rc_pwm_left = pinData[0].lastGoodWidth;
-    rc_pwm_right = pinData[1].lastGoodWidth;
-//    if(rc_pwm_left < 1520 || rc_pwm_left > 1850)
-  //    left_pwm = 0;
-  //  else
-      left_pwm = map(rc_pwm_left,1520,1850,0,255);
- //   if(rc_pwm_right < 1520 || rc_pwm_right > 1850)
-  //    right_pwm = 0;
-  //  else
-      right_pwm = map(rc_pwm_right,1520,1850,0,255);
+    rc_pwm_left = timingData::g_pinData[0].lastGoodWidth;
+    rc_pwm_right = timingData::g_pinData[1].lastGoodWidth;
+    
+    left_pwm = map(rc_pwm_left,1520,1850,0,255);
+    right_pwm = map(rc_pwm_right,1520,1850,0,255);
 
     if(left_pwm > -40 && left_pwm < 40 & right_pwm > -40 & right_pwm < 40)
       footswitch_off();
@@ -189,21 +159,21 @@ void loop()
   else
   {
     rc_pwm_left = 0;
-    pinData[0].lastGoodWidth = 0;
+    timingData::g_pinData[0].lastGoodWidth = 0;
     rc_pwm_right = 0;
-    pinData[1].lastGoodWidth = 0;
+    timingData::g_pinData[1].lastGoodWidth = 0;
     left_pwm = 0;
     right_pwm = 0;
-    analogWrite(LEFT_PWM_OUTPUT, left_pwm);
-    analogWrite(RIGHT_PWM_OUTPUT, right_pwm);
+    m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
+    m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
     // turn off all direction relays and footswitch
     footswitch_off(); 
     direction_relays_off();
     while(1)
     {
       // wait here forever - requires a reset
-       Serial.println(" DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
-       delay(500);
+       m_hardwareInterface->serialPrintln(" DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
+       m_hardwareInterface->delay(500);
     }
   }
 #endif
@@ -212,23 +182,23 @@ void loop()
   left_pwm = map(test_pot_value,0,1023,0,255);
   right_pwm = map(test_pot_value,0,1023,0,255);
 //#ifdef DEBUG_OUTPUT
-//  Serial.print("  RIGHT PWM: ");
-//  Serial.print(right_pwm);
+//  m_hardwareInterface->serialPrint("  RIGHT PWM: ");
+//  m_hardwareInterface->serialPrint(right_pwm);
 //#endif
 #endif
 
 
 #ifdef DEBUG_OUTPUT_PWM
-  if(digitalRead(RC_DEADMAN) == HIGH)
-      Serial.print("ENABLED  ");
-  Serial.print("LEFT PWM: ");
-  Serial.print(left_pwm);
-  Serial.print("  RIGHT PWM: ");
-  Serial.println(right_pwm);
+  if(m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) == digitalIO::E_HIGH)
+      m_hardwareInterface->serialPrint("ENABLED  ");
+  m_hardwareInterface->serialPrint("LEFT PWM: ");
+  m_hardwareInterface->serialPrint(left_pwm);
+  m_hardwareInterface->serialPrint("  RIGHT PWM: ");
+  m_hardwareInterface->serialPrintln(right_pwm);
 #endif
 
-  analogWrite(LEFT_PWM_OUTPUT, left_pwm);
-  analogWrite(RIGHT_PWM_OUTPUT, right_pwm);
+   m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
+   m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
 
 /*
   long left_newPosition = left_encoder.read();
@@ -245,10 +215,10 @@ void loop()
 */
 
 #ifdef DEBUG_OUTPUT
-  Serial.print("  LPOS: ");
-  Serial.print(left_newPosition);
-  Serial.print("  RPOS: ");
-  Serial.println(right_newPosition);
+  m_hardwareInterface->serialPrint("  LPOS: ");
+  m_hardwareInterface->serialPrint(left_newPosition);
+  m_hardwareInterface->serialPrint("  RPOS: ");
+  m_hardwareInterface->serialPrintln(right_newPosition);
 #endif
   
 //  delay(200);
@@ -258,25 +228,25 @@ void loop()
   {
     byte c = Serial.read();
     if(c == 'l')
-      digitalWrite(RIGHT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_HIGH);
     else if(c == 'p')
-      digitalWrite(RIGHT_FORWARD_RELAY,LOW);
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_LOW);
 
     if(c == 'k')
-      digitalWrite(RIGHT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_HIGH);
     else if(c == 'o')
-      digitalWrite(RIGHT_REVERSE_RELAY,LOW);
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_LOW);
     
 
     if(c == 'a')
-      digitalWrite(LEFT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_HIGH);
     else if(c == 'q')
-      digitalWrite(LEFT_FORWARD_RELAY,LOW);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_LOW);
 
     if(c == 's')
-      digitalWrite(LEFT_REVERSE_RELAY,HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_HIGH);
     else if(c == 'w')
-      digitalWrite(LEFT_REVERSE_RELAY,LOW);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_LOW);
   
   
   }    
@@ -287,65 +257,30 @@ void loop()
 }
 
 
-void direction_relays_off()
+void ArgoRc::direction_relays_off()
 {
 
-      Serial.println("RELAYS OFF");
-      digitalWrite(RIGHT_FORWARD_RELAY,HIGH);
-      digitalWrite(RIGHT_REVERSE_RELAY,HIGH);
-      digitalWrite(LEFT_REVERSE_RELAY,HIGH);
-      digitalWrite(LEFT_FORWARD_RELAY,HIGH);
+      m_hardwareInterface->serialPrintln("RELAYS OFF");
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_HIGH);
+      m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_HIGH);
 }
 
-
-void setup_rc()
+void ArgoRc::setup_rc()
 {
-  DDRK = 0; // pins as input
+  // Set ADC8 - ADC15 to input (0) using the port register
+  m_hardwareInterface->setPortBitmask(portMapping::E_DDRK, 0);
+
+  // enable PCINT which allows us to use the PCMSK register by bitshifting
+  // 1 into the correct register location
+  const auto pcie2EnableBitmask = 1 << static_cast<uint8_t>(portControlValues::E_PCIE2);
+  m_hardwareInterface->orPortBitmask(portMapping::E_PCICR, pcie2EnableBitmask);
   
-  // enable PCINT 18 to 23
-  PCICR |= (1 << PCIE2);
-  PCMSK2 = 0xFC;
+  // Set pins 18 to 23 as ISR triggers
+  m_hardwareInterface->setPortBitmask(portMapping::E_PCMSK2, 0xFC);
+
+  // The ISR is defined in the hardware implementation
 }
 
-ISR(PCINT2_vect)
-{
-  uint8_t bit;
-  uint8_t curr;
-  uint8_t mask;
-  uint32_t currentTime;
-  uint32_t time;
-  
-  // get the pin states for the indicated port.
-  curr = PINK & 0xFC;
-  mask = curr ^ PCintLast;
-  PCintLast = curr;
-  
-  currentTime = micros();
-  
-  // mask is pcint pins that have changed.
-  for (uint8_t i=0; i < 6; i++) {
-    bit = 0x04 << i;
-    if (bit & mask) {
-      // for each pin changed, record time of change
-      if (bit & PCintLast) {
-        time = currentTime - pinData[i].fallTime;
-        pinData[i].riseTime = currentTime;
-        if ((time >= 10000) && (time <= 26000))
-          pinData[i].edge = 1;
-        else
-          pinData[i].edge = 0; // invalid rising edge detected
-      }
-      else {
-        time = currentTime - pinData[i].riseTime;
-        pinData[i].fallTime = currentTime;
-        if ((time >= 800) && (time <= 2200) && (pinData[i].edge == 1)) {
-          pinData[i].lastGoodWidth = time;
-          pinData[i].edge = 0;
-        }
-      }
-    }
-  }
-}
-
-
-
+} // End of namespace
