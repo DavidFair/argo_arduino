@@ -10,11 +10,11 @@ ArgoRcLib::ArgoRc argoRcLib;
 void setup(){
     // The hardware abstraction must live as long as the program runs so there
     // is no corresponding free 
-    ArduinoInterface *hardware = new ArduinoHardware();
-    if (!hardware){
+    Hardware::ArduinoInterface *hardwareImpl = new Hardware::ArduinoHardware();
+    if (!hardwareImpl){
         exit(-1);
     }
-    argoRcLib.setup(hardware);
+    argoRcLib.setup(hardwareImpl);
 }
 
 void loop(){

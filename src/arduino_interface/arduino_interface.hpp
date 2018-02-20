@@ -6,7 +6,7 @@
 #include "arduino_enums.hpp"
 #include "arduino_string.hpp"
 
-
+namespace Hardware {
 
 class ArduinoInterface {
     // Abstract class which defines the methods that we use on our Arduino
@@ -47,6 +47,6 @@ public:
     virtual void setPinMode(ArduinoEnums::pinMapping pin, ArduinoEnums::digitalIO mode) const = 0;
 };
 
-
+} // End of namespace
 
 #endif //ARDUINO_INTERFACE_HPP_

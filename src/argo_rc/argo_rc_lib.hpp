@@ -10,7 +10,7 @@ public:
     ArgoRc() = default;
     ~ArgoRc() = default;
     
-    void setup(ArduinoInterface *hardwareInterface);
+    void setup(Hardware::ArduinoInterface *hardwareInterface);
 
     void forward_left();
 
@@ -32,7 +32,7 @@ public:
 
 private:
 
-    ArduinoInterface *m_hardwareInterface {nullptr};
+    Hardware::ArduinoInterface *m_hardwareInterface {nullptr};
 };
 
 }

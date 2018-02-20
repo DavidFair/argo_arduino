@@ -7,6 +7,7 @@
 
 #include "arduino_interface.hpp"
 
+namespace Hardware{
 
 class ArduinoHardware : public ArduinoInterface {
 
@@ -48,6 +49,8 @@ private:
     static uint8_t convertPinEnumToArduino(ArduinoEnums::pinMapping pinToConvert);
 
 };
+
+} // End of namespace
 
 
 #endif //ARDUINO_HARDWARE_HPP_

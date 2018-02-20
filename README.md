@@ -15,8 +15,9 @@
 The following dependencies are required:
 
 - arduino
-- picocom
 - cmake
+- git
+- picocom
 
 The following are required but installed by the Arduino SDK
 - gcc-avr 
@@ -28,7 +29,7 @@ The following are required but installed by the Arduino SDK
 These can be installed with the following command
 
 ```sh
-sudo apt-get install arduino cmake gcc-avr binutils-avr avr-libc avrdude picocom
+sudo apt-get install arduino cmake gcc-avr binutils-avr avr-libc avrdude picocom git
 ```
 
 

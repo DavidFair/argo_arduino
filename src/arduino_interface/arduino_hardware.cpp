@@ -6,6 +6,8 @@
 
 using namespace ArduinoEnums;
 
+namespace Hardware{
+
 // Due to the nature of an ISR we cannot unit test it. Place it within this file
 // as it is hardware specific
 ISR(PCINT2_vect)
@@ -185,4 +187,4 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert){
     }
 }
 
-
+} // End of namespace

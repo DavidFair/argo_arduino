@@ -14,11 +14,14 @@
 //Encoder left_encoder(pinMapping.LEFT_ENCODER_1,pinMapping.LEFT_ENCODER_2);
 //Encoder right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
 
+using namespace ArduinoEnums;
+using namespace Hardware;
+
+namespace ArgoRcLib{
+
 long left_oldPosition  = -999;
 long right_oldPosition  = -999;
 
-using namespace ArgoRcLib;
-using namespace ArduinoEnums;
 
 void ArgoRc::setup(ArduinoInterface *hardwareInterface) 
 {
@@ -283,3 +286,5 @@ void ArgoRc::setup_rc()
 
   // The ISR is defined in the hardware implementation
 }
+
+} // End of namespace
