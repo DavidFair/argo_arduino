@@ -66,6 +66,7 @@ void ArgoRc::setup(ArduinoInterface *hardwareInterface) {
   setup_rc();
 #endif
 
+  // TODO: why is this delay here?
   m_hardwareInterface->delay(1000);
 
   // Hardwire direction relays to forward
@@ -253,7 +254,8 @@ void ArgoRc::loop() {
         m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_HIGH);
       else if(c == 'o')
         m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,digitalIO::E_LOW);
-      
+      
+
 
       if(c == 'a')
         m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_HIGH);
@@ -264,8 +266,10 @@ void ArgoRc::loop() {
         m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_HIGH);
       else if(c == 'w')
         m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,digitalIO::E_LOW);
-    
-    
+    
+
+    
+
     }
 
 

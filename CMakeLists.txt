@@ -38,8 +38,9 @@ project(ARGO C CXX)
 # Add directories depending on whether we are targeting hardware
 if(UNIT_TESTING)
     # Use native compiler and add test directory
-    add_subdirectory(test)
+    enable_testing()
     add_definitions(-DUNIT_TESTING)
+    add_subdirectory(test)
 else()
     # Add external library files
     add_subdirectory(ext)
