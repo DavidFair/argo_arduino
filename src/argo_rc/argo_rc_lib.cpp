@@ -38,7 +38,6 @@ void ArgoRc::setup(ArduinoInterface *hardwareInterface) {
   m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_2,
                                   digitalIO::E_INPUT_PULLUP);
 
-  // put your setup code here, to run once:
   m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY,
                                   digitalIO::E_OUTPUT);
   m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY,
