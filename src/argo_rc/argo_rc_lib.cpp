@@ -24,58 +24,24 @@ namespace ArgoRcLib {
 long left_oldPosition = -999;
 long right_oldPosition = -999;
 
-void ArgoRc::setup(ArduinoInterface *hardwareInterface) {
-  m_hardwareInterface = hardwareInterface;
+ArgoRc::ArgoRc(ArduinoInterface *hardwareInterface)
+    : m_hardwareInterface(hardwareInterface){};
+
+void ArgoRc::setup() {
   m_hardwareInterface->serialBegin(115200);
 
-  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_1,
-                                  digitalIO::E_INPUT_PULLUP);
-  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_2,
-                                  digitalIO::E_INPUT_PULLUP);
+  setupDigitalPins();
 
-  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_1,
-                                  digitalIO::E_INPUT_PULLUP);
-  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_2,
-                                  digitalIO::E_INPUT_PULLUP);
-
-  m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY,
-                                  digitalIO::E_OUTPUT);
-  m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY,
-                                  digitalIO::E_OUTPUT);
-  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FORWARD_RELAY,
-                                  digitalIO::E_OUTPUT);
-  m_hardwareInterface->setPinMode(pinMapping::RIGHT_REVERSE_RELAY,
-                                  digitalIO::E_OUTPUT);
-
-  m_hardwareInterface->setPinMode(pinMapping::LEFT_FOOTSWITCH_RELAY,
-                                  digitalIO::E_OUTPUT);
-  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY,
-                                  digitalIO::E_OUTPUT);
   footswitch_off();
+  direction_relays_off();
 
-  m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE,
-                                  digitalIO::E_OUTPUT);
   m_hardwareInterface->digitalWrite(pinMapping::TEST_POT_POSITIVE,
                                     digitalIO::E_HIGH);
-
-  direction_relays_off();
 
 #ifdef RC_PWM_ENABLED
   m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
   setup_rc();
 #endif
-
-  // TODO: why is this delay here?
-  m_hardwareInterface->delay(1000);
-
-  // Hardwire direction relays to forward
-  //#ifdef RC_PWM_ENABLED
-  //      m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,digitalIO::E_LOW);
-  //      m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,digitalIO::E_LOW);
-  //#endif
-
-  // forward_left();
-  // reverse_right();
 }
 
 void ArgoRc::forward_left() {
@@ -286,6 +252,36 @@ void ArgoRc::direction_relays_off() {
                                     digitalIO::E_HIGH);
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,
                                     digitalIO::E_HIGH);
+}
+
+void ArgoRc::setupDigitalPins() {
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY,
+                                  digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY,
+                                  digitalIO::E_OUTPUT);
+
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FORWARD_RELAY,
+                                  digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_REVERSE_RELAY,
+                                  digitalIO::E_OUTPUT);
+
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_FOOTSWITCH_RELAY,
+                                  digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY,
+                                  digitalIO::E_OUTPUT);
+
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_1,
+                                  digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::LEFT_ENCODER_2,
+                                  digitalIO::E_INPUT_PULLUP);
+
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_1,
+                                  digitalIO::E_INPUT_PULLUP);
+  m_hardwareInterface->setPinMode(pinMapping::RIGHT_ENCODER_2,
+                                  digitalIO::E_INPUT_PULLUP);
+
+  m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE,
+                                  digitalIO::E_OUTPUT);
 }
 
 void ArgoRc::setup_rc() {

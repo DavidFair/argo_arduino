@@ -3,38 +3,39 @@
 
 #include "arduino_interface.hpp"
 
-namespace ArgoRcLib{
+namespace ArgoRcLib {
 
 class ArgoRc {
 public:
-    ArgoRc() = default;
-    ~ArgoRc() = default;
-    
-    void setup(Hardware::ArduinoInterface *hardwareInterface);
+  ArgoRc(Hardware::ArduinoInterface *hardwareInterface);
+  ~ArgoRc() = default;
 
-    void forward_left();
+  void setup();
 
-    void forward_right();
+  void forward_left();
 
-    void reverse_left();
+  void forward_right();
 
-    void reverse_right();
+  void reverse_left();
 
-    void footswitch_on();
+  void reverse_right();
 
-    void footswitch_off();
+  void footswitch_on();
 
-    void loop();
+  void footswitch_off();
 
-    void direction_relays_off();
+  void loop();
 
-    void setup_rc();
+  void direction_relays_off();
 
 private:
+  void setupDigitalPins();
 
-    Hardware::ArduinoInterface *m_hardwareInterface {nullptr};
+  void setup_rc();
+
+  Hardware::ArduinoInterface *m_hardwareInterface{nullptr};
 };
 
-}
+} // namespace ArgoRcLib
 
-#endif //ARGO_RC_LIB_H_
+#endif // ARGO_RC_LIB_H_

@@ -5,64 +5,77 @@
 
 using ::testing::AtLeast;
 using ::testing::Ge;
+using ::testing::NiceMock;
 using ::testing::_;
 
 using namespace ArduinoEnums;
 using ArgoRcLib::ArgoRc;
+using Hardware::ArduinoInterface;
 
-class ArgoRcTest : public testing::Test {
-public:
-  MockArduino m_hardwareMock;
-  ArgoRc m_argoRc;
+ArgoRc createArgoRcLibObject(MockArduino &hardware) {
+  auto hardwarePtr = static_cast<ArduinoInterface *>(&hardware);
+  return ArgoRc(hardwarePtr);
+}
 
-  // virtual void SetUp() { m_argoRc.setup(&m_hardwareMock); }
-};
+void checkFootSwitchesAreOff(const MockArduino &hardwareInterface) {
+  EXPECT_CALL(hardwareInterface, digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
+                                              digitalIO::E_HIGH));
+  EXPECT_CALL(
+      hardwareInterface,
+      digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_HIGH));
+}
 
-TEST_F(ArgoRcTest, setupConfiguresDevice) {
-  EXPECT_CALL(m_hardwareMock, serialBegin(Ge(1000))).Times(1);
+void checkDirectionRelaysAreOff(const MockArduino &hardwareInterface) {
+  // And the direction relays are switched off too
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_HIGH));
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_HIGH));
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_HIGH));
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_HIGH));
+}
 
-  // Output Pins
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_OUTPUT))
-      .Times(1);
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_OUTPUT))
-      .Times(1);
+TEST(ArgoRcLib, setupConfiguresDigitalIO) {
+  NiceMock<MockArduino> hardwareMock;
 
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_OUTPUT))
-      .Times(1);
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_OUTPUT))
-      .Times(1);
+  EXPECT_CALL(hardwareMock, serialBegin(Ge(1000))).Times(1);
 
-  EXPECT_CALL(m_hardwareMock, setPinMode(pinMapping::LEFT_FOOTSWITCH_RELAY,
-                                         digitalIO::E_OUTPUT))
-      .Times(1);
-  EXPECT_CALL(m_hardwareMock, setPinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY,
-                                         digitalIO::E_OUTPUT))
-      .Times(1);
+  // Check all output Pins
+  for (auto pin : ArduinoEnums::allDigitalPins) {
+    EXPECT_CALL(hardwareMock, setPinMode(pin, _));
+  }
 
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::TEST_POT_POSITIVE, digitalIO::E_OUTPUT))
-      .Times(1);
+  // Check there is a state set to the test potentiometer
+  EXPECT_CALL(hardwareMock, digitalWrite(pinMapping::TEST_POT_POSITIVE, _));
 
-  // Input Pullup Pins
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::LEFT_ENCODER_1, digitalIO::E_INPUT_PULLUP))
-      .Times(1);
-  EXPECT_CALL(m_hardwareMock,
-              setPinMode(pinMapping::LEFT_ENCODER_2, digitalIO::E_INPUT_PULLUP))
-      .Times(1);
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+  argoRcLib.setup();
+}
 
-  EXPECT_CALL(m_hardwareMock, setPinMode(pinMapping::RIGHT_ENCODER_1,
-                                         digitalIO::E_INPUT_PULLUP))
-      .Times(1);
+TEST(ArgoRcLib, setupResetRelays) {
+  NiceMock<MockArduino> hardwareMock;
+  checkFootSwitchesAreOff(hardwareMock);
+  checkDirectionRelaysAreOff(hardwareMock);
 
-  EXPECT_CALL(m_hardwareMock, setPinMode(pinMapping::RIGHT_ENCODER_2,
-                                         digitalIO::E_INPUT_PULLUP))
-      .Times(1);
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+  argoRcLib.setup();
+}
+
+TEST(ArgoRcLib, setupConfiguresIsr) {
+  NiceMock<MockArduino> hardwareMock;
+
+  // Check ADC8-15 are set to inputs (all bits 0)
+  EXPECT_CALL(hardwareMock, setPortBitmask(portMapping::E_DDRK, 0));
+
+  // this is done by setting PCICR to PCIE2 bitmask to
+  // enable interrupts
+  EXPECT_CALL(hardwareMock, orPortBitmask(portMapping::E_PCICR, _));
+  // And then enabling the specific pin triggers
+  EXPECT_CALL(hardwareMock, setPortBitmask(portMapping::E_PCMSK2, _));
 
   // Trigger the call
-  m_argoRc.setup(&m_hardwareMock);
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+  argoRcLib.setup();
 }
