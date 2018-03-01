@@ -132,13 +132,13 @@ void ArgoRc::loop()
         (right_pwm > -40 && right_pwm < 40))
       footswitch_off();
 
-    if (left_pwm > 40)
+    if (left_pwm >= 40)
       forward_left();
-    if (right_pwm > 40)
+    if (right_pwm >= 40)
       forward_right();
-    if (left_pwm < -40)
+    if (left_pwm <= -40)
       reverse_left();
-    if (right_pwm < -40)
+    if (right_pwm <= -40)
       reverse_right();
 
     if (left_pwm < 0)

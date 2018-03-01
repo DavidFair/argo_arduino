@@ -272,6 +272,94 @@ TEST(ArgoRcPwmIn, pwmLeftIsForward)
   // Set timing data to the boundary value
   timingData::g_pinData[leftPwmIndex].lastGoodWidth = forwardBoundValue;
   timingData::g_pinData[rightPwmIndex].lastGoodWidth = zeroValue;
+
+  checkForwardLeftIsOn(hardwareMock);
+
+  argoRcLib.loop();
+}
+
+TEST(ArgoRcPwmIn, pwmRightIsForward)
+{
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  returnDeadmanSafe(hardwareMock);
+
+  // Set timing data to the boundary value
+  timingData::g_pinData[rightPwmIndex].lastGoodWidth = forwardBoundValue;
+  timingData::g_pinData[leftPwmIndex].lastGoodWidth = zeroValue;
+
+  checkForwardRightIsOn(hardwareMock);
+
+  argoRcLib.loop();
+}
+
+TEST(ArgoRcPwmIn, pwmLeftIsReverse)
+{
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  returnDeadmanSafe(hardwareMock);
+
+  // Set timing data to the boundary value
+  timingData::g_pinData[leftPwmIndex].lastGoodWidth = reverseBoundValue;
+  timingData::g_pinData[rightPwmIndex].lastGoodWidth = zeroValue;
+
+  checkReverseLeftIsOn(hardwareMock);
+
+  argoRcLib.loop();
+}
+
+TEST(ArgoRcPwmIn, pwmRightIsReverse)
+{
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  returnDeadmanSafe(hardwareMock);
+
+  // Set timing data to the boundary value
+  timingData::g_pinData[leftPwmIndex].lastGoodWidth = zeroValue;
+  timingData::g_pinData[rightPwmIndex].lastGoodWidth = reverseBoundValue;
+
+  checkReverseRightIsOn(hardwareMock);
+
+  argoRcLib.loop();
+}
+
+TEST(ArgoRcPwmIn, pwmPositiveOff)
+{
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  returnDeadmanSafe(hardwareMock);
+
+  // Set timing data to the boundary value
+  timingData::g_pinData[leftPwmIndex].lastGoodWidth = forwardBoundValue - 1;
+  timingData::g_pinData[rightPwmIndex].lastGoodWidth = forwardBoundValue - 1;
+
+  // TODO : Make sure direction relays switch off
+  // checkDirectionRelaysAreOff(hardwareMock);
+  checkFootSwitchesAreOff(hardwareMock);
+
+  argoRcLib.loop();
+}
+
+TEST(ArgoRcPwmIn, pwmNegativeOff)
+{
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  returnDeadmanSafe(hardwareMock);
+
+  // Set timing data to the boundary value
+  timingData::g_pinData[leftPwmIndex].lastGoodWidth = reverseBoundValue + 1;
+  timingData::g_pinData[rightPwmIndex].lastGoodWidth = reverseBoundValue + 1;
+
+  // TODO : Make sure direction relays switch off
+  // checkDirectionRelaysAreOff(hardwareMock);
+  checkFootSwitchesAreOff(hardwareMock);
+
+  argoRcLib.loop();
 }
 
 int main(int argc, char **argv)
