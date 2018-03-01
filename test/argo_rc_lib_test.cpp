@@ -2,6 +2,7 @@
 
 #include "argo_rc_lib.hpp"
 #include "mock_arduino.hpp"
+#include "pinTimingData.hpp"
 
 using ::testing::AnyNumber;
 using ::testing::AtLeast;
@@ -19,6 +20,8 @@ ArgoRc createArgoRcLibObject(MockArduino &hardware)
   auto hardwarePtr = static_cast<ArduinoInterface *>(&hardware);
   return ArgoRc(hardwarePtr);
 }
+
+// ---------- Functions to setup various checks --------
 
 void checkFootSwitchesAreOff(MockArduino &hardwareInterface)
 {
@@ -59,6 +62,65 @@ void checkDirectionRelaysAreOff(MockArduino &hardwareInterface)
   EXPECT_CALL(hardwareInterface,
               digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_HIGH))
       .Times(1);
+}
+
+void checkForwardLeftIsOn(MockArduino &hardwareInterface)
+{
+  // Check the relays are switched on by dropping the circuit low
+  checkFootSwitchesAreOn(hardwareInterface);
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_LOW))
+      .Times(1);
+
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_HIGH))
+      .Times(1);
+}
+
+void checkForwardRightIsOn(MockArduino &hardwareInterface)
+{
+  // Check the relays are switched on by dropping the circuit low
+  checkFootSwitchesAreOn(hardwareInterface);
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_LOW))
+      .Times(1);
+
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_HIGH))
+      .Times(1);
+}
+
+void checkReverseLeftIsOn(MockArduino &hardwareInterface)
+{
+  // Check the relays are switched on by dropping the circuit low
+  checkFootSwitchesAreOn(hardwareInterface);
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_LOW))
+      .Times(1);
+
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_HIGH))
+      .Times(1);
+}
+
+void checkReverseRightIsOn(MockArduino &hardwareInterface)
+{
+  checkFootSwitchesAreOn(hardwareInterface);
+  // Check the relays are switched on by dropping the circuit low
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_LOW))
+      .Times(1);
+
+  EXPECT_CALL(hardwareInterface,
+              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_HIGH))
+      .Times(1);
+}
+
+void returnDeadmanSafe(MockArduino &hardwareInterface)
+{
+  ON_CALL(hardwareInterface,
+          digitalRead(pinMapping::RC_DEADMAN))
+      .WillByDefault(Return(digitalIO::E_HIGH));
 }
 
 // ----- Setup Tests ------
@@ -116,72 +178,36 @@ TEST(ArgoRcLibSetup, configuresIsr)
 TEST(ArgoRcRuntime, forwardLeftSetsRelays)
 {
   NiceMock<MockArduino> hardwareMock;
-
-  checkFootSwitchesAreOn(hardwareMock);
-
-  // Check the relays are switched on by dropping the circuit low
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_LOW))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_HIGH))
-      .Times(1);
   auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  checkForwardLeftIsOn(hardwareMock);
   argoRcLib.forward_left();
 }
 
 TEST(ArgoRcRuntime, forwardRightSetsRelays)
 {
   NiceMock<MockArduino> hardwareMock;
-
-  checkFootSwitchesAreOn(hardwareMock);
-
-  // Check the relays are switched on by dropping the circuit low
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_LOW))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_HIGH))
-      .Times(1);
   auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  checkForwardRightIsOn(hardwareMock);
   argoRcLib.forward_right();
 }
 
 TEST(ArgoRcRuntime, reverseLeftSetRelays)
 {
   NiceMock<MockArduino> hardwareMock;
-
-  checkFootSwitchesAreOn(hardwareMock);
-
-  // Check the relays are switched on by dropping the circuit low
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_LOW))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_HIGH))
-      .Times(1);
   auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  checkReverseLeftIsOn(hardwareMock);
   argoRcLib.reverse_left();
 }
 
 TEST(ArgoRcRuntime, reverseRightSetsRelays)
 {
   NiceMock<MockArduino> hardwareMock;
-
-  checkFootSwitchesAreOn(hardwareMock);
-
-  // Check the relays are switched on by dropping the circuit low
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_LOW))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_HIGH))
-      .Times(1);
   auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  checkReverseRightIsOn(hardwareMock);
   argoRcLib.reverse_right();
 }
 
@@ -222,6 +248,30 @@ TEST(ArgoRcDeadman, deadmanSwitchTriggers)
   EXPECT_CALL(hardwareMock, enterDeadmanSafetyMode());
 
   argoRcLib.loop();
+}
+
+// -------- PWM input tests
+
+// This maps to -40 when the bounds are set from 1520-1850 : 0-255
+const unsigned int reverseBoundValue = 1468;
+// This maps to 40 when the bounds are set from 1520-1850 : 0-255
+const unsigned int forwardBoundValue = 1572;
+// This maps to 0
+const unsigned int zeroValue = 1520;
+
+const size_t leftPwmIndex = 0;
+const size_t rightPwmIndex = 1;
+
+TEST(ArgoRcPwmIn, pwmLeftIsForward)
+{
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  returnDeadmanSafe(hardwareMock);
+
+  // Set timing data to the boundary value
+  timingData::g_pinData[leftPwmIndex].lastGoodWidth = forwardBoundValue;
+  timingData::g_pinData[rightPwmIndex].lastGoodWidth = zeroValue;
 }
 
 int main(int argc, char **argv)

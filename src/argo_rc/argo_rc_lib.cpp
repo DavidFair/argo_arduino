@@ -112,7 +112,6 @@ int rc_pwm_right = 0;
 
 void ArgoRc::loop()
 {
-  // put your main code here, to run repeatedly:
   int left_pwm = 0;
   int right_pwm = 0;
 
@@ -154,14 +153,11 @@ void ArgoRc::loop()
   }
   else
   {
-    rc_pwm_left = 0;
     timingData::g_pinData[0].lastGoodWidth = 0;
-    rc_pwm_right = 0;
     timingData::g_pinData[1].lastGoodWidth = 0;
-    left_pwm = 0;
-    right_pwm = 0;
-    m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
-    m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
+    m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0);
+    m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0);
+
     // turn off all direction relays and footswitch
     footswitch_off();
     direction_relays_off();
