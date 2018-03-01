@@ -19,7 +19,8 @@
 using namespace ArduinoEnums;
 using namespace Hardware;
 
-namespace ArgoRcLib {
+namespace ArgoRcLib
+{
 
 long left_oldPosition = -999;
 long right_oldPosition = -999;
@@ -27,7 +28,8 @@ long right_oldPosition = -999;
 ArgoRc::ArgoRc(ArduinoInterface *hardwareInterface)
     : m_hardwareInterface(hardwareInterface) {}
 
-void ArgoRc::setup() {
+void ArgoRc::setup()
+{
   m_hardwareInterface->serialBegin(115200);
 
   setupDigitalPins();
@@ -44,7 +46,8 @@ void ArgoRc::setup() {
 #endif
 }
 
-void ArgoRc::forward_left() {
+void ArgoRc::forward_left()
+{
   footswitch_on();
   m_hardwareInterface->serialPrintln("forward_left");
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,
@@ -53,7 +56,8 @@ void ArgoRc::forward_left() {
                                     digitalIO::E_HIGH);
 }
 
-void ArgoRc::forward_right() {
+void ArgoRc::forward_right()
+{
   footswitch_on();
   m_hardwareInterface->serialPrintln("                  forward_right");
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
@@ -62,7 +66,8 @@ void ArgoRc::forward_right() {
                                     digitalIO::E_HIGH);
 }
 
-void ArgoRc::reverse_left() {
+void ArgoRc::reverse_left()
+{
   footswitch_on();
   m_hardwareInterface->serialPrintln(
       "                                    reverse_left");
@@ -72,7 +77,8 @@ void ArgoRc::reverse_left() {
                                     digitalIO::E_LOW);
 }
 
-void ArgoRc::reverse_right() {
+void ArgoRc::reverse_right()
+{
   footswitch_on();
   m_hardwareInterface->serialPrintln(
       "                                                      reverse_right");
@@ -82,14 +88,16 @@ void ArgoRc::reverse_right() {
                                     digitalIO::E_LOW);
 }
 
-void ArgoRc::footswitch_on() {
+void ArgoRc::footswitch_on()
+{
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
                                     digitalIO::E_LOW);
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,
                                     digitalIO::E_LOW);
 }
 
-void ArgoRc::footswitch_off() {
+void ArgoRc::footswitch_off()
+{
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
                                     digitalIO::E_HIGH);
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,
@@ -102,7 +110,8 @@ void ArgoRc::footswitch_off() {
 int rc_pwm_left = 0;
 int rc_pwm_right = 0;
 
-void ArgoRc::loop() {
+void ArgoRc::loop()
+{
   // put your main code here, to run repeatedly:
   int left_pwm = 0;
   int right_pwm = 0;
@@ -112,7 +121,8 @@ void ArgoRc::loop() {
 
 #ifdef RC_PWM_ENABLED
   if (m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) ==
-      digitalIO::E_HIGH) {
+      digitalIO::E_HIGH)
+  {
     rc_pwm_left = timingData::g_pinData[0].lastGoodWidth;
     rc_pwm_right = timingData::g_pinData[1].lastGoodWidth;
 
@@ -141,7 +151,9 @@ void ArgoRc::loop() {
       left_pwm = 255;
     if (right_pwm > 255)
       right_pwm = 255;
-  } else {
+  }
+  else
+  {
     rc_pwm_left = 0;
     timingData::g_pinData[0].lastGoodWidth = 0;
     rc_pwm_right = 0;
@@ -153,7 +165,8 @@ void ArgoRc::loop() {
     // turn off all direction relays and footswitch
     footswitch_off();
     direction_relays_off();
-    while (1) {
+    while (1)
+    {
       // wait here forever - requires a reset
       m_hardwareInterface->serialPrintln(
           " DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
@@ -242,7 +255,8 @@ void ArgoRc::loop() {
   */
 }
 
-void ArgoRc::direction_relays_off() {
+void ArgoRc::direction_relays_off()
+{
 
   m_hardwareInterface->serialPrintln("RELAYS OFF");
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
@@ -255,7 +269,8 @@ void ArgoRc::direction_relays_off() {
                                     digitalIO::E_HIGH);
 }
 
-void ArgoRc::setupDigitalPins() {
+void ArgoRc::setupDigitalPins()
+{
   m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY,
                                   digitalIO::E_OUTPUT);
   m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY,
@@ -285,7 +300,8 @@ void ArgoRc::setupDigitalPins() {
                                   digitalIO::E_OUTPUT);
 }
 
-void ArgoRc::setup_rc() {
+void ArgoRc::setup_rc()
+{
   // Set ADC8 - ADC15 to input (0) using the port register
   m_hardwareInterface->setPortBitmask(portMapping::E_DDRK, 0);
 

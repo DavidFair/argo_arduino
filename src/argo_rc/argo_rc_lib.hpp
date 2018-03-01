@@ -3,9 +3,11 @@
 
 #include "arduino_interface.hpp"
 
-namespace ArgoRcLib {
+namespace ArgoRcLib
+{
 
-class ArgoRc {
+class ArgoRc
+{
 public:
   ArgoRc(Hardware::ArduinoInterface *hardwareInterface);
   ~ArgoRc() = default;
