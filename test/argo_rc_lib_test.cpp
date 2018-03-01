@@ -3,6 +3,7 @@
 #include "argo_rc_lib.hpp"
 #include "mock_arduino.hpp"
 
+using ::testing::AnyNumber;
 using ::testing::AtLeast;
 using ::testing::Ge;
 using ::testing::NiceMock;
@@ -17,27 +18,34 @@ ArgoRc createArgoRcLibObject(MockArduino &hardware) {
   return ArgoRc(hardwarePtr);
 }
 
-void checkFootSwitchesAreOff(const MockArduino &hardwareInterface) {
+void checkFootSwitchesAreOff(MockArduino &hardwareInterface) {
   EXPECT_CALL(hardwareInterface, digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
-                                              digitalIO::E_HIGH));
+                                              digitalIO::E_HIGH))
+      .Times(1);
+
   EXPECT_CALL(
       hardwareInterface,
-      digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_HIGH));
+      digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_HIGH))
+      .Times(1);
 }
 
-void checkDirectionRelaysAreOff(const MockArduino &hardwareInterface) {
+void checkDirectionRelaysAreOff(MockArduino &hardwareInterface) {
   // And the direction relays are switched off too
   EXPECT_CALL(hardwareInterface,
-              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_HIGH));
+              digitalWrite(pinMapping::RIGHT_FORWARD_RELAY, digitalIO::E_HIGH))
+      .Times(1);
   EXPECT_CALL(hardwareInterface,
-              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_HIGH));
+              digitalWrite(pinMapping::RIGHT_REVERSE_RELAY, digitalIO::E_HIGH))
+      .Times(1);
   EXPECT_CALL(hardwareInterface,
-              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_HIGH));
+              digitalWrite(pinMapping::LEFT_FORWARD_RELAY, digitalIO::E_HIGH))
+      .Times(1);
   EXPECT_CALL(hardwareInterface,
-              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_HIGH));
+              digitalWrite(pinMapping::LEFT_REVERSE_RELAY, digitalIO::E_HIGH))
+      .Times(1);
 }
 
-TEST(ArgoRcLib, setupConfiguresDigitalIO) {
+TEST(ArgoRcLibSetup, configuresDigitalIO) {
   NiceMock<MockArduino> hardwareMock;
 
   EXPECT_CALL(hardwareMock, serialBegin(Ge(1000))).Times(1);
@@ -47,15 +55,16 @@ TEST(ArgoRcLib, setupConfiguresDigitalIO) {
     EXPECT_CALL(hardwareMock, setPinMode(pin, _));
   }
 
-  // Check there is a state set to the test potentiometer
-  EXPECT_CALL(hardwareMock, digitalWrite(pinMapping::TEST_POT_POSITIVE, _));
-
   auto argoRcLib = createArgoRcLibObject(hardwareMock);
   argoRcLib.setup();
 }
 
-TEST(ArgoRcLib, setupResetRelays) {
+TEST(ArgoRcLibSetup, resetRelays) {
   NiceMock<MockArduino> hardwareMock;
+
+  // Ignore all other writes
+  EXPECT_CALL(hardwareMock, digitalWrite(_, _)).Times(AnyNumber());
+
   checkFootSwitchesAreOff(hardwareMock);
   checkDirectionRelaysAreOff(hardwareMock);
 
@@ -63,7 +72,7 @@ TEST(ArgoRcLib, setupResetRelays) {
   argoRcLib.setup();
 }
 
-TEST(ArgoRcLib, setupConfiguresIsr) {
+TEST(ArgoRcLibSetup, configuresIsr) {
   NiceMock<MockArduino> hardwareMock;
 
   // Check ADC8-15 are set to inputs (all bits 0)
@@ -78,4 +87,9 @@ TEST(ArgoRcLib, setupConfiguresIsr) {
   // Trigger the call
   auto argoRcLib = createArgoRcLibObject(hardwareMock);
   argoRcLib.setup();
+}
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleMock(&argc, argv);
+  return RUN_ALL_TESTS();
 }

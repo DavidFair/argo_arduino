@@ -25,7 +25,7 @@ long left_oldPosition = -999;
 long right_oldPosition = -999;
 
 ArgoRc::ArgoRc(ArduinoInterface *hardwareInterface)
-    : m_hardwareInterface(hardwareInterface){};
+    : m_hardwareInterface(hardwareInterface) {}
 
 void ArgoRc::setup() {
   m_hardwareInterface->serialBegin(115200);
@@ -107,8 +107,8 @@ void ArgoRc::loop() {
   int left_pwm = 0;
   int right_pwm = 0;
 
-  int test_pot_value =
-      m_hardwareInterface->analogRead(pinMapping::TEST_POT_WIPER);
+  //  int test_pot_value =
+  //      m_hardwareInterface->analogRead(pinMapping::TEST_POT_WIPER);
 
 #ifdef RC_PWM_ENABLED
   if (m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) ==
@@ -119,7 +119,8 @@ void ArgoRc::loop() {
     left_pwm = map(rc_pwm_left, 1520, 1850, 0, 255);
     right_pwm = map(rc_pwm_right, 1520, 1850, 0, 255);
 
-    if (left_pwm > -40 && left_pwm<40 & right_pwm> - 40 & right_pwm < 40)
+    if ((left_pwm > -40 && left_pwm < 40) &&
+        (right_pwm > -40 && right_pwm < 40))
       footswitch_off();
 
     if (left_pwm > 40)
