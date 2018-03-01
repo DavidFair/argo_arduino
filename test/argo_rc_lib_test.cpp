@@ -7,6 +7,7 @@ using ::testing::AnyNumber;
 using ::testing::AtLeast;
 using ::testing::Ge;
 using ::testing::NiceMock;
+using ::testing::Return;
 using ::testing::_;
 
 using namespace ArduinoEnums;
@@ -202,9 +203,25 @@ TEST(ArgoRcRuntime, footSwitchOff)
   argoRcLib.footswitch_off();
 }
 
-// ------- Deadman switch activates ------
-TEST(ArgoRcRuntime, deadmanSwitchTriggers)
+// ------- Deadman switch tests ------
+TEST(ArgoRcDeadman, deadmanSwitchTriggers)
 {
+  NiceMock<MockArduino> hardwareMock;
+  auto argoRcLib = createArgoRcLibObject(hardwareMock);
+
+  ON_CALL(hardwareMock,
+          digitalRead(pinMapping::RC_DEADMAN))
+      .WillByDefault(Return(digitalIO::E_LOW));
+
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0));
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0));
+
+  checkFootSwitchesAreOff(hardwareMock);
+  checkDirectionRelaysAreOff(hardwareMock);
+
+  EXPECT_CALL(hardwareMock, enterDeadmanSafetyMode());
+
+  argoRcLib.loop();
 }
 
 int main(int argc, char **argv)

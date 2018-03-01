@@ -165,13 +165,11 @@ void ArgoRc::loop()
     // turn off all direction relays and footswitch
     footswitch_off();
     direction_relays_off();
-    while (1)
-    {
-      // wait here forever - requires a reset
-      m_hardwareInterface->serialPrintln(
-          " DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
-      m_hardwareInterface->delay(500);
-    }
+    m_hardwareInterface->enterDeadmanSafetyMode();
+
+    // This is for unit testing - enterDeadmanSafetyMode on hardware gets
+    // stuck in an infinite loop
+    return;
   }
 #endif
 

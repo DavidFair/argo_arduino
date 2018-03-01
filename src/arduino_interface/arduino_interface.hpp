@@ -6,9 +6,11 @@
 #include "arduino_enums.hpp"
 #include "arduino_lib_wrapper.hpp"
 
-namespace Hardware {
+namespace Hardware
+{
 
-class ArduinoInterface {
+class ArduinoInterface
+{
   // Abstract class which defines the methods that we use on our Arduino
   // for unit testing and on a real device
 
@@ -27,6 +29,8 @@ public:
 
   virtual void digitalWrite(ArduinoEnums::pinMapping pin,
                             ArduinoEnums::digitalIO mode) const = 0;
+
+  virtual void enterDeadmanSafetyMode() const = 0;
 
   virtual unsigned long micros() const = 0;
 
