@@ -3,11 +3,9 @@
 
 #include "arduino_interface.hpp"
 
-namespace ArgoRcLib
-{
+namespace ArgoRcLib {
 
-class ArgoRc
-{
+class ArgoRc {
 public:
   ArgoRc(Hardware::ArduinoInterface *hardwareInterface);
   ~ArgoRc() = default;
@@ -31,6 +29,12 @@ public:
   void direction_relays_off();
 
 private:
+  void readPwmInput(const int leftPwmValue, const int rightPwmValue);
+
+  int constrainPwmInput(int initialValue);
+
+  void enterDeadmanFail();
+
   void setupDigitalPins();
 
   void setup_rc();
