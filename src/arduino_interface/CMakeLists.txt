@@ -6,9 +6,10 @@ set(SRC_FILES
 set(HDR_FILES
     arduino_hardware.hpp
     arduino_interface.hpp
-    arduino_lib_wrapper.hpp
     pinTimingData.hpp
 )
+
+include_directories("${PROJECT_SOURCE_DIR}/src/lib_wrappers")
 
 if (NOT UNIT_TESTING)
     generate_arduino_library(
@@ -18,10 +19,10 @@ if (NOT UNIT_TESTING)
     BOARD ${BOARD_TYPE}
     )
 else()
+    # We only need the pin timing data for unit testing as the 
+    # implementation is mocked by the testing framework
     add_library(
     arduino_hardware STATIC
-    arduino_lib_wrapper.hpp
-    arduino_lib_wrapper.cpp
     pinTimingData.cpp
     pinTimingData.hpp
     )

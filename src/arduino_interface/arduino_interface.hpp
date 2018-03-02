@@ -6,21 +6,21 @@
 #include "arduino_enums.hpp"
 #include "arduino_lib_wrapper.hpp"
 
-namespace Hardware
-{
+namespace Hardware {
 
-class ArduinoInterface
-{
+class ArduinoInterface {
   // Abstract class which defines the methods that we use on our Arduino
   // for unit testing and on a real device
 
 public:
-  ArduinoInterface() = default;
   virtual ~ArduinoInterface() = default;
 
   virtual int analogRead(ArduinoEnums::pinMapping pin) const = 0;
 
   virtual void analogWrite(ArduinoEnums::pinMapping pin, int value) const = 0;
+
+  virtual uint8_t
+  convertPinEnumToArduino(ArduinoEnums::pinMapping pinToConvert) const = 0;
 
   virtual void delay(unsigned long milliseconds) const = 0;
 
@@ -58,6 +58,9 @@ public:
   virtual void serialPrintln(const std::string &s) const = 0;
   virtual void serialPrint(const std::string &s) const = 0;
 #endif
+
+protected:
+  ArduinoInterface() = default;
 };
 
 } // namespace Hardware

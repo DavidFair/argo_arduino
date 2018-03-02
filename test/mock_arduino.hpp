@@ -9,12 +9,14 @@
 #include "arduino_interface.hpp"
 #include "arduino_lib_wrapper.hpp"
 
-class MockArduino : public Hardware::ArduinoInterface
-{
+class MockArduino : public Hardware::ArduinoInterface {
 public:
   MOCK_CONST_METHOD1(analogRead, int(ArduinoEnums::pinMapping));
 
   MOCK_CONST_METHOD2(analogWrite, void(ArduinoEnums::pinMapping, int));
+
+  MOCK_CONST_METHOD1(convertPinEnumToArduino,
+                     uint8_t(ArduinoEnums::pinMapping));
 
   MOCK_CONST_METHOD1(delay, void(unsigned long));
 
