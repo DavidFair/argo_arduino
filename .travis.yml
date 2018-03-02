@@ -1,0 +1,42 @@
+dist: trusty
+sudo: enabled
+language: cpp
+
+addons:
+  apt:
+    sources:
+      - llvm-toolchain-trusty-5.0
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-7
+      - g++-7
+      - clang-format-5.0
+    
+
+before_script:
+  - mkdir avr_build
+  - mkdir build
+
+
+before_install:
+  - sudo apt-get -qq update
+
+install:
+  - sudo apt-get install -y arduino cmake gcc-avr binutils-avr avr-libc avrdude git
+
+matrix:
+  include:
+    # Unit tests
+    - env:
+        - CXX="g++-7"
+        - CC="gcc-7"
+      script:
+        - cd build
+        - cmake ../ -DUNIT_TESTING=ON
+        - make -j2 && ctest -V
+
+    # AVR build
+    - script:
+        - cd avr_build
+        - cmake ../
+        - make -j2
