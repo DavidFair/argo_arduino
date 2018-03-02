@@ -17,4 +17,12 @@ if (NOT UNIT_TESTING)
     HDRS ${HDR_FILES}
     BOARD ${BOARD_TYPE}
     )
+else()
+    add_library(
+    arduino_hardware STATIC
+    arduino_lib_wrapper.hpp
+    arduino_lib_wrapper.cpp
+    pinTimingData.cpp
+    pinTimingData.hpp
+    )
 endif()

@@ -3,9 +3,6 @@
 link_directories(${PROJECT_SOURCE_DIR}/ext/rfm69)
 link_directories(${PROJECT_SOURCE_DIR}/ext/spiflash)
 
-message(test!)
-message(${PROJECT_SOURCE_DIR}/ext/spiflash)
-
 # Specify target
 
 if (NOT UNIT_TESTING)

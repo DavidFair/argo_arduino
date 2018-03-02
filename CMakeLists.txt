@@ -14,6 +14,7 @@ execute_process(COMMAND git submodule update --init
 
 cmake_minimum_required(VERSION 3.1)
 set (CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wpedantic -Wextra")
 
 # If the user didn't specify a build type assume Release as we
 # are targetting an embedded device normally
@@ -38,8 +39,9 @@ project(ARGO C CXX)
 # Add directories depending on whether we are targeting hardware
 if(UNIT_TESTING)
     # Use native compiler and add test directory
-    add_subdirectory(test)
+    enable_testing()
     add_definitions(-DUNIT_TESTING)
+    add_subdirectory(test)
 else()
     # Add external library files
     add_subdirectory(ext)

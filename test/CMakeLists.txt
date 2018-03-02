@@ -25,7 +25,18 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
                  EXCLUDE_FROM_ALL)
 
 
-# Now simply link against gtest or gtest_main as needed. Eg
+#### Define our test targets #####
+
+# Sanity check
+
 add_executable(example example.cpp)
 target_link_libraries(example gtest_main)
 add_test(NAME example_test COMMAND example)
+
+include_directories(${PROJECT_SOURCE_DIR}/src/arduino_interface)
+
+# Argo_rc tests
+include_directories(${PROJECT_SOURCE_DIR}/src/argo_rc)
+add_executable(argo_rc_test argo_rc_lib_test.cpp)
+target_link_libraries(argo_rc_test gmock_main argo_lib arduino_hardware)
+add_test(NAME argo_rc_test COMMAND argo_rc_test)

@@ -1,6 +1,8 @@
+#include <stdint.h>
 #include "pinTimingData.hpp"
 
-namespace timingData {
+namespace timingData
+{
 
 // This is the portable standard way of defining the declared global variable
 volatile PinTimingData g_pinData[6 + 1];
