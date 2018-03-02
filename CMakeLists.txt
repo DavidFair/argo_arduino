@@ -26,6 +26,10 @@ endif()
 if(NOT UNIT_TESTING)
     # Set the toolchain to AVR - GCC
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake/cmake/ArduinoToolchain.cmake)
+    
+    # Sized deallocation was introduced in C++-14 standard however the 
+    # avr std lib does not understand it so force GCC to not use it
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation")
 
     # Set default options for the ARGO
     set(BOARD_TYPE mega2560 CACHE STRING "The target Arduino board")
