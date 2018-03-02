@@ -6,13 +6,11 @@
 
 using namespace ArduinoEnums;
 
-namespace Hardware
-{
+namespace Hardware {
 
 // Due to the nature of an ISR we cannot unit test it. Place it within this file
 // as it is hardware specific
-ISR(PCINT2_vect)
-{
+ISR(PCINT2_vect) {
   uint8_t bit;
   uint8_t curr;
   uint8_t mask;
@@ -27,28 +25,22 @@ ISR(PCINT2_vect)
   currentTime = micros();
 
   // mask is pcint pins that have changed.
-  for (uint8_t i = 0; i < 6; i++)
-  {
+  for (uint8_t i = 0; i < 6; i++) {
     bit = 0x04 << i;
-    if (bit & mask)
-    {
+    if (bit & mask) {
       // for each pin changed, record time of change
-      if (bit & timingData::g_pcIntLast)
-      {
+      if (bit & timingData::g_pcIntLast) {
         time = currentTime - timingData::g_pinData[i].fallTime;
         timingData::g_pinData[i].riseTime = currentTime;
         if ((time >= 10000) && (time <= 26000))
           timingData::g_pinData[i].edge = 1;
         else
           timingData::g_pinData[i].edge = 0; // invalid rising edge detected
-      }
-      else
-      {
+      } else {
         time = currentTime - timingData::g_pinData[i].riseTime;
         timingData::g_pinData[i].fallTime = currentTime;
         if ((time >= 800) && (time <= 2200) &&
-            (timingData::g_pinData[i].edge == 1))
-        {
+            (timingData::g_pinData[i].edge == 1)) {
           timingData::g_pinData[i].lastGoodWidth = time;
           timingData::g_pinData[i].edge = 0;
         }
@@ -57,27 +49,22 @@ ISR(PCINT2_vect)
   }
 }
 
-int ArduinoHardware::analogRead(pinMapping pin) const
-{
+int ArduinoHardware::analogRead(pinMapping pin) const {
   return ::analogRead(convertPinEnumToArduino(pin));
 }
 
-void ArduinoHardware::analogWrite(pinMapping pin, int value) const
-{
+void ArduinoHardware::analogWrite(pinMapping pin, int value) const {
   ::analogWrite(convertPinEnumToArduino(pin), value);
 }
 
-void ArduinoHardware::delay(unsigned long milliseconds) const
-{
+void ArduinoHardware::delay(unsigned long milliseconds) const {
   ::delay(milliseconds);
 }
 
-digitalIO ArduinoHardware::digitalRead(pinMapping pin) const
-{
+digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
   int result = ::digitalRead(convertPinEnumToArduino(pin));
 
-  switch (result)
-  {
+  switch (result) {
   case HIGH:
     return digitalIO::E_HIGH;
   case LOW:
@@ -85,12 +72,10 @@ digitalIO ArduinoHardware::digitalRead(pinMapping pin) const
   }
 }
 
-void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const
-{
+void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
   const auto outputPin = convertPinEnumToArduino(pin);
 
-  switch (mode)
-  {
+  switch (mode) {
   case digitalIO::E_HIGH:
     return ::digitalWrite(outputPin, HIGH);
   case digitalIO::E_LOW:
@@ -101,20 +86,16 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const
   }
 }
 
-void ArduinoHardware::enterDeadmanSafetyMode const
-{
-  while (1)
-  {
+void ArduinoHardware::enterDeadmanSafetyMode() const {
+  while (1) {
     // wait here forever - requires a reset
     serialPrintln(" DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
     delay(500);
   }
 }
 
-void ArduinoHardware::orPortBitmask(portMapping port, uint8_t bitmask) const
-{
-  switch (port)
-  {
+void ArduinoHardware::orPortBitmask(portMapping port, uint8_t bitmask) const {
+  switch (port) {
   case portMapping::E_DDRK:
     DDRK |= bitmask;
     break;
@@ -130,10 +111,8 @@ void ArduinoHardware::orPortBitmask(portMapping port, uint8_t bitmask) const
   }
 }
 
-uint8_t ArduinoHardware::readPortBits(portMapping port) const
-{
-  switch (port)
-  {
+uint8_t ArduinoHardware::readPortBits(portMapping port) const {
+  switch (port) {
   case portMapping::E_DDRK:
     return DDRK;
   case portMapping::E_PCICR:
@@ -145,10 +124,8 @@ uint8_t ArduinoHardware::readPortBits(portMapping port) const
   }
 }
 
-void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const
-{
-  switch (port)
-  {
+void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const {
+  switch (port) {
   case portMapping::E_DDRK:
     DDRK = bitmask;
     break;
@@ -164,11 +141,9 @@ void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const
   }
 }
 
-void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const
-{
+void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
   const auto destPin = convertPinEnumToArduino(pin);
-  switch (mode)
-  {
+  switch (mode) {
   case digitalIO::E_INPUT:
     ::pinMode(destPin, INPUT);
     break;
@@ -184,8 +159,7 @@ void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const
   }
 }
 
-uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert)
-{
+uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   /* It is not possible to assign a value to an enum class after
    * the definition. However to pull in pins A6/A7 we must include
    * the Arduino header which means we must target the Mega.
@@ -199,8 +173,7 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert)
 
   // GCC will warn us if we miss a case off the enum
 
-  switch (pinToConvert)
-  {
+  switch (pinToConvert) {
   case pinMapping::LEFT_FORWARD_RELAY:
     return 23;
   case pinMapping::LEFT_REVERSE_RELAY:

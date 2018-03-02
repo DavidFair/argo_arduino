@@ -1,0 +1,46 @@
+dist: trusty
+sudo: enabled
+language: cpp
+
+before_script:
+  - mkdir avr_build
+  - mkdir build
+
+before_install:
+  - sudo apt-get -qq update
+
+install:
+  - sudo apt-get install -y cmake git
+
+matrix:
+  include:
+    # Unit tests
+    - env:
+        - CXX="g++-7"
+        - CC="gcc-7"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-7
+            - g++-7
+
+      script:
+        - cd build
+        - cmake ../ -DUNIT_TESTING=ON
+        - make -j2 && ctest -V
+
+    # AVR build
+    - addons:
+        apt:
+          packages:
+            - arduino
+            - gcc-avr
+            - binutils-avr 
+            - avr-libc
+      
+      script:
+        - cd avr_build
+        - cmake ../
+        - make -j2

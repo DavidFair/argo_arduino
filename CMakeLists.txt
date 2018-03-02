@@ -14,7 +14,7 @@ execute_process(COMMAND git submodule update --init
 
 cmake_minimum_required(VERSION 3.1)
 set (CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wpedantic -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra")
 
 # If the user didn't specify a build type assume Release as we
 # are targetting an embedded device normally
@@ -26,6 +26,10 @@ endif()
 if(NOT UNIT_TESTING)
     # Set the toolchain to AVR - GCC
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake/cmake/ArduinoToolchain.cmake)
+    
+    # Sized deallocation was introduced in C++-14 standard however the 
+    # avr std lib does not understand it so force GCC to not use it
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation")
 
     # Set default options for the ARGO
     set(BOARD_TYPE mega2560 CACHE STRING "The target Arduino board")
@@ -42,6 +46,8 @@ if(UNIT_TESTING)
     enable_testing()
     add_definitions(-DUNIT_TESTING)
     add_subdirectory(test)
+    
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 else()
     # Add external library files
     add_subdirectory(ext)
