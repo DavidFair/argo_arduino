@@ -8,16 +8,25 @@ before_script:
 
 before_install:
   - sudo apt-get -qq update
+  - eval "${MATRIX_EVAL}"
 
 install:
-  - sudo apt-get install -y cmake git
+  - sudo apt-get install -y cmake
 
 matrix:
   include:
-    # Unit tests
+    # Unit tests on default compiler
     - env:
-        - CXX="g++-7"
-        - CC="gcc-7"
+        - MATRIX_EVAL="CC=gcc && CXX=g++"
+      script:
+        - cd build
+        - cmake ../ -DUNIT_TESTING=ON
+        - make -j2 && ctest -V
+    
+    # Unit tests on latest compiler
+    - env:
+        # According to the docs this is the correct way to set CC and CXX
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
       addons:
         apt:
           sources:
@@ -32,7 +41,9 @@ matrix:
         - make -j2 && ctest -V
 
     # AVR build
-    - addons:
+    - env:
+        - MATRIX_EVAL="CC=avr-gcc && CXX=avr-g++"
+      addons:
         apt:
           packages:
             - arduino
