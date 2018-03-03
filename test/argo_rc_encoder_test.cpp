@@ -8,31 +8,30 @@
 #include "unique_ptr.hpp"
 
 using ::testing::NiceMock;
+using ::testing::Test;
 
 using namespace Mocks;
 using namespace Hardware;
 using ArgoRcLib::ArgoRc;
 
-static ArgoRc createArgoRcLibObject(MockArduino &hardware) {
-  // Inject the current mock object to the createEncoder method
+namespace { // Anonymous namespace
 
-  auto hardwarePtr = static_cast<ArduinoInterface *>(&hardware);
-  return ArgoRc(hardwarePtr);
-}
+class EncoderTest : public ::testing::Test {
+protected:
+  EncoderTest()
+      : hardwareMock(), argoLib(static_cast<ArduinoInterface *>(&hardwareMock)),
+        encoderMock(new MockEncoder()){};
 
-static Argo::unique_ptr<MockEncoder> injectMockEncoder() {
-  Argo::unique_ptr<MockEncoder> mockEncoder(new MockEncoder());
+  virtual void SetUp() { encoderMock->injectMockObj(); }
 
-  // Inject the current mock object to be used
-  mockEncoder->injectMockObj();
-  return mockEncoder;
-}
+  MockArduino hardwareMock;
+  ArgoRc argoLib;
+  Argo::unique_ptr<MockEncoder> encoderMock{nullptr};
+};
 
-TEST(ArgoRcEncoder, loopReadsFromEncoder) {
-  NiceMock<MockArduino> hardwareMock;
+} // namespace
 
-  auto argoObj = createArgoRcLibObject(hardwareMock);
-  auto encoderMock = injectMockEncoder();
+TEST_F(EncoderTest, loopReadsFromEncoder) {
 
   // Expect a call for each encoder
   EXPECT_CALL(*encoderMock, read()).Times(2);

@@ -18,15 +18,20 @@
 // right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
 
 using namespace ArduinoEnums;
+using namespace EncoderLib;
 using namespace Hardware;
 
 namespace ArgoRcLib {
 
-long left_oldPosition = -999;
-long right_oldPosition = -999;
-
 ArgoRc::ArgoRc(ArduinoInterface *hardwareInterface)
-    : m_hardwareInterface(hardwareInterface) {}
+    : m_hardwareInterface(hardwareInterface)
+
+// m_leftEncoder(EncoderInterface::createEncoder(
+//     pinMapping::LEFT_ENCODER_1, pinMapping::LEFT_ENCODER_2)),
+
+// m_rightEncoder(EncoderInterface::createEncoder(
+//     pinMapping::RIGHT_ENCODER_1, pinMapping::RIGHT_ENCODER_2))
+{}
 
 void ArgoRc::setup() {
   m_hardwareInterface->serialBegin(115200);
@@ -100,17 +105,15 @@ void ArgoRc::footswitch_off() {
 //#define DEBUG_OUTPUT
 #define DEBUG_OUTPUT_PWM
 
-int rc_pwm_left = 0;
-int rc_pwm_right = 0;
-
 void ArgoRc::loop() {
+  int rc_pwm_left = 0;
+  int rc_pwm_right = 0;
+
   int left_pwm = 0;
   int right_pwm = 0;
 
-  //  int test_pot_value =
-  //      m_hardwareInterface->analogRead(pinMapping::TEST_POT_WIPER);
-
 #ifdef RC_PWM_ENABLED
+
   if (m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) ==
       digitalIO::E_LOW) {
     enterDeadmanFail();
@@ -137,16 +140,10 @@ void ArgoRc::loop() {
 #ifdef TEST_POT_ENABLED
   left_pwm = map(test_pot_value, 0, 1023, 0, 255);
   right_pwm = map(test_pot_value, 0, 1023, 0, 255);
-//#ifdef DEBUG_OUTPUT
-//  m_hardwareInterface->serialPrint("  RIGHT PWM: ");
-//  m_hardwareInterface->serialPrint(right_pwm);
-//#endif
 #endif
 
 #ifdef DEBUG_OUTPUT_PWM
-  if (m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) ==
-      digitalIO::E_HIGH)
-    m_hardwareInterface->serialPrint("ENABLED  ");
+  m_hardwareInterface->serialPrint("ENABLED  ");
   m_hardwareInterface->serialPrint("LEFT PWM: ");
   m_hardwareInterface->serialPrint(left_pwm);
   m_hardwareInterface->serialPrint("  RIGHT PWM: ");

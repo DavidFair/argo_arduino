@@ -16,6 +16,11 @@ public:
     other.ptr = nullptr;
   }
 
+  T *reset(T *newPtr) {
+    delete ptr;
+    ptr = newPtr;
+  }
+
   T &operator*() { return *ptr; }
 
   T *operator->() { return ptr; }

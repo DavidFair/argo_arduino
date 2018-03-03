@@ -2,6 +2,8 @@
 #define ARGO_RC_LIB_H_
 
 #include "arduino_interface.hpp"
+#include "encoder_interface.hpp"
+#include "unique_ptr.hpp"
 
 namespace ArgoRcLib {
 
@@ -29,17 +31,19 @@ public:
   void direction_relays_off();
 
 private:
-  void readPwmInput(const int leftPwmValue, const int rightPwmValue);
-
   int constrainPwmInput(int initialValue);
 
   void enterDeadmanFail();
+
+  void readPwmInput(const int leftPwmValue, const int rightPwmValue);
 
   void setupDigitalPins();
 
   void setup_rc();
 
-  Hardware::ArduinoInterface *m_hardwareInterface{nullptr};
+  Hardware::ArduinoInterface *m_hardwareInterface;
+  // Argo::unique_ptr<EncoderLib::EncoderInterface> m_leftEncoder;
+  // Argo::unique_ptr<EncoderLib::EncoderInterface> m_rightEncoder;
 };
 
 } // namespace ArgoRcLib
