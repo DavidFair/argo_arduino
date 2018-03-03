@@ -69,6 +69,9 @@ digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
     return digitalIO::E_HIGH;
   case LOW:
     return digitalIO::E_LOW;
+  default:
+    serialPrintln("Result was unexpected in digitalRead, aborting!");
+    exit(-1);
   }
 }
 
@@ -121,6 +124,9 @@ uint8_t ArduinoHardware::readPortBits(portMapping port) const {
     return PCMSK2;
   case portMapping::E_PINK:
     return PINK;
+  default:
+    serialPrintln("Uknown port mapping. Aborting!");
+    exit(-1);
   }
 }
 
@@ -212,6 +218,9 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
     return A11;
   case pinMapping::RC_DEADMAN:
     return 2;
+  default:
+    ::Serial.println("Unknown pin in pin mapping. Aborting!");
+    exit(-1);
   }
 }
 

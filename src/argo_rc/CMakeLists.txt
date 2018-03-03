@@ -1,7 +1,11 @@
 set(ARGO_LIB_SRC argo_rc_lib.cpp)
 set(ARGO_LIB_HDR argo_rc_lib.hpp)
 
-include_directories(${PROJECT_SOURCE_DIR}/src/arduino_interface)
+include_directories(
+    "${PROJECT_SOURCE_DIR}/src/arduino_interface"
+    "${PROJECT_SOURCE_DIR}/src/lib_wrappers"
+    )
+
 
 # Define the static library
 if (UNIT_TESTING)
@@ -21,7 +25,7 @@ else()
 
     generate_arduino_firmware(argo_rc
     SRCS argo_rc.cpp
-    LIBS argo_lib arduino_hardware
+    LIBS argo_lib arduino_hardware lib_wrappers
     BOARD ${BOARD_TYPE}
     PORT ${PORT_PATH}
     # -l Prevents picocom from attempting to lock the port

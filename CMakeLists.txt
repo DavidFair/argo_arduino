@@ -29,7 +29,7 @@ if(NOT UNIT_TESTING)
     
     # Sized deallocation was introduced in C++-14 standard however the 
     # avr std lib does not understand it so force GCC to not use it
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation -Wswitch-enum")
 
     # Set default options for the ARGO
     set(BOARD_TYPE mega2560 CACHE STRING "The target Arduino board")
@@ -46,7 +46,8 @@ if(UNIT_TESTING)
     enable_testing()
     add_definitions(-DUNIT_TESTING)
     add_subdirectory(test)
-    
+
+    # We can only set Werror on Unit test target as Arduino libs have warnings
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 else()
     # Add external library files

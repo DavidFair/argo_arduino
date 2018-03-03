@@ -1,6 +1,7 @@
 
-//#include <Encoder.h>
 #include <stdint.h>
+
+//#include <Encoder.h>
 
 #include "arduino_enums.hpp"
 #include "arduino_interface.hpp"
