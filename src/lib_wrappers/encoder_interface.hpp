@@ -19,7 +19,7 @@ public:
   virtual void write(int32_t val) = 0;
 
 protected:
-  EncoderInterface();
+  EncoderInterface() = default;
 
   static void injectMockDep(EncoderInterface *mockedObject) {
     m_injectedMock = mockedObject;

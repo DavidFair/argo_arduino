@@ -16,7 +16,7 @@ public:
     other.ptr = nullptr;
   }
 
-  T &operator*() { return ptr; }
+  T &operator*() { return *ptr; }
 
   T *operator->() { return ptr; }
 

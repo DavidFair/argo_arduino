@@ -15,7 +15,7 @@ using namespace ArduinoEnums;
 using ArgoRcLib::ArgoRc;
 using Hardware::ArduinoInterface;
 
-ArgoRc createArgoRcLibObject(MockArduino &hardware) {
+static ArgoRc createArgoRcLibObject(MockArduino &hardware) {
   auto hardwarePtr = static_cast<ArduinoInterface *>(&hardware);
   return ArgoRc(hardwarePtr);
 }
