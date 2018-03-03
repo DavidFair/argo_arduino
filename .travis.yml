@@ -10,15 +10,18 @@ before_install:
   - sudo apt-get -qq update
 
 install:
-  - sudo apt-get install -y cmake git
+  - sudo apt-get install -y cmake
 
 matrix:
   include:
     # Unit tests on default compiler
-    - scipt:
-      - cd build
-      - cmake ../ -DUNIT_TESTING=ON
-      - make -j2 && ctest -V
+    - env:
+        - CC=gcc
+        - CXX=g++
+      script:
+        - cd build
+        - cmake ../ -DUNIT_TESTING=ON
+        - make -j2 && ctest -V
     
     # Unit tests on latest compiler
     - env:
@@ -38,7 +41,10 @@ matrix:
         - make -j2 && ctest -V
 
     # AVR build
-    - addons:
+    - env:
+        - CC=avr-gcc
+        - CXX=avr-g++
+      addons:
         apt:
           packages:
             - arduino
