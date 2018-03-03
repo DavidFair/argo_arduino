@@ -20,9 +20,6 @@ public:
   virtual void analogWrite(ArduinoEnums::pinMapping pin,
                            int value) const override;
 
-  virtual uint8_t
-  convertPinEnumToArduino(ArduinoEnums::pinMapping pinToConvert) const override;
-
   virtual void delay(unsigned long milliseconds) const override;
 
   virtual ArduinoEnums::digitalIO
@@ -61,6 +58,9 @@ public:
 
   virtual void setPinMode(ArduinoEnums::pinMapping pin,
                           ArduinoEnums::digitalIO mode) const override;
+
+  // Static methods
+  static uint8_t convertPinEnumToArduino(ArduinoEnums::pinMapping pinToConvert);
 };
 
 } // namespace Hardware

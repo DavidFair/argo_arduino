@@ -19,9 +19,6 @@ public:
 
   virtual void analogWrite(ArduinoEnums::pinMapping pin, int value) const = 0;
 
-  virtual uint8_t
-  convertPinEnumToArduino(ArduinoEnums::pinMapping pinToConvert) const = 0;
-
   virtual void delay(unsigned long milliseconds) const = 0;
 
   virtual ArduinoEnums::digitalIO

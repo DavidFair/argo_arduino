@@ -165,8 +165,7 @@ void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
   }
 }
 
-uint8_t
-ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) const {
+uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   /* It is not possible to assign a value to an enum class after
    * the definition. However to pull in pins A6/A7 we must include
    * the Arduino header which means we must target the Mega.
@@ -220,7 +219,6 @@ ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) const {
   case pinMapping::RC_DEADMAN:
     return 2;
   default:
-    serialPrintln("Unkown Pin in mapping. Aborting!");
     exit(-1);
   }
 }

@@ -2,15 +2,17 @@
 #define ENCODER_INTERFACE_HPP_
 
 #include "arduino_enums.hpp"
+#include "unique_ptr.hpp"
 
-namespace Encoder {
+namespace EncoderLib {
 
 class EncoderInterface {
 public:
   virtual ~EncoderInterface() = default;
 
-  static *EncoderInterface createEncoder(ArduinoEnums::pinMapping pinOne,
-                                         ArduinoEnums::pinMapping pinTwo);
+  static Argo::unique_ptr<EncoderInterface>
+  createEncoder(ArduinoEnums::pinMapping pinOne,
+                ArduinoEnums::pinMapping pinTwo);
 
   virtual int32_t read() = 0;
 
@@ -18,8 +20,15 @@ public:
 
 protected:
   EncoderInterface();
+
+  static void injectMockDep(EncoderInterface *mockedObject) {
+    m_injectedMock = mockedObject;
+  }
+
+private:
+  static EncoderInterface *m_injectedMock;
 };
 
-} // Namespace Encoder
+} // Namespace EncoderLib
 
 #endif // ENCODER_INTERFACE_HPP_

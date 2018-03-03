@@ -15,9 +15,6 @@ public:
 
   MOCK_CONST_METHOD2(analogWrite, void(ArduinoEnums::pinMapping, int));
 
-  MOCK_CONST_METHOD1(convertPinEnumToArduino,
-                     uint8_t(ArduinoEnums::pinMapping));
-
   MOCK_CONST_METHOD1(delay, void(unsigned long));
 
   MOCK_CONST_METHOD1(digitalRead,
