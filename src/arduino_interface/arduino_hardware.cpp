@@ -219,6 +219,7 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   case pinMapping::RC_DEADMAN:
     return 2;
   default:
+    ::Serial.println("Unknown pin in pin mapping. Aborting!");
     exit(-1);
   }
 }
