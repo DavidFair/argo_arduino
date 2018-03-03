@@ -14,10 +14,16 @@ install:
 
 matrix:
   include:
-    # Unit tests
+    # Unit tests on default compiler
+    - scipt:
+      - cd build
+      - cmake ../ -DUNIT_TESTING=ON
+      - make -j2 && ctest -V
+    
+    # Unit tests on latest compiler
     - env:
-        - CXX="g++-7"
-        - CC="gcc-7"
+        # According to the docs this is the correct way to set CC and CXX
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
       addons:
         apt:
           sources:
