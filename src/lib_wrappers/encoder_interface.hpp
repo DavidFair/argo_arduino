@@ -10,23 +10,31 @@ class EncoderInterface {
 public:
   virtual ~EncoderInterface() = default;
 
-  static Argo::unique_ptr<EncoderInterface>
-  createEncoder(ArduinoEnums::pinMapping pinOne,
-                ArduinoEnums::pinMapping pinTwo);
-
   virtual int32_t read() = 0;
 
   virtual void write(int32_t val) = 0;
 
 protected:
   EncoderInterface() = default;
+};
 
-  static void injectMockDep(EncoderInterface *mockedObject) {
-    m_injectedMock = mockedObject;
-  }
+// This factory class was adapted from the idea by Bryan Chen
+// https://stackoverflow.com/a/24295925 (Accessed: 2017-03-03)
+
+using FactoryFunction = Argo::unique_ptr<EncoderInterface> (*)(
+    ArduinoEnums::pinMapping pinOne, ArduinoEnums::pinMapping pinTwo);
+
+class EncoderFactory {
+public:
+  EncoderFactory();
+  EncoderFactory(FactoryFunction funcPtr);
+
+  Argo::unique_ptr<EncoderInterface>
+  createEncoder(ArduinoEnums::pinMapping pinOne,
+                ArduinoEnums::pinMapping pinTwo);
 
 private:
-  static EncoderInterface *m_injectedMock;
+  FactoryFunction m_currentFactory;
 };
 
 } // Namespace EncoderLib

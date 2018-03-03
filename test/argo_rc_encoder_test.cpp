@@ -24,7 +24,7 @@ protected:
 
   virtual void SetUp() { encoderMock->injectMockObj(); }
 
-  MockArduino hardwareMock;
+  NiceMock<MockArduino> hardwareMock;
   ArgoRc argoLib;
   Argo::unique_ptr<MockEncoder> encoderMock{nullptr};
 };
