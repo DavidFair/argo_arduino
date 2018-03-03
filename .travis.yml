@@ -8,6 +8,7 @@ before_script:
 
 before_install:
   - sudo apt-get -qq update
+  - eval "${MATRIX_EVAL}"
 
 install:
   - sudo apt-get install -y cmake
@@ -16,8 +17,7 @@ matrix:
   include:
     # Unit tests on default compiler
     - env:
-        - CC=gcc
-        - CXX=g++
+        - MATRIX_EVAL="CC=gcc && CXX=g++"
       script:
         - cd build
         - cmake ../ -DUNIT_TESTING=ON
@@ -42,8 +42,7 @@ matrix:
 
     # AVR build
     - env:
-        - CC=avr-gcc
-        - CXX=avr-g++
+        - MATRIX_EVAL="CC=avr-gcc && CXX=avr-g++"
       addons:
         apt:
           packages:
