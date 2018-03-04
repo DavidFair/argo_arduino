@@ -7,7 +7,7 @@
 	branch = develop
 [submodule "ext/rfm69"]
 	path = ext/rfm69
-	url = https://www.github.com/lowpowerlab/rfm69
+	url = https://www.github.com/lowpowerlab/rfm69.git
 [submodule "ext/spiflash"]
 	path = ext/spiflash
-	url = https://www.github.com/lowpowerlab/spiflash
+	url = https://www.github.com/lowpowerlab/spiflash.git
