@@ -11,37 +11,46 @@
 #endif
 
 using namespace ArduinoEnums;
+using namespace EncoderLib;
 
-namespace EncoderLib {
+// Anonymous namespace
 
-// Initialise the pointer for DI to nullptr
-EncoderInterface *EncoderInterface::m_injectedMock = nullptr;
-
-Argo::unique_ptr<EncoderInterface>
-EncoderInterface::createEncoder(pinMapping pinOne, pinMapping pinTwo) {
+namespace {
+// This holds the method used when we are on actual Arduino Hardware
+Argo::unique_ptr<EncoderInterface> createEncoderOnHardware(pinMapping pinOne,
+                                                           pinMapping pinTwo) {
 
 #ifdef UNIT_TESTING
-  // Unit testing impl
-  if (!m_injectedMock) {
-    throw std::runtime_error("The mock object was not injected before use");
-  }
-
-  // Supress unused warning for params as we are mocking
+  // Mark params as used
   (void)pinOne;
   (void)pinTwo;
 
-  Argo::unique_ptr<EncoderInterface> mockedEncoder(m_injectedMock);
-  m_injectedMock = nullptr;
-  return mockedEncoder;
+  throw std::runtime_error(
+      "An implementation should be provided for the encoder factory");
+
 #else
   const auto pinOneNumber =
       Hardware::ArduinoHardware::convertPinEnumToArduino(pinOne);
   const auto pinTwoNumber =
       Hardware::ArduinoHardware::convertPinEnumToArduino(pinTwo);
+
   Argo::unique_ptr<EncoderInterface> argoPtr(static_cast<EncoderInterface *>(
       new EncoderImpl(pinOneNumber, pinTwoNumber)));
   return argoPtr;
 #endif
+}
+} // namespace
+
+namespace EncoderLib {
+
+EncoderFactory::EncoderFactory() : m_currentFactory(&createEncoderOnHardware) {}
+
+EncoderFactory::EncoderFactory(EncoderFactoryFunction funcPtr)
+    : m_currentFactory(funcPtr) {}
+
+Argo::unique_ptr<EncoderInterface>
+EncoderFactory::createEncoder(pinMapping pinOne, pinMapping pinTwo) const {
+  return m_currentFactory(pinOne, pinTwo);
 }
 
 } // namespace EncoderLib

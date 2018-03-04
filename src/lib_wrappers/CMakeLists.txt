@@ -6,6 +6,8 @@ set(SRC_FILES
 set(HDR_FILES
     arduino_lib_wrapper.hpp
     encoder_interface.hpp
+    move.hpp
+    pair.hpp
     unique_ptr.hpp)
 
 include_directories(
@@ -16,6 +18,7 @@ if (NOT UNIT_TESTING)
 
     generate_arduino_library(
     lib_wrappers
+    LIBS encoder
     SRCS ${SRC_FILES}
     HDRS ${HDR_FILES} encoder_impl.hpp
     BOARD ${BOARD_TYPE}

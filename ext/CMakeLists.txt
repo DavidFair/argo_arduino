@@ -10,7 +10,8 @@ set(ENCODER_HDR
   encoder/utility/interrupt_config.h
   encoder/utility/interrupt_pins.h)
 
-generate_arduino_library(encoder
+generate_arduino_library(
+    encoder
     SRCS ${ENCODER_SRC}
     HDRS ${ENCODER_HDR}
     BOARD mega2560

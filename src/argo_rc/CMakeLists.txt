@@ -1,5 +1,10 @@
-set(ARGO_LIB_SRC argo_rc_lib.cpp)
-set(ARGO_LIB_HDR argo_rc_lib.hpp)
+set(ARGO_LIB_SRC 
+    argo_rc_lib.cpp
+    argo_encoder.cpp)
+
+set(ARGO_LIB_HDR 
+    argo_rc_lib.hpp
+    argo_encoder.cpp)
 
 include_directories(
     "${PROJECT_SOURCE_DIR}/src/arduino_interface"
