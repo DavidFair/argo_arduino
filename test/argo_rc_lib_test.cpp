@@ -26,7 +26,7 @@ namespace {
 Argo::unique_ptr<EncoderInterface> blankEncoderFactoryMethod(pinMapping,
                                                              pinMapping) {
   // Returns a default mock object with no expectations
-  return Argo::unique_ptr<EncoderInterface>(new Mocks::MockEncoder());
+  return Argo::unique_ptr<EncoderInterface>(new NiceMock<Mocks::MockEncoder>());
 }
 
 Argo::unique_ptr<EncoderFactory> blankEncoderFactory() {
