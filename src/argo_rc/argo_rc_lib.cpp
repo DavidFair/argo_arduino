@@ -23,20 +23,18 @@ using namespace Hardware;
 
 namespace ArgoRcLib {
 
-ArgoRc::ArgoRc(ArduinoInterface *hardwareInterface)
-    : m_hardwareInterface(hardwareInterface),
-
-      m_leftEncoder(EncoderInterface::createEncoder(
-          pinMapping::LEFT_ENCODER_1, pinMapping::LEFT_ENCODER_2)),
-
-      m_rightEncoder(EncoderInterface::createEncoder(
-          pinMapping::RIGHT_ENCODER_1, pinMapping::RIGHT_ENCODER_2)) {}
+ArgoRc::ArgoRc(Argo::unique_ptr<ArduinoInterface> &&hardwareInterface,
+               Argo::unique_ptr<ArgoEncoder> &&encoders)
+    : m_hardwareInterface(Argo::move(hardwareInterface)),
+      m_encoders(Argo::move(encoders)) {
+  // Initialise encoders before any function attempts to use them
+  setupEncoders();
+}
 
 void ArgoRc::setup() {
   m_hardwareInterface->serialBegin(115200);
 
   setupDigitalPins();
-
   footswitch_off();
   direction_relays_off();
 
@@ -118,7 +116,7 @@ void ArgoRc::footswitch_off() {
 #define DEBUG_OUTPUT_PWM
 
 void ArgoRc::loop() {
-  readEncoderOutput();
+  m_encoders->read();
 
 #ifdef RC_PWM_ENABLED
 
@@ -194,11 +192,6 @@ void ArgoRc::enterDeadmanFail() {
   m_hardwareInterface->enterDeadmanSafetyMode();
 }
 
-void ArgoRc::readEncoderOutput() {
-  m_lastEncoderVal.leftEncoderVal = m_leftEncoder->read();
-  m_lastEncoderVal.rightEncoderVal = m_rightEncoder->read();
-}
-
 void ArgoRc::readPwmInput(const int leftPwmValue, const int rightPwmValue) {
 
   if ((leftPwmValue > -40 && leftPwmValue < 40) &&
@@ -243,6 +236,18 @@ void ArgoRc::setupDigitalPins() {
 
   m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE,
                                   digitalIO::E_OUTPUT);
+}
+
+void ArgoRc::setupEncoders() {
+  m_encoders->setEncoderPins(
+      ArgoEncoderPositions::LEFT_ENCODER,
+      Argo::pair<pinMapping, pinMapping>(pinMapping::LEFT_ENCODER_1,
+                                         pinMapping::LEFT_ENCODER_2));
+
+  m_encoders->setEncoderPins(
+      ArgoEncoderPositions::RIGHT_ENCODER,
+      Argo::pair<pinMapping, pinMapping>(pinMapping::RIGHT_ENCODER_1,
+                                         pinMapping::RIGHT_ENCODER_2));
 }
 
 void ArgoRc::setup_rc() {

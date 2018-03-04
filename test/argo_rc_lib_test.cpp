@@ -1,8 +1,12 @@
 #include <gtest/gtest.h>
 
+#include "argo_encoder.hpp"
 #include "argo_rc_lib.hpp"
+#include "encoder_interface.hpp"
 #include "mock_arduino.hpp"
+#include "mock_encoder.hpp"
 #include "pinTimingData.hpp"
+#include "unique_ptr.hpp"
 
 using ::testing::AnyNumber;
 using ::testing::AtLeast;
@@ -13,19 +17,44 @@ using ::testing::Test;
 using ::testing::_;
 
 using namespace ArduinoEnums;
-using ArgoRcLib::ArgoRc;
+using namespace ArgoRcLib;
+using namespace EncoderLib;
 using Hardware::ArduinoInterface;
 
 // Anonymous namespace
 namespace {
+Argo::unique_ptr<EncoderInterface> blankEncoderFactoryMethod(pinMapping,
+                                                             pinMapping) {
+  // Returns a default mock object with no expectations
+  return Argo::unique_ptr<EncoderInterface>(new Mocks::MockEncoder());
+}
+
+Argo::unique_ptr<EncoderFactory> blankEncoderFactory() {
+  // Creates a factory which embeds the default mock object creation
+  return Argo::unique_ptr<EncoderFactory>(
+      new EncoderFactory(&blankEncoderFactoryMethod));
+}
+
+Argo::unique_ptr<ArgoEncoder> createEncoderDep(MockArduino &hardwareMock) {
+  // Passes the factory to ArgoEncoder to create instances on demand
+  auto encoderFactory = blankEncoderFactory();
+  Argo::unique_ptr<ArgoEncoder> newEncoder(
+      new ArgoEncoder(static_cast<ArduinoInterface &>(hardwareMock),
+                      Argo::move(encoderFactory)));
+  return newEncoder;
+}
 
 class ArgoRcTest : public ::testing::Test {
 protected:
   ArgoRcTest()
-      : hardwareMock(),
-        argoRcLib(static_cast<ArduinoInterface *>(&hardwareMock)) {}
+      : _forwardedPtr(new MockArduino),
+        hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
+        argoRcLib(Argo::move(_forwardedPtr), createEncoderDep(hardwareMock)) {}
 
-  NiceMock<MockArduino> hardwareMock;
+  // This pointer has its ownership transfered to ArgoRc however we still
+  // hold a reference so we can set expectations
+  Argo::unique_ptr<ArduinoInterface> _forwardedPtr;
+  NiceMock<MockArduino> &hardwareMock;
   ArgoRc argoRcLib;
 };
 

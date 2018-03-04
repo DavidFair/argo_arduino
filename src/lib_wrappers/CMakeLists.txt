@@ -6,6 +6,8 @@ set(SRC_FILES
 set(HDR_FILES
     arduino_lib_wrapper.hpp
     encoder_interface.hpp
+    move.hpp
+    pair.hpp
     unique_ptr.hpp)
 
 include_directories(

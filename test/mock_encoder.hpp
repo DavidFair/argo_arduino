@@ -14,8 +14,6 @@ class MockEncoder : public EncoderLib::EncoderInterface {
 public:
   MOCK_METHOD0(read, int32_t());
   MOCK_METHOD1(write, void(int32_t));
-
-  void injectMockObj() { injectMockDep(this); }
 };
 
 } // Namespace Mocks

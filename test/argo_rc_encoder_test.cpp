@@ -10,29 +10,41 @@
 using ::testing::NiceMock;
 using ::testing::Test;
 
+using namespace ArduinoEnums;
+using namespace ArgoRcLib;
+using namespace EncoderLib;
 using namespace Mocks;
 using namespace Hardware;
-using ArgoRcLib::ArgoRc;
 
 namespace { // Anonymous namespace
 
-class EncoderTest : public ::testing::Test {
-protected:
-  EncoderTest()
-      : hardwareMock(), argoLib(static_cast<ArduinoInterface *>(&hardwareMock)),
-        encoderMock(new MockEncoder()){};
+ArgoRc createArgoObject(EncoderFactoryFunction mockFunc) {
+  // At this point of call the expectations should have been set on the mock
+  Argo::unique_ptr<ArduinoInterface> mockHardware(new MockArduino);
+  Argo::unique_ptr<EncoderFactory> encoderFactory(new EncoderFactory(mockFunc));
 
-  virtual void SetUp() { encoderMock->injectMockObj(); }
+  // As ArgoRc takes ownership of the pointer to the mock object this is safe
+  Argo::unique_ptr<ArgoEncoder> mockEncoder(
+      new ArgoEncoder(*mockHardware, Argo::move(encoderFactory)));
 
-  NiceMock<MockArduino> hardwareMock;
-  ArgoRc argoLib;
-  Argo::unique_ptr<MockEncoder> encoderMock{nullptr};
-};
+  return ArgoRc(Argo::move(mockHardware), Argo::move(mockEncoder));
+}
 
 } // namespace
 
-TEST_F(EncoderTest, loopReadsFromEncoder) {
+TEST(EncoderTest, loopReadsFromEncoder) {
+  auto argoLib = createArgoObject([](pinMapping, pinMapping) {
+    auto mock = new NiceMock<MockEncoder>();
 
-  // Expect a call for each encoder
-  EXPECT_CALL(*encoderMock, read()).Times(2);
+    // Expect a call for each encoder once
+    EXPECT_CALL(*mock, read()).Times(1);
+    return Argo::unique_ptr<EncoderInterface>(mock);
+  });
+
+  argoLib.loop();
+}
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleMock(&argc, argv);
+  return RUN_ALL_TESTS();
 }

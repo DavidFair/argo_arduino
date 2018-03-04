@@ -21,20 +21,20 @@ protected:
 // This factory class was adapted from the idea by Bryan Chen
 // https://stackoverflow.com/a/24295925 (Accessed: 2017-03-03)
 
-using FactoryFunction = Argo::unique_ptr<EncoderInterface> (*)(
+using EncoderFactoryFunction = Argo::unique_ptr<EncoderInterface> (*)(
     ArduinoEnums::pinMapping pinOne, ArduinoEnums::pinMapping pinTwo);
 
 class EncoderFactory {
 public:
   EncoderFactory();
-  EncoderFactory(FactoryFunction funcPtr);
+  EncoderFactory(EncoderFactoryFunction funcPtr);
 
   Argo::unique_ptr<EncoderInterface>
   createEncoder(ArduinoEnums::pinMapping pinOne,
-                ArduinoEnums::pinMapping pinTwo);
+                ArduinoEnums::pinMapping pinTwo) const;
 
 private:
-  FactoryFunction m_currentFactory;
+  EncoderFactoryFunction m_currentFactory;
 };
 
 } // Namespace EncoderLib
