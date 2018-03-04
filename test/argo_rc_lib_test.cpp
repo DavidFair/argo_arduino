@@ -47,7 +47,7 @@ Argo::unique_ptr<ArgoEncoder> createEncoderDep(MockArduino &hardwareMock) {
 class ArgoRcTest : public ::testing::Test {
 protected:
   ArgoRcTest()
-      : _forwardedPtr(new MockArduino),
+      : _forwardedPtr(new NiceMock<MockArduino>),
         hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
         argoRcLib(Argo::move(_forwardedPtr), createEncoderDep(hardwareMock)) {}
 

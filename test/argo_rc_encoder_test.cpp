@@ -20,7 +20,7 @@ namespace { // Anonymous namespace
 
 ArgoRc createArgoObject(EncoderFactoryFunction mockFunc) {
   // At this point of call the expectations should have been set on the mock
-  Argo::unique_ptr<ArduinoInterface> mockHardware(new MockArduino);
+  Argo::unique_ptr<ArduinoInterface> mockHardware(new NiceMock<MockArduino>);
   Argo::unique_ptr<EncoderFactory> encoderFactory(new EncoderFactory(mockFunc));
 
   // As ArgoRc takes ownership of the pointer to the mock object this is safe
