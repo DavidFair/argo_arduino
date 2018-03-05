@@ -41,8 +41,9 @@ include_directories(
     "${PROJECT_SOURCE_DIR}/src/lib_wrappers"
     )
 
-add_executable(argo_rc_test argo_rc_lib_test.cpp)
-add_executable(argo_encoder_test argo_rc_encoder_test.cpp)
+add_executable(argo_rc_test argo_rc_lib_test.cpp main.cpp)
+add_executable(argo_encoder_test argo_rc_encoder_test.cpp main.cpp)
+add_executable(SerialComms_test SerialCommsTest.cpp main.cpp)
 
 set(REQUIRED_LIBS
   gmock_main 
@@ -53,6 +54,8 @@ set(REQUIRED_LIBS
 
 target_link_libraries(argo_rc_test ${REQUIRED_LIBS})
 target_link_libraries(argo_encoder_test ${REQUIRED_LIBS})
+target_link_libraries(SerialComms_test ${REQUIRED_LIBS})
 
 add_test(NAME argo_rc_test COMMAND argo_rc_test)
 add_test(NAME argo_encoder_test COMMAND argo_encoder_test)
+add_test(NAME SerialComms_test COMMAND SerialComms_test)

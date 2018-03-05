@@ -44,13 +44,13 @@ project(ARGO C CXX)
 
 # Add directories depending on whether we are targeting hardware
 if(UNIT_TESTING)
+    # We can only set Werror on Unit test target as Arduino libs have warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+
     # Use native compiler and add test directory
     enable_testing()
     add_definitions(-DUNIT_TESTING)
     add_subdirectory(test)
-
-    # We can only set Werror on Unit test target as Arduino libs have warnings
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 else()
     # Add external library files
     add_subdirectory(ext)
