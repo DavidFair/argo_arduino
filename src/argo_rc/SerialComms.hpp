@@ -14,6 +14,8 @@ public:
 
 private:
   void appendKVPair(const char *key, const char *value);
+
+  void appendToOutputBuf(const char c);
   void appendToOutputBuf(const char *s);
 
   void sendCurrentBuffer();

@@ -45,14 +45,22 @@ void SerialComms::sendEncoderRotation(const EncoderData &data) {
 
     // Convert each number and forward as a K-V pair
     appendKVPair(ENCODER_NAMES[i], convertedNumber);
-    appendToOutputBuf(&SEPERATOR);
+    appendToOutputBuf(SEPERATOR);
   }
+
+  sendCurrentBuffer();
 }
 
 void SerialComms::appendKVPair(const char *key, const char *value) {
   appendToOutputBuf(key);
-  appendToOutputBuf(&K_V_SEPERATOR);
+  appendToOutputBuf(K_V_SEPERATOR);
   appendToOutputBuf(value);
+}
+
+void SerialComms::appendToOutputBuf(const char c) {
+  // Wrap in null terminated array and forward
+  const char toAppend[2] = {c, '\0'};
+  appendToOutputBuf(toAppend);
 }
 
 void SerialComms::appendToOutputBuf(const char *s) {
@@ -66,8 +74,10 @@ void SerialComms::appendToOutputBuf(const char *s) {
   }
 }
 
-void sendCurrentBuffer() {
-  // TODO
+void SerialComms::sendCurrentBuffer() {
+  m_hardwareInterface.serialPrintln(m_outBuffer);
+  m_outBuffer[0] = '\0';
+  m_currentIndex = 0;
 }
 
 } // namespace ArgoRcLib

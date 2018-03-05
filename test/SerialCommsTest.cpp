@@ -20,6 +20,8 @@ protected:
   SerialComms testInstance;
 };
 
+} // Anonymous namespace
+
 TEST_F(SerialCommsFixture, writesEncoderData) {
   const EncoderData expectedData = {101, 102};
   const std::string expectedString = "!D L_ENC_1:101 R_ENC_1:102 ";
@@ -27,5 +29,3 @@ TEST_F(SerialCommsFixture, writesEncoderData) {
   EXPECT_CALL(mockObj, serialPrintln(expectedString));
   testInstance.sendEncoderRotation(expectedData);
 }
-
-} // Anonymous namespace
