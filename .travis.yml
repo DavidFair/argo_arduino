@@ -22,23 +22,6 @@ matrix:
         - cd build
         - cmake ../ -DUNIT_TESTING=ON
         - make -j2 && ctest -V
-    
-    # Unit tests on latest compiler
-    - env:
-        # According to the docs this is the correct way to set CC and CXX
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-7
-            - g++-7
-
-      script:
-        - cd build
-        - cmake ../ -DUNIT_TESTING=ON
-        - make -j2 && ctest -V
 
     # AVR build
     - env:
@@ -55,3 +38,20 @@ matrix:
         - cd avr_build
         - cmake ../
         - make -j2
+
+    # Unit tests on latest compiler
+    - env:
+        # According to the docs this is the correct way to set CC and CXX
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-7
+            - g++-7
+
+      script:
+        - cd build
+        - cmake ../ -DUNIT_TESTING=ON
+        - make -j2 && ctest -V

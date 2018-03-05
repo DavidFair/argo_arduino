@@ -25,13 +25,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
+# Setup toolchain
 if(NOT UNIT_TESTING)
-    # Set the toolchain to AVR - GCC
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake/cmake/ArduinoToolchain.cmake)
-    
-    # Sized deallocation was introduced in C++-14 standard however the 
-    # avr std lib does not understand it so force GCC to not use it
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation -Wswitch-enum")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wswitch-enum")
 
     # Set default options for the ARGO
     set(BOARD_TYPE mega2560 CACHE STRING "The target Arduino board")
@@ -52,6 +49,14 @@ if(UNIT_TESTING)
     add_definitions(-DUNIT_TESTING)
     add_subdirectory(test)
 else()
+    # Sized deallocation was introduced in C++-14 standard however the 
+    # avr std lib does not understand it so force GCC to not use it
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-fno-sized-deallocation" COMPILER_NEEDS_NOSIZE_DEALLOC)
+    if (COMPILER_NEEDS_NOSIZE_DEALLOC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation")
+    endif()
+
     # Add external library files
     add_subdirectory(ext)
 endif()
