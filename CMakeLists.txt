@@ -62,14 +62,15 @@ else()
     # This was taken from the Arduino IDE compilation flags
     set(LTO_COMPILER_FLAGS "-MMD -flto -fno-fat-lto-objects")
     set(LINK_TIME_FLAGS "-flto -fuse-linker-plugin -Wl,--gc-sections")
-    CHECK_CXX_COMPILER_FLAG(${LTO_COMPILER_FLAGS} COMPILER_SUPPORTS_LTO)
+    CHECK_CXX_COMPILER_FLAG("${LTO_COMPILER_FLAGS} ${LINK_TIME_FLAGS}" COMPILER_SUPPORTS_LTO)
     if (COMPILER_SUPPORTS_LTO)
         message("Using Link Time Optimisations")
-        set(CMAKE_AR "avr-gcc-ar")
-        set(CMAKE_RANLIB "avr-gcc-ranlib")
+        set(CMAKE_AR "avr-gcc-ar" CACHE STRING "" FORCE)
+        set(CMAKE_RANLIB "avr-gcc-ranlib" CACHE STRING "" FORCE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LTO_COMPILER_FLAGS}" CACHE STRING "" FORCE)
 
         set(CMAKE_LINK_LIBRARY_FLAG "${CMAKE_LINK_LIBRARY_FLAG} ${LINK_TIME_FLAGS}" CACHE STRING "" FORCE)
+        mark_as_advanced(CMAKE_LINK_LIBRARY_FLAG)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_TIME_FLAGS}" CACHE STRING "" FORCE)
     endif()
 
