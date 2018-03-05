@@ -1,29 +1,32 @@
 set(SRC_FILES
-    arduino_hardware.cpp 
+    encoder_interface.cpp
     pinTimingData.cpp
 )
 
 set(HDR_FILES
-    arduino_hardware.hpp
+    arduino_enums.hpp
     arduino_interface.hpp
+    encoder_interface.hpp
     pinTimingData.hpp
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/src/lib_wrappers")
 
 if (NOT UNIT_TESTING)
+    # Bring in hardware definition for factory
+    include_directories("${PROJECT_SOURCE_DIR}/src/arduino_hardware"
+                        "${PROJECT_SOURCE_DIR}/ext/encoder")
+
     generate_arduino_library(
-    arduino_hardware
+    arduino_interface
+    LIBS arduino_hardware
     SRCS ${SRC_FILES}
     HDRS ${HDR_FILES}
     BOARD ${BOARD_TYPE}
     )
 else()
-    # We only need the pin timing data for unit testing as the 
-    # implementation is mocked by the testing framework
     add_library(
-    arduino_hardware STATIC
-    pinTimingData.cpp
-    pinTimingData.hpp
+    arduino_interface STATIC
+    ${SRC_FILES} ${HDR_FILES}
     )
 endif()
