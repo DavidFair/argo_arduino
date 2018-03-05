@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <string>
 
 #include "argo_encoder.hpp"
 #include "argo_rc_lib.hpp"
@@ -8,6 +9,7 @@
 #include "pinTimingData.hpp"
 #include "unique_ptr.hpp"
 
+using ::testing::An;
 using ::testing::AnyNumber;
 using ::testing::AtLeast;
 using ::testing::Ge;
@@ -19,6 +21,7 @@ using ::testing::_;
 using namespace ArduinoEnums;
 using namespace ArgoRcLib;
 using namespace EncoderLib;
+using namespace Mocks;
 using Hardware::ArduinoInterface;
 
 // Anonymous namespace
@@ -26,7 +29,7 @@ namespace {
 Argo::unique_ptr<EncoderInterface> blankEncoderFactoryMethod(pinMapping,
                                                              pinMapping) {
   // Returns a default mock object with no expectations
-  return Argo::unique_ptr<EncoderInterface>(new NiceMock<Mocks::MockEncoder>());
+  return Argo::unique_ptr<EncoderInterface>(new NiceMock<MockEncoder>());
 }
 
 Argo::unique_ptr<EncoderFactory> blankEncoderFactory() {
@@ -252,7 +255,7 @@ TEST_F(ArgoRcTest, deadmanSwitchTriggers) {
   argoRcLib.loop();
 }
 
-// -------- PWM input tests
+// -------- PWM input tests ----------
 
 // This maps to -40 when the bounds are set from 1520-1850 : 0-255
 const unsigned int reverseBoundValue = 1468;
@@ -373,4 +376,40 @@ TEST_F(ArgoRcTest, pwmNegativeOff) {
   checkFootSwitchesAreOff(hardwareMock);
 
   argoRcLib.loop();
+}
+
+// --------- Check Encoder data is printed over serial -------
+// As we need to setup our own on call for the encoder mock don't use text
+// fixtures
+TEST(SerialComms, encoderDataIsSent) {
+  const int32_t expectedVal = 123;
+
+  // Create a factory that sets expectations for us
+  auto factoryMethod = [](pinMapping, pinMapping) {
+    auto mockedEncoder = new MockEncoder();
+
+    ON_CALL(*mockedEncoder, read()).WillByDefault(Return(expectedVal));
+    return Argo::unique_ptr<EncoderInterface>(mockedEncoder);
+  };
+
+  // Wrap the factory and put it in an object ArgoRc understands
+  Argo::unique_ptr<EncoderFactory> encoderFactory(
+      new EncoderFactory(factoryMethod));
+
+  auto mockArduino = new NiceMock<MockArduino>();
+  Argo::unique_ptr<ArgoEncoder> encoderImpl =
+      (new ArgoEncoder(static_cast<ArduinoInterface &>(*mockArduino),
+                       std::move(encoderFactory)));
+
+  // Ignore other calls to serialPrintln
+  EXPECT_CALL(*mockArduino, serialPrintln(An<int>()));
+  EXPECT_CALL(*mockArduino, serialPrintln(An<const std::string &>()));
+
+  const std::string expectedOutput("!D L_ENC_1:123 R_ENC_1:123 ");
+  EXPECT_CALL(*mockArduino, serialPrintln(expectedOutput));
+
+  ArgoRc testInstance(Argo::unique_ptr<ArduinoInterface>(mockArduino),
+                      std::move(encoderImpl));
+
+  testInstance.loop();
 }
