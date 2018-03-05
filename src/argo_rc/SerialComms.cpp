@@ -40,8 +40,13 @@ void SerialComms::sendEncoderRotation(const EncoderData &data) {
     const auto encoderVal = data.encoderVal[i];
 
     char convertedNumber[NUM_DEC_PLACES];
-    // Abuse snprintf to convert our value
+// Abuse snprintf to convert our value
+#ifdef UNIT_TESTING
     snprintf(convertedNumber, sizeof(convertedNumber), "%d", encoderVal);
+#else
+    // On Arduino a int32_t is equivalent to a long decimal
+    snprintf(convertedNumber, sizeof(convertedNumber), "%ld", encoderVal);
+#endif
 
     // Convert each number and forward as a K-V pair
     appendKVPair(ENCODER_NAMES[i], convertedNumber);
