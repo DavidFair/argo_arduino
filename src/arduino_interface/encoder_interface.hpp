@@ -1,6 +1,8 @@
 #ifndef ENCODER_INTERFACE_HPP_
 #define ENCODER_INTERFACE_HPP_
 
+#include <stdint.h>
+
 #include "arduino_enums.hpp"
 #include "unique_ptr.hpp"
 

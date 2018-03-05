@@ -37,10 +37,9 @@ add_test(NAME example_test COMMAND example)
 
 include_directories(
     "${PROJECT_SOURCE_DIR}/src/arduino_interface"
+    "${PROJECT_SOURCE_DIR}/src/argo_rc"
     "${PROJECT_SOURCE_DIR}/src/lib_wrappers"
     )
-
-include_directories(${PROJECT_SOURCE_DIR}/src/argo_rc)
 
 add_executable(argo_rc_test argo_rc_lib_test.cpp)
 add_executable(argo_encoder_test argo_rc_encoder_test.cpp)
@@ -48,7 +47,7 @@ add_executable(argo_encoder_test argo_rc_encoder_test.cpp)
 set(REQUIRED_LIBS
   gmock_main 
   argo_lib 
-  arduino_hardware 
+  arduino_interface
   lib_wrappers
 )
 
