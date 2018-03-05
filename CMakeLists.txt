@@ -27,17 +27,7 @@ endif()
 
 # Setup toolchain
 if(NOT UNIT_TESTING)
-    # Patch the Arduino toolchain ignoring our flags and duplicating several of its own
-    execute_process(COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/ext/toolchainFlags.patch
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake)
-
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake/cmake/ArduinoToolchain.cmake)
-
-    # Then revert the patch so we don't show up as modified in git
-    execute_process(COMMAND git reset HEAD --hard
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake
-                    OUTPUT_QUIET)
-
     # Warn on missing cases in a switch - gmock prevents us doing this globally
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wswitch-enum" CACHE STRING "" FORCE)
 
