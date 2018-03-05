@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stdexcept>
 
 #include "argo_rc_lib.hpp"
 #include "encoder_interface.hpp"
@@ -42,9 +41,4 @@ TEST(EncoderTest, loopReadsFromEncoder) {
   });
 
   argoLib.loop();
-}
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleMock(&argc, argv);
-  return RUN_ALL_TESTS();
 }
