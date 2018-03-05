@@ -14,7 +14,7 @@ execute_process(COMMAND git submodule update --init
 
 cmake_minimum_required(VERSION 3.1)
 set (CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra" CACHE STRING "" FORCE)
 
 set(UNIT_TESTING ${UNIT_TESTING} CACHE BOOL "Enables unit testing targets and builds on GCC" FORCE)
 
@@ -27,8 +27,19 @@ endif()
 
 # Setup toolchain
 if(NOT UNIT_TESTING)
+    # Patch the Arduino toolchain ignoring our flags and duplicating several of its own
+    execute_process(COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/ext/toolchainFlags.patch
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake)
+
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake/cmake/ArduinoToolchain.cmake)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wswitch-enum")
+
+    # Then revert the patch so we don't show up as modified in git
+    execute_process(COMMAND git reset HEAD --hard
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ext/arduino-cmake
+                    OUTPUT_QUIET)
+
+    # Warn on missing cases in a switch - gmock prevents us doing this globally
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wswitch-enum" CACHE STRING "" FORCE)
 
     # Set default options for the ARGO
     set(BOARD_TYPE mega2560 CACHE STRING "The target Arduino board")
@@ -42,7 +53,7 @@ project(ARGO C CXX)
 # Add directories depending on whether we are targeting hardware
 if(UNIT_TESTING)
     # We can only set Werror on Unit test target as Arduino libs have warnings
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror" CACHE STRING "" FORCE)
 
     # Use native compiler and add test directory
     enable_testing()
@@ -54,7 +65,22 @@ else()
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-fno-sized-deallocation" COMPILER_NEEDS_NOSIZE_DEALLOC)
     if (COMPILER_NEEDS_NOSIZE_DEALLOC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation" CACHE STRING "" FORCE)
+    endif()
+
+    # LTO to reduce overhead from using static libs
+    # This was taken from the Arduino IDE compilation flags
+    set(LTO_COMPILER_FLAGS "-MMD -flto -fno-fat-lto-objects")
+    set(LINK_TIME_FLAGS "-flto -fuse-linker-plugin -Wl,--gc-sections")
+    CHECK_CXX_COMPILER_FLAG(${LTO_COMPILER_FLAGS} COMPILER_SUPPORTS_LTO)
+    if (COMPILER_SUPPORTS_LTO)
+        message("Using Link Time Optimisations")
+        set(CMAKE_AR "avr-gcc-ar")
+        set(CMAKE_RANLIB "avr-gcc-ranlib")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LTO_COMPILER_FLAGS}" CACHE STRING "" FORCE)
+
+        set(CMAKE_LINK_LIBRARY_FLAG "${CMAKE_LINK_LIBRARY_FLAG} ${LINK_TIME_FLAGS}" CACHE STRING "" FORCE)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_TIME_FLAGS}" CACHE STRING "" FORCE)
     endif()
 
     # Add external library files
