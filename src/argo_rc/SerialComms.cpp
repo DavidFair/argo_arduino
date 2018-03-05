@@ -1,4 +1,4 @@
-#include <cstring>
+#include "cstring_wrapper.hpp"
 #include <stdint.h>
 #include <stdlib.h>
 
