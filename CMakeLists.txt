@@ -58,11 +58,17 @@ else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sized-deallocation" CACHE STRING "" FORCE)
     endif()
 
-    # LTO to reduce overhead from using static libs
+    # LTO to reduce overhead from using static libs saves a few MB
     # This was taken from the Arduino IDE compilation flags
     set(LTO_COMPILER_FLAGS "-MMD -flto -fno-fat-lto-objects")
     set(LINK_TIME_FLAGS "-flto -fuse-linker-plugin -Wl,--gc-sections")
-    CHECK_CXX_COMPILER_FLAG("${LTO_COMPILER_FLAGS} ${LINK_TIME_FLAGS}" COMPILER_SUPPORTS_LTO)
+    CHECK_CXX_COMPILER_FLAG(${LTO_COMPILER_FLAGS} COMPILER_SUPPORTS_LTO)
+
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.0")
+        # LTO will not work with 4.8.x and below compilers
+        set(COMPILER_SUPPORTS_LTO FALSE)
+    endif()
+
     if (COMPILER_SUPPORTS_LTO)
         message("Using Link Time Optimisations")
         set(CMAKE_AR "avr-gcc-ar" CACHE STRING "" FORCE)
