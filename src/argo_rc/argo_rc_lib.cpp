@@ -26,7 +26,7 @@ namespace ArgoRcLib {
 ArgoRc::ArgoRc(Argo::unique_ptr<ArduinoInterface> &&hardwareInterface,
                Argo::unique_ptr<ArgoEncoder> &&encoders)
     : m_hardwareInterface(Argo::move(hardwareInterface)),
-      m_encoders(Argo::move(encoders)) {
+      m_encoders(Argo::move(encoders)), m_commsObject(*m_hardwareInterface) {
   // Initialise encoders before any function attempts to use them
   setupEncoders();
 }
@@ -116,7 +116,7 @@ void ArgoRc::footswitch_off() {
 #define DEBUG_OUTPUT_PWM
 
 void ArgoRc::loop() {
-  m_encoders->read();
+  m_commsObject.sendEncoderRotation(m_encoders->read());
 
 #ifdef RC_PWM_ENABLED
 

@@ -11,7 +11,6 @@
 
 using ::testing::An;
 using ::testing::AnyNumber;
-using ::testing::AtLeast;
 using ::testing::Ge;
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -386,7 +385,7 @@ TEST(SerialComms, encoderDataIsSent) {
 
   // Create a factory that sets expectations for us
   auto factoryMethod = [](pinMapping, pinMapping) {
-    auto mockedEncoder = new MockEncoder();
+    auto mockedEncoder = new NiceMock<MockEncoder>();
 
     ON_CALL(*mockedEncoder, read()).WillByDefault(Return(expectedVal));
     return Argo::unique_ptr<EncoderInterface>(mockedEncoder);
@@ -402,8 +401,9 @@ TEST(SerialComms, encoderDataIsSent) {
                        std::move(encoderFactory)));
 
   // Ignore other calls to serialPrintln
-  EXPECT_CALL(*mockArduino, serialPrintln(An<int>()));
-  EXPECT_CALL(*mockArduino, serialPrintln(An<const std::string &>()));
+  EXPECT_CALL(*mockArduino, serialPrintln(An<int>())).Times(AnyNumber());
+  EXPECT_CALL(*mockArduino, serialPrintln(An<const std::string &>()))
+      .Times(AnyNumber());
 
   const std::string expectedOutput("!D L_ENC_1:123 R_ENC_1:123 ");
   EXPECT_CALL(*mockArduino, serialPrintln(expectedOutput));
