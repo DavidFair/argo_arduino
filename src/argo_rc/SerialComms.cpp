@@ -41,7 +41,7 @@ void SerialComms::sendEncoderRotation(const EncoderData &data) {
 
     char convertedNumber[NUM_DEC_PLACES];
     // Abuse snprintf to convert our value
-    snprintf(convertedNumber, sizeof(convertedNumber), "%ld", encoderVal);
+    snprintf(convertedNumber, sizeof(convertedNumber), "%d", encoderVal);
 
     // Convert each number and forward as a K-V pair
     appendKVPair(ENCODER_NAMES[i], convertedNumber);
