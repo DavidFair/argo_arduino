@@ -260,7 +260,8 @@ void ArgoRc::setup_rc() {
       1 << static_cast<uint8_t>(portControlValues::E_PCIE2);
   m_hardwareInterface->orPortBitmask(portMapping::E_PCICR, pcie2EnableBitmask);
 
-  // Set pins 18 to 23 as ISR triggers
+  // Set PCINT18 to 23 as ISR triggers
+  // On the Mega 2560 these are pins A10-A15 as ISR
   m_hardwareInterface->setPortBitmask(portMapping::E_PCMSK2, 0xFC);
 
   // The ISR is defined in the hardware implementation
