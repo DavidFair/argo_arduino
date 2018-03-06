@@ -2,52 +2,10 @@
 #include <stdint.h>
 
 #include "arduino_hardware.hpp"
-#include "pinTimingData.hpp"
 
 using namespace ArduinoEnums;
 
 namespace Hardware {
-
-// Due to the nature of an ISR we cannot unit test it. Place it within this file
-// as it is hardware specific
-ISR(PCINT2_vect) {
-  uint8_t bit;
-  uint8_t curr;
-  uint8_t mask;
-  uint32_t currentTime;
-  uint32_t time;
-
-  // get the pin states for the indicated port.
-  curr = PINK & 0xFC;
-  mask = curr ^ timingData::g_pcIntLast;
-  timingData::g_pcIntLast = curr;
-
-  currentTime = micros();
-
-  // mask is pcint pins that have changed.
-  for (uint8_t i = 0; i < 6; i++) {
-    bit = 0x04 << i;
-    if (bit & mask) {
-      // for each pin changed, record time of change
-      if (bit & timingData::g_pcIntLast) {
-        time = currentTime - timingData::g_pinData[i].fallTime;
-        timingData::g_pinData[i].riseTime = currentTime;
-        if ((time >= 10000) && (time <= 26000))
-          timingData::g_pinData[i].edge = 1;
-        else
-          timingData::g_pinData[i].edge = 0; // invalid rising edge detected
-      } else {
-        time = currentTime - timingData::g_pinData[i].riseTime;
-        timingData::g_pinData[i].fallTime = currentTime;
-        if ((time >= 800) && (time <= 2200) &&
-            (timingData::g_pinData[i].edge == 1)) {
-          timingData::g_pinData[i].lastGoodWidth = time;
-          timingData::g_pinData[i].edge = 0;
-        }
-      }
-    }
-  }
-}
 
 int ArduinoHardware::analogRead(pinMapping pin) const {
   return ::analogRead(convertPinEnumToArduino(pin));
