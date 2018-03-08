@@ -9,9 +9,11 @@
 #include "move.hpp"
 #include "unique_ptr.hpp"
 
-namespace ArgoRcLib {
+namespace ArgoRcLib
+{
 
-class ArgoRc {
+class ArgoRc
+{
 public:
   explicit ArgoRc(
       Argo::unique_ptr<Hardware::ArduinoInterface> &&hardwareInterface,
@@ -28,7 +30,8 @@ public:
         m_encoders(Argo::move(other.m_encoders)),
         m_commsObject(Argo::move(other.m_commsObject)) {}
 
-  ArgoRc &operator=(ArgoRc &&other) {
+  ArgoRc &operator=(ArgoRc &&other)
+  {
     m_hardwareInterface.reset(other.m_hardwareInterface.release());
     m_encoders.reset(other.m_encoders.release());
     return *this;
@@ -53,6 +56,8 @@ public:
   void direction_relays_off();
 
 private:
+  void setMotorTarget(int speed, int steer, int &left_pwm, int &right_pwm);
+
   int constrainPwmInput(int initialValue);
 
   void enterDeadmanFail();

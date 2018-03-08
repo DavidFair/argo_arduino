@@ -7,12 +7,19 @@
 #include "encoder_interface.hpp"
 #include "unique_ptr.hpp"
 
-namespace EncoderLib {
+namespace EncoderLib
+{
 
-class EncoderImpl : public EncoderInterface {
+class EncoderImpl : public EncoderInterface
+{
 public:
   EncoderImpl(uint8_t pinOne, uint8_t pinTwo)
-      : m_encoder(new Encoder(pinOne, pinTwo)) {}
+      : m_encoder(new Encoder(pinOne, pinTwo))
+  {
+    Serial.println("Creating encoders");
+    Serial.println(pinOne);
+    Serial.println(pinTwo);
+  }
 
   virtual ~EncoderImpl() = default;
 
