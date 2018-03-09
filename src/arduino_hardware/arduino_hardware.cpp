@@ -5,30 +5,24 @@
 
 using namespace ArduinoEnums;
 
-namespace Hardware
-{
+namespace Hardware {
 
-int ArduinoHardware::analogRead(pinMapping pin) const
-{
+int ArduinoHardware::analogRead(pinMapping pin) const {
   return ::analogRead(convertPinEnumToArduino(pin));
 }
 
-void ArduinoHardware::analogWrite(pinMapping pin, int value) const
-{
+void ArduinoHardware::analogWrite(pinMapping pin, int value) const {
   ::analogWrite(convertPinEnumToArduino(pin), value);
 }
 
-void ArduinoHardware::delay(unsigned long milliseconds) const
-{
+void ArduinoHardware::delay(unsigned long milliseconds) const {
   ::delay(milliseconds);
 }
 
-digitalIO ArduinoHardware::digitalRead(pinMapping pin) const
-{
+digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
   int result = ::digitalRead(convertPinEnumToArduino(pin));
 
-  switch (result)
-  {
+  switch (result) {
   case HIGH:
     return digitalIO::E_HIGH;
   case LOW:
@@ -39,12 +33,10 @@ digitalIO ArduinoHardware::digitalRead(pinMapping pin) const
   }
 }
 
-void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const
-{
+void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
   const auto outputPin = convertPinEnumToArduino(pin);
 
-  switch (mode)
-  {
+  switch (mode) {
   case digitalIO::E_HIGH:
     return ::digitalWrite(outputPin, HIGH);
   case digitalIO::E_LOW:
@@ -55,77 +47,17 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const
   }
 }
 
-void ArduinoHardware::enterDeadmanSafetyMode() const
-{
-  while (1)
-  {
+void ArduinoHardware::enterDeadmanSafetyMode() const {
+  while (1) {
     // wait here forever - requires a reset
     serialPrintln(" DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
     delay(500);
   }
 }
 
-void ArduinoHardware::orPortBitmask(portMapping port, uint8_t bitmask) const
-{
-  switch (port)
-  {
-  case portMapping::E_DDRK:
-    DDRK |= bitmask;
-    break;
-  case portMapping::E_PCICR:
-    PCICR |= bitmask;
-    break;
-  case portMapping::E_PCMSK2:
-    PCMSK2 |= bitmask;
-    break;
-  case portMapping::E_PINK:
-    PINK |= bitmask;
-    break;
-  }
-}
-
-uint8_t ArduinoHardware::readPortBits(portMapping port) const
-{
-  switch (port)
-  {
-  case portMapping::E_DDRK:
-    return DDRK;
-  case portMapping::E_PCICR:
-    return PCICR;
-  case portMapping::E_PCMSK2:
-    return PCMSK2;
-  case portMapping::E_PINK:
-    return PINK;
-  default:
-    serialPrintln("Uknown port mapping. Aborting!");
-    exit(-1);
-  }
-}
-
-void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const
-{
-  switch (port)
-  {
-  case portMapping::E_DDRK:
-    DDRK = bitmask;
-    break;
-  case portMapping::E_PCICR:
-    PCICR = bitmask;
-    break;
-  case portMapping::E_PCMSK2:
-    PCMSK2 = bitmask;
-    break;
-  case portMapping::E_PINK:
-    PINK = bitmask;
-    break;
-  }
-}
-
-void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const
-{
+void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
   const auto destPin = convertPinEnumToArduino(pin);
-  switch (mode)
-  {
+  switch (mode) {
   case digitalIO::E_INPUT:
     ::pinMode(destPin, INPUT);
     break;
@@ -141,8 +73,7 @@ void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const
   }
 }
 
-uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert)
-{
+uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   /* It is not possible to assign a value to an enum class after
    * the definition. However to pull in pins A6/A7 we must include
    * the Arduino header which means we must target the Mega.
@@ -156,8 +87,7 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert)
 
   // GCC will warn us if we miss a case off the enum
 
-  switch (pinToConvert)
-  {
+  switch (pinToConvert) {
   case pinMapping::LEFT_FORWARD_RELAY:
     return 23;
   case pinMapping::LEFT_REVERSE_RELAY:

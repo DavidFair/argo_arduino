@@ -21,20 +21,17 @@ using namespace ArduinoEnums;
 using namespace EncoderLib;
 using namespace Hardware;
 
-namespace ArgoRcLib
-{
+namespace ArgoRcLib {
 
 ArgoRc::ArgoRc(Argo::unique_ptr<ArduinoInterface> &&hardwareInterface,
                Argo::unique_ptr<ArgoEncoder> &&encoders)
     : m_hardwareInterface(Argo::move(hardwareInterface)),
-      m_encoders(Argo::move(encoders)), m_commsObject(*m_hardwareInterface)
-{
+      m_encoders(Argo::move(encoders)), m_commsObject(*m_hardwareInterface) {
   // Initialise encoders before any function attempts to use them
   setupEncoders();
 }
 
-void ArgoRc::setup()
-{
+void ArgoRc::setup() {
   m_hardwareInterface->serialBegin(115200);
 
   setupDigitalPins();
@@ -45,11 +42,9 @@ void ArgoRc::setup()
                                     digitalIO::E_HIGH);
 
   m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
-  setup_rc();
 }
 
-void ArgoRc::direction_relays_off()
-{
+void ArgoRc::direction_relays_off() {
 
   m_hardwareInterface->serialPrintln("RELAYS OFF");
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
@@ -62,8 +57,7 @@ void ArgoRc::direction_relays_off()
                                     digitalIO::E_HIGH);
 }
 
-void ArgoRc::forward_left()
-{
+void ArgoRc::forward_left() {
   footswitch_on();
   m_hardwareInterface->serialPrintln("forward_left");
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,
@@ -72,8 +66,7 @@ void ArgoRc::forward_left()
                                     digitalIO::E_HIGH);
 }
 
-void ArgoRc::forward_right()
-{
+void ArgoRc::forward_right() {
   footswitch_on();
   m_hardwareInterface->serialPrintln("                  forward_right");
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
@@ -82,8 +75,7 @@ void ArgoRc::forward_right()
                                     digitalIO::E_HIGH);
 }
 
-void ArgoRc::reverse_left()
-{
+void ArgoRc::reverse_left() {
   footswitch_on();
   m_hardwareInterface->serialPrintln(
       "                                    reverse_left");
@@ -93,8 +85,7 @@ void ArgoRc::reverse_left()
                                     digitalIO::E_LOW);
 }
 
-void ArgoRc::reverse_right()
-{
+void ArgoRc::reverse_right() {
   footswitch_on();
   m_hardwareInterface->serialPrintln(
       "                                                      reverse_right");
@@ -104,16 +95,14 @@ void ArgoRc::reverse_right()
                                     digitalIO::E_LOW);
 }
 
-void ArgoRc::footswitch_on()
-{
+void ArgoRc::footswitch_on() {
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
                                     digitalIO::E_LOW);
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,
                                     digitalIO::E_LOW);
 }
 
-void ArgoRc::footswitch_off()
-{
+void ArgoRc::footswitch_off() {
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
                                     digitalIO::E_HIGH);
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY,
@@ -123,12 +112,10 @@ void ArgoRc::footswitch_off()
 //#define DEBUG_OUTPUT
 #define DEBUG_OUTPUT_PWM
 
-void ArgoRc::loop()
-{
+void ArgoRc::loop() {
   m_commsObject.sendEncoderRotation(m_encoders->read());
 
-  for (int i = 18; i < 23; i++)
-  {
+  for (int i = 18; i < 23; i++) {
     Serial.print(i);
     Serial.print(" : ");
     Serial.println(digitalRead(i));
@@ -137,19 +124,16 @@ void ArgoRc::loop()
 
 #define DEADMAN_TIMEOUT_DELAY 500
 
-  if (digitalRead(RC_DEADMAN) == LOW)
-  {
+  if (digitalRead(RC_DEADMAN) == LOW) {
 
     unsigned long timout_deadman = millis();
-    while ((millis() - timout_deadman) < DEADMAN_TIMEOUT_DELAY)
-    {
+    while ((millis() - timout_deadman) < DEADMAN_TIMEOUT_DELAY) {
       if (digitalRead(RC_DEADMAN) == HIGH)
         break;
     }
 
     if (m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) ==
-        digitalIO::E_LOW)
-    {
+        digitalIO::E_LOW) {
       enterDeadmanFail();
 
       // This is for unit testing - enterDeadmanSafetyMode on hardware gets
@@ -172,8 +156,8 @@ void ArgoRc::loop()
   int throttle_pwm = map(rc_pwm_left, 1520, 1850, 0, 255);
   int steering_pwm = map(rc_pwm_right, 1520, 1850, 0, 255);
 
-  //throttle_pwm = constrainPwmInput(throttle_pwm);
-  //steeringPwm = constrainPwmInput(steeringPwm);
+  // throttle_pwm = constrainPwmInput(throttle_pwm);
+  // steeringPwm = constrainPwmInput(steeringPwm);
 
   int left_pwm;
   int right_pwm;
@@ -209,22 +193,18 @@ void ArgoRc::loop()
 
 // ---------- Private Methods --------------
 
-void ArgoRc::setMotorTarget(int speed, int steer, int &left_pwm, int &right_pwm)
-{
-  if (abs(speed) < 40 && abs(steer) > 2)
-  {
+void ArgoRc::setMotorTarget(int speed, int steer, int &left_pwm,
+                            int &right_pwm) {
+  if (abs(speed) < 40 && abs(steer) > 2) {
     left_pwm = steer;
     right_pwm = -steer;
-  }
-  else
-  {
+  } else {
     left_pwm = speed * ((-255 - steer) / -255.0);
     right_pwm = speed * ((255 - steer) / 255.0);
   }
 }
 
-int ArgoRc::constrainPwmInput(int initialValue)
-{
+int ArgoRc::constrainPwmInput(int initialValue) {
   int returnValue = initialValue;
   if (returnValue < 0)
     returnValue = -returnValue;
@@ -235,8 +215,7 @@ int ArgoRc::constrainPwmInput(int initialValue)
   return returnValue;
 }
 
-void ArgoRc::enterDeadmanFail()
-{
+void ArgoRc::enterDeadmanFail() {
   timingData::g_pinData[0].lastGoodWidth = 0;
   timingData::g_pinData[1].lastGoodWidth = 0;
   m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0);
@@ -248,8 +227,7 @@ void ArgoRc::enterDeadmanFail()
   m_hardwareInterface->enterDeadmanSafetyMode();
 }
 
-void ArgoRc::readPwmInput(const int leftPwmValue, const int rightPwmValue)
-{
+void ArgoRc::readPwmInput(const int leftPwmValue, const int rightPwmValue) {
 
   if ((leftPwmValue > -40 && leftPwmValue < 40) &&
       (rightPwmValue > -40 && rightPwmValue < 40))
@@ -265,8 +243,7 @@ void ArgoRc::readPwmInput(const int leftPwmValue, const int rightPwmValue)
     reverse_right();
 }
 
-void ArgoRc::setupDigitalPins()
-{
+void ArgoRc::setupDigitalPins() {
   m_hardwareInterface->setPinMode(pinMapping::LEFT_FORWARD_RELAY,
                                   digitalIO::E_OUTPUT);
   m_hardwareInterface->setPinMode(pinMapping::LEFT_REVERSE_RELAY,
@@ -295,15 +272,16 @@ void ArgoRc::setupDigitalPins()
   m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE,
                                   digitalIO::E_OUTPUT);
 
-  m_hardwareInterface->setPinMode(pinMapping::STEERING_PWM_OUTPUT, digitalIO::E_OUTPUT);
-  m_hardwareInterface->setPinMode(pinMapping::BRAKING_PWM_OUTPUT, digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::STEERING_PWM_OUTPUT,
+                                  digitalIO::E_OUTPUT);
+  m_hardwareInterface->setPinMode(pinMapping::BRAKING_PWM_OUTPUT,
+                                  digitalIO::E_OUTPUT);
 
   m_hardwareInterface->analogWrite(pinMapping::STEERING_PWM_OUTPUT, 0);
   m_hardwareInterface->analogWrite(pinMapping::BRAKING_PWM_OUTPUT, 128);
 }
 
-void ArgoRc::setupEncoders()
-{
+void ArgoRc::setupEncoders() {
   m_encoders->setEncoderPins(
       ArgoEncoderPositions::LEFT_ENCODER,
       Argo::pair<pinMapping, pinMapping>(pinMapping::LEFT_ENCODER_1,
@@ -313,31 +291,6 @@ void ArgoRc::setupEncoders()
       ArgoEncoderPositions::RIGHT_ENCODER,
       Argo::pair<pinMapping, pinMapping>(pinMapping::RIGHT_ENCODER_1,
                                          pinMapping::RIGHT_ENCODER_2));
-}
-
-void ArgoRc::setup_rc()
-{
-
-  DDRK = 0; // pins as input
-
-  // enable PCINT 18 to 23
-  PCICR |= (1 << PCIE2);
-  PCMSK2 = 0xFC;
-
-  // Set ADC8 - ADC15 to input (0) using the port register
-  // m_hardwareInterface->setPortBitmask(portMapping::E_DDRK, 0);
-
-  // // enable PCINT which allows us to use the PCMSK register by bitshifting
-  // // 1 into the correct register location
-  // const auto pcie2EnableBitmask =
-  //     1 << static_cast<uint8_t>(portControlValues::E_PCIE2);
-  // m_hardwareInterface->orPortBitmask(portMapping::E_PCICR, pcie2EnableBitmask);
-
-  // // Set PCINT18 to 23 as ISR triggers
-  // // On the Mega 2560 these are pins A10-A15 as ISR
-  // m_hardwareInterface->setPortBitmask(portMapping::E_PCMSK2, 0xFC);
-
-  // // The ISR is defined in the hardware implementation
 }
 
 } // namespace ArgoRcLib

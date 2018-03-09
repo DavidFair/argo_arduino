@@ -9,11 +9,9 @@
 #include "move.hpp"
 #include "unique_ptr.hpp"
 
-namespace ArgoRcLib
-{
+namespace ArgoRcLib {
 
-class ArgoRc
-{
+class ArgoRc {
 public:
   explicit ArgoRc(
       Argo::unique_ptr<Hardware::ArduinoInterface> &&hardwareInterface,
@@ -30,8 +28,7 @@ public:
         m_encoders(Argo::move(other.m_encoders)),
         m_commsObject(Argo::move(other.m_commsObject)) {}
 
-  ArgoRc &operator=(ArgoRc &&other)
-  {
+  ArgoRc &operator=(ArgoRc &&other) {
     m_hardwareInterface.reset(other.m_hardwareInterface.release());
     m_encoders.reset(other.m_encoders.release());
     return *this;
@@ -67,8 +64,6 @@ private:
   void setupDigitalPins();
 
   void setupEncoders();
-
-  void setup_rc();
 
   Argo::unique_ptr<Hardware::ArduinoInterface> m_hardwareInterface;
   Argo::unique_ptr<ArgoEncoder> m_encoders;
