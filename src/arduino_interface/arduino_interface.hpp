@@ -31,6 +31,8 @@ public:
 
   virtual unsigned long micros() const = 0;
 
+  virtual unsigned long millis() const = 0;
+
   virtual void serialBegin(unsigned long baudRate) const = 0;
 
   virtual void serialPrint(int i) const = 0;

@@ -11,6 +11,11 @@
 
 namespace ArgoRcLib {
 
+struct PwmTargets {
+  int leftPwm{0};
+  int rightPwm{0};
+};
+
 class ArgoRc {
 public:
   explicit ArgoRc(
@@ -53,17 +58,19 @@ public:
   void direction_relays_off();
 
 private:
-  void setMotorTarget(int speed, int steer, int &left_pwm, int &right_pwm);
+  bool checkDeadmanSwitch();
 
   int constrainPwmInput(int initialValue);
 
   void enterDeadmanFail();
 
-  void readPwmInput(const int leftPwmValue, const int rightPwmValue);
+  PwmTargets readPwmInput();
 
   void setupDigitalPins();
 
   void setupEncoders();
+
+  PwmTargets setMotorTarget(int speed, int steer);
 
   Argo::unique_ptr<Hardware::ArduinoInterface> m_hardwareInterface;
   Argo::unique_ptr<ArgoEncoder> m_encoders;

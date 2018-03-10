@@ -25,6 +25,7 @@ using Hardware::ArduinoInterface;
 
 // Anonymous namespace
 namespace {
+// Mock object creation helpers
 Argo::unique_ptr<EncoderInterface> blankEncoderFactoryMethod(pinMapping,
                                                              pinMapping) {
   // Returns a default mock object with no expectations
@@ -46,44 +47,35 @@ Argo::unique_ptr<ArgoEncoder> createEncoderDep(MockArduino &hardwareMock) {
   return newEncoder;
 }
 
-class ArgoRcTest : public ::testing::Test {
-protected:
-  ArgoRcTest()
-      : _forwardedPtr(new NiceMock<MockArduino>),
-        hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
-        argoRcLib(Argo::move(_forwardedPtr), createEncoderDep(hardwareMock)) {}
-
-  // This pointer has its ownership transfered to ArgoRc however we still
-  // hold a reference so we can set expectations
-  Argo::unique_ptr<ArduinoInterface> _forwardedPtr;
-  NiceMock<MockArduino> &hardwareMock;
-  ArgoRc argoRcLib;
-};
-
-} // namespace
-
 // ---------- Functions to setup various checks --------
+
+// RetiresOnSaturation() ensures we can setup multiple expectations
+// of the same type i.e. we can check the footswitch on is called 2x1 times
 
 void checkFootSwitchesAreOff(MockArduino &hardwareInterface) {
   EXPECT_CALL(hardwareInterface, digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY,
                                               digitalIO::E_HIGH))
-      .Times(1);
+      .Times(1)
+      .RetiresOnSaturation();
 
   EXPECT_CALL(
       hardwareInterface,
       digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_HIGH))
-      .Times(1);
+      .Times(1)
+      .RetiresOnSaturation();
 }
 
 void checkFootSwitchesAreOn(MockArduino &hardwareInterface) {
   EXPECT_CALL(hardwareInterface,
               digitalWrite(pinMapping::LEFT_FOOTSWITCH_RELAY, digitalIO::E_LOW))
-      .Times(1);
+      .Times(1)
+      .RetiresOnSaturation();
 
   EXPECT_CALL(
       hardwareInterface,
       digitalWrite(pinMapping::RIGHT_FOOTSWITCH_RELAY, digitalIO::E_LOW))
-      .Times(1);
+      .Times(1)
+      .RetiresOnSaturation();
 }
 
 void checkDirectionRelaysAreOff(MockArduino &hardwareInterface) {
@@ -155,6 +147,26 @@ void returnDeadmanSafe(MockArduino &hardwareInterface) {
       .WillByDefault(Return(digitalIO::E_HIGH));
 }
 
+// ----------- Test fixture --------------
+
+class ArgoRcTest : public ::testing::Test {
+protected:
+  ArgoRcTest()
+      : _forwardedPtr(new NiceMock<MockArduino>),
+        hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
+        argoRcLib(Argo::move(_forwardedPtr), createEncoderDep(hardwareMock)) {
+    returnDeadmanSafe(hardwareMock);
+  }
+
+  // This pointer has its ownership transfered to ArgoRc however we still
+  // hold a reference so we can set expectations
+  Argo::unique_ptr<ArduinoInterface> _forwardedPtr;
+  NiceMock<MockArduino> &hardwareMock;
+  ArgoRc argoRcLib;
+};
+
+} // End of anonymous namespace
+
 // ----- Setup Tests ------
 
 TEST_F(ArgoRcTest, configuresDigitalIO) {
@@ -175,22 +187,6 @@ TEST_F(ArgoRcTest, resetRelays) {
 
   checkFootSwitchesAreOff(hardwareMock);
   checkDirectionRelaysAreOff(hardwareMock);
-
-  argoRcLib.setup();
-}
-
-TEST_F(ArgoRcTest, configuresIsr) {
-
-  // Check ADC8-15 are set to inputs (all bits 0)
-  EXPECT_CALL(hardwareMock, setPortBitmask(portMapping::E_DDRK, 0));
-
-  // this is done by setting PCICR to PCIE2 bitmask to
-  // enable interrupts
-  EXPECT_CALL(hardwareMock, orPortBitmask(portMapping::E_PCICR, _));
-  // And then enabling the specific pin triggers
-  EXPECT_CALL(hardwareMock, setPortBitmask(portMapping::E_PCMSK2, _));
-
-  // Trigger the call
 
   argoRcLib.setup();
 }
@@ -239,9 +235,18 @@ TEST_F(ArgoRcTest, footSwitchOff) {
 
 // ------- Deadman switch tests ------
 TEST_F(ArgoRcTest, deadmanSwitchTriggers) {
+  const unsigned long LOOP_MAX_DELAY = 500;
+  // We return 0, 499 and 500 to the loop
+  EXPECT_CALL(hardwareMock, millis()).WillOnce(Return(LOOP_MAX_DELAY));
+  EXPECT_CALL(hardwareMock, millis())
+      .WillOnce(Return(LOOP_MAX_DELAY - 1))
+      .RetiresOnSaturation();
+  EXPECT_CALL(hardwareMock, millis()).WillOnce(Return(0)).RetiresOnSaturation();
 
-  ON_CALL(hardwareMock, digitalRead(pinMapping::RC_DEADMAN))
-      .WillByDefault(Return(digitalIO::E_LOW));
+  // At least 2 calls - one before and in the loop
+  EXPECT_CALL(hardwareMock, digitalRead(pinMapping::RC_DEADMAN))
+      .Times(2)
+      .WillRepeatedly(Return(digitalIO::E_LOW));
 
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0));
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0));
@@ -257,89 +262,29 @@ TEST_F(ArgoRcTest, deadmanSwitchTriggers) {
 // -------- PWM input tests ----------
 
 // This maps to -40 when the bounds are set from 1520-1850 : 0-255
-const unsigned int reverseBoundValue = 1468;
+const unsigned int negFortyBounds = 1468;
 // This maps to 40 when the bounds are set from 1520-1850 : 0-255
-const unsigned int forwardBoundValue = 1572;
+const unsigned int posFortyBounds = 1572;
+
 // This maps to 0
 const unsigned int zeroValue = 1520;
 const int mappedValue = 40;
 
-const size_t leftPwmIndex = 0;
-const size_t rightPwmIndex = 1;
+const size_t throttlePwmIndex = 0;
+const size_t steeringPwmIndex = 1;
 
-TEST_F(ArgoRcTest, pwmLeftIsForward) {
-
-  returnDeadmanSafe(hardwareMock);
-
+TEST_F(ArgoRcTest, throttleIsForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[leftPwmIndex].lastGoodWidth = forwardBoundValue;
-  timingData::g_pinData[rightPwmIndex].lastGoodWidth = zeroValue;
+  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkForwardLeftIsOn(hardwareMock);
-
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
-      .Times(1);
-
-  argoRcLib.loop();
-}
-
-TEST_F(ArgoRcTest, pwmRightIsForward) {
-
-  returnDeadmanSafe(hardwareMock);
-
-  // Set timing data to the boundary value
-  timingData::g_pinData[rightPwmIndex].lastGoodWidth = forwardBoundValue;
-  timingData::g_pinData[leftPwmIndex].lastGoodWidth = zeroValue;
-
   checkForwardRightIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
-      .Times(1);
-
-  argoRcLib.loop();
-}
-
-TEST_F(ArgoRcTest, pwmLeftIsReverse) {
-
-  returnDeadmanSafe(hardwareMock);
-
-  // Set timing data to the boundary value
-  timingData::g_pinData[leftPwmIndex].lastGoodWidth = reverseBoundValue;
-  timingData::g_pinData[rightPwmIndex].lastGoodWidth = zeroValue;
-
-  checkReverseLeftIsOn(hardwareMock);
-
   EXPECT_CALL(hardwareMock,
               analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
-      .Times(1);
-
-  argoRcLib.loop();
-}
-
-TEST_F(ArgoRcTest, pwmRightIsReverse) {
-
-  returnDeadmanSafe(hardwareMock);
-
-  // Set timing data to the boundary value
-  timingData::g_pinData[leftPwmIndex].lastGoodWidth = zeroValue;
-  timingData::g_pinData[rightPwmIndex].lastGoodWidth = reverseBoundValue;
-
-  checkReverseRightIsOn(hardwareMock);
-
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
-      .Times(1);
-
   EXPECT_CALL(hardwareMock,
               analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
       .Times(1);
@@ -347,35 +292,80 @@ TEST_F(ArgoRcTest, pwmRightIsReverse) {
   argoRcLib.loop();
 }
 
-TEST_F(ArgoRcTest, pwmPositiveOff) {
+// TEST_F(ArgoRcTest, pwmRightIsForward) {
+//   // Set timing data to the boundary value
+//   timingData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds;
+//   timingData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
 
-  returnDeadmanSafe(hardwareMock);
+//   checkForwardRightIsOn(hardwareMock);
 
-  // Set timing data to the boundary value
-  timingData::g_pinData[leftPwmIndex].lastGoodWidth = forwardBoundValue - 1;
-  timingData::g_pinData[rightPwmIndex].lastGoodWidth = forwardBoundValue - 1;
+//   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
+//       .Times(1);
 
-  // TODO : Make sure direction relays switch off
-  // checkDirectionRelaysAreOff(hardwareMock);
-  checkFootSwitchesAreOff(hardwareMock);
+//   EXPECT_CALL(hardwareMock,
+//               analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
+//       .Times(1);
 
-  argoRcLib.loop();
-}
+//   argoRcLib.loop();
+// }
 
-TEST_F(ArgoRcTest, pwmNegativeOff) {
+// TEST_F(ArgoRcTest, pwmLeftIsReverse) {
+//   // Set timing data to the boundary value
+//   timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+//   timingData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
-  returnDeadmanSafe(hardwareMock);
+//   checkReverseLeftIsOn(hardwareMock);
 
-  // Set timing data to the boundary value
-  timingData::g_pinData[leftPwmIndex].lastGoodWidth = reverseBoundValue + 1;
-  timingData::g_pinData[rightPwmIndex].lastGoodWidth = reverseBoundValue + 1;
+//   EXPECT_CALL(hardwareMock,
+//               analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
+//       .Times(1);
 
-  // TODO : Make sure direction relays switch off
-  // checkDirectionRelaysAreOff(hardwareMock);
-  checkFootSwitchesAreOff(hardwareMock);
+//   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
+//       .Times(1);
 
-  argoRcLib.loop();
-}
+//   argoRcLib.loop();
+// }
+
+// TEST_F(ArgoRcTest, pwmRightIsReverse) {
+//   // Set timing data to the boundary value
+//   timingData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
+//   timingData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds;
+
+//   checkReverseRightIsOn(hardwareMock);
+
+//   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
+//       .Times(1);
+
+//   EXPECT_CALL(hardwareMock,
+//               analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
+//       .Times(1);
+
+//   argoRcLib.loop();
+// }
+
+// TEST_F(ArgoRcTest, pwmPositiveOff) {
+//   // Set timing data to the boundary value
+//   timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds - 1;
+//   timingData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds - 1;
+
+//   // TODO : Make sure direction relays switch off
+//   // checkDirectionRelaysAreOff(hardwareMock);
+//   checkFootSwitchesAreOff(hardwareMock);
+
+//   argoRcLib.loop();
+// }
+
+// TEST_F(ArgoRcTest, pwmNegativeOff) {
+//   // Set timing data to the boundary value
+//   timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds + 1;
+//   timingData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds + 1;
+
+//   // TODO : Make sure direction relays switch off
+//   // checkDirectionRelaysAreOff(hardwareMock);
+//   checkFootSwitchesAreOff(hardwareMock);
+
+//   argoRcLib.loop();
+// }
 
 // --------- Check Encoder data is printed over serial -------
 // As we need to setup our own on call for the encoder mock don't use text
@@ -404,6 +394,9 @@ TEST(SerialComms, encoderDataIsSent) {
   EXPECT_CALL(*mockArduino, serialPrintln(An<int>())).Times(AnyNumber());
   EXPECT_CALL(*mockArduino, serialPrintln(An<const std::string &>()))
       .Times(AnyNumber());
+
+  // Set the deadman switch to safe
+  returnDeadmanSafe(*mockArduino);
 
   const std::string expectedOutput("!D L_ENC_1:123 R_ENC_1:123 ");
   EXPECT_CALL(*mockArduino, serialPrintln(expectedOutput));

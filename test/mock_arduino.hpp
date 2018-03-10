@@ -27,14 +27,9 @@ public:
 
   MOCK_CONST_METHOD0(micros, unsigned long());
 
-  MOCK_CONST_METHOD2(orPortBitmask, void(ArduinoEnums::portMapping, uint8_t));
-
-  MOCK_CONST_METHOD1(readPortBits, uint8_t(ArduinoEnums::portMapping));
+  MOCK_CONST_METHOD0(millis, unsigned long());
 
   MOCK_CONST_METHOD1(serialBegin, void(unsigned long));
-
-  MOCK_CONST_METHOD2(setPortBitmask,
-                     void(ArduinoEnums::portMapping, uint8_t bitmask));
 
   MOCK_CONST_METHOD1(serialPrint, void(const std::string &));
 

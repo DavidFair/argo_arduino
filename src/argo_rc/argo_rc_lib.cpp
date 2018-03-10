@@ -17,6 +17,10 @@
 // Encoder
 // right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
 
+namespace {
+const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
+}
+
 using namespace ArduinoEnums;
 using namespace EncoderLib;
 using namespace Hardware;
@@ -38,10 +42,11 @@ void ArgoRc::setup() {
   footswitch_off();
   direction_relays_off();
 
+  m_hardwareInterface->analogWrite(pinMapping::STEERING_PWM_OUTPUT, 0);
+  m_hardwareInterface->analogWrite(pinMapping::BRAKING_PWM_OUTPUT, 128);
+
   m_hardwareInterface->digitalWrite(pinMapping::TEST_POT_POSITIVE,
                                     digitalIO::E_HIGH);
-
-  m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
 }
 
 void ArgoRc::direction_relays_off() {
@@ -51,9 +56,9 @@ void ArgoRc::direction_relays_off() {
                                     digitalIO::E_HIGH);
   m_hardwareInterface->digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,
                                     digitalIO::E_HIGH);
-  m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,
-                                    digitalIO::E_HIGH);
   m_hardwareInterface->digitalWrite(pinMapping::LEFT_FORWARD_RELAY,
+                                    digitalIO::E_HIGH);
+  m_hardwareInterface->digitalWrite(pinMapping::LEFT_REVERSE_RELAY,
                                     digitalIO::E_HIGH);
 }
 
@@ -115,93 +120,72 @@ void ArgoRc::footswitch_off() {
 void ArgoRc::loop() {
   m_commsObject.sendEncoderRotation(m_encoders->read());
 
-  for (int i = 18; i < 23; i++) {
-    Serial.print(i);
-    Serial.print(" : ");
-    Serial.println(digitalRead(i));
-  }
 #ifdef RC_PWM_ENABLED
 
-#define DEADMAN_TIMEOUT_DELAY 500
-
-  if (digitalRead(RC_DEADMAN) == LOW) {
-
-    unsigned long timout_deadman = millis();
-    while ((millis() - timout_deadman) < DEADMAN_TIMEOUT_DELAY) {
-      if (digitalRead(RC_DEADMAN) == HIGH)
-        break;
-    }
-
-    if (m_hardwareInterface->digitalRead(pinMapping::RC_DEADMAN) ==
-        digitalIO::E_LOW) {
-      enterDeadmanFail();
-
-      // This is for unit testing - enterDeadmanSafetyMode on hardware gets
-      // stuck in an infinite loop
-      return;
-    }
+  if (!checkDeadmanSwitch()) {
+    // This is for unit testing - enterDeadmanSafetyMode on hardware gets
+    // stuck in an infinite loop
+    return;
   }
 
   // Deadman switch is high at this point
-
-  int rc_pwm_left = timingData::g_pinData[0].lastGoodWidth;
-  int rc_pwm_right = timingData::g_pinData[1].lastGoodWidth;
-
-  m_hardwareInterface->serialPrint("rc_pwm_left_raw: ");
-  m_hardwareInterface->serialPrintln(rc_pwm_left);
-
-  m_hardwareInterface->serialPrint("rc_pwm_right_raw: ");
-  m_hardwareInterface->serialPrintln(rc_pwm_right);
-
-  int throttle_pwm = map(rc_pwm_left, 1520, 1850, 0, 255);
-  int steering_pwm = map(rc_pwm_right, 1520, 1850, 0, 255);
-
-  // throttle_pwm = constrainPwmInput(throttle_pwm);
-  // steeringPwm = constrainPwmInput(steeringPwm);
-
-  int left_pwm;
-  int right_pwm;
-
-  setMotorTarget(throttle_pwm, steering_pwm, left_pwm, right_pwm);
-  readPwmInput(left_pwm, right_pwm);
-
+  auto targetPwmVals = readPwmInput();
 #endif
 
-#ifdef TEST_POT_ENABLED
-  left_pwm = map(test_pot_value, 0, 1023, 0, 255);
-  right_pwm = map(test_pot_value, 0, 1023, 0, 255);
-#endif
+  int leftPwmValue = targetPwmVals.leftPwm;
+  int rightPwmValue = targetPwmVals.rightPwm;
 
-#ifdef DEBUG_OUTPUT_PWM
-  m_hardwareInterface->serialPrint("ENABLED  ");
-  m_hardwareInterface->serialPrint("LEFT PWM: ");
-  m_hardwareInterface->serialPrint(left_pwm);
-  m_hardwareInterface->serialPrint("  RIGHT PWM: ");
-  m_hardwareInterface->serialPrintln(right_pwm);
-#endif
+  if ((leftPwmValue > -40 && leftPwmValue < 40) &&
+      (rightPwmValue > -40 && rightPwmValue < 40))
+    footswitch_off();
 
-  m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, left_pwm);
-  m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, right_pwm);
+  if (leftPwmValue >= 40)
+    forward_left();
+  if (rightPwmValue >= 40)
+    forward_right();
+  if (leftPwmValue <= -40)
+    reverse_left();
+  if (rightPwmValue <= -40)
+    reverse_right();
 
-#ifdef DEBUG_OUTPUT
-  m_hardwareInterface->serialPrint("  LPOS: ");
-  m_hardwareInterface->serialPrint(left_newPosition);
-  m_hardwareInterface->serialPrint("  RPOS: ");
-  m_hardwareInterface->serialPrintln(right_newPosition);
-#endif
+  m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, leftPwmValue);
+  m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, rightPwmValue);
 }
 
 // ---------- Private Methods --------------
 
-void ArgoRc::setMotorTarget(int speed, int steer, int &left_pwm,
-                            int &right_pwm) {
-  if (abs(speed) < 40 && abs(steer) > 2) {
-    left_pwm = steer;
-    right_pwm = -steer;
-  } else {
-    left_pwm = speed * ((-255 - steer) / -255.0);
-    right_pwm = speed * ((255 - steer) / 255.0);
+bool ArgoRc::checkDeadmanSwitch() {
+  if (m_hardwareInterface->digitalRead(RC_DEADMAN) == digitalIO::E_HIGH) {
+    return true;
   }
+
+  unsigned long startingTime = m_hardwareInterface->millis();
+
+  while ((m_hardwareInterface->millis() - startingTime) <
+         DEADMAN_TIMEOUT_DELAY) {
+    // Check its not a switch bounce
+    if (m_hardwareInterface->digitalRead(RC_DEADMAN) == digitalIO::E_HIGH)
+      return true;
+  }
+
+  // Pin still has not driven high after DEADMAN_TIMEOUT seconds
+  enterDeadmanFail();
+
+  // For unit testing
+  return false;
+} // namespace ArgoRcLib
+
+PwmTargets ArgoRc::setMotorTarget(int speed, int steer) {
+  PwmTargets targetPwmVals;
+
+  if (abs(speed) < 40 && abs(steer) > 2) {
+    targetPwmVals.leftPwm = steer;
+    targetPwmVals.rightPwm = -steer;
+  } else {
+    targetPwmVals.leftPwm = speed * ((-255 - steer) / -255.0);
+    targetPwmVals.rightPwm = speed * ((255 - steer) / 255.0);
+  }
+  return targetPwmVals;
 }
 
 int ArgoRc::constrainPwmInput(int initialValue) {
@@ -227,20 +211,22 @@ void ArgoRc::enterDeadmanFail() {
   m_hardwareInterface->enterDeadmanSafetyMode();
 }
 
-void ArgoRc::readPwmInput(const int leftPwmValue, const int rightPwmValue) {
+PwmTargets ArgoRc::readPwmInput() {
+  int rcPwmThrottleRaw = timingData::g_pinData[0].lastGoodWidth;
+  int rcPwmSteeringRaw = timingData::g_pinData[1].lastGoodWidth;
 
-  if ((leftPwmValue > -40 && leftPwmValue < 40) &&
-      (rightPwmValue > -40 && rightPwmValue < 40))
-    footswitch_off();
+  m_hardwareInterface->serialPrint("rc_pwm_throttle_raw: ");
+  m_hardwareInterface->serialPrintln(rcPwmThrottleRaw);
 
-  if (leftPwmValue >= 40)
-    forward_left();
-  if (rightPwmValue >= 40)
-    forward_right();
-  if (leftPwmValue <= -40)
-    reverse_left();
-  if (rightPwmValue <= -40)
-    reverse_right();
+  m_hardwareInterface->serialPrint("rc_pwm_steering_raw: ");
+  m_hardwareInterface->serialPrintln(rcPwmSteeringRaw);
+
+  int throttlePwm = map(rcPwmThrottleRaw, 1520, 1850, 0, 255);
+  int steeringPwm = map(rcPwmSteeringRaw, 1520, 1850, 0, 255);
+
+  auto calculatedPwmVals = setMotorTarget(throttlePwm, steeringPwm);
+
+  return calculatedPwmVals;
 }
 
 void ArgoRc::setupDigitalPins() {
@@ -272,13 +258,7 @@ void ArgoRc::setupDigitalPins() {
   m_hardwareInterface->setPinMode(pinMapping::TEST_POT_POSITIVE,
                                   digitalIO::E_OUTPUT);
 
-  m_hardwareInterface->setPinMode(pinMapping::STEERING_PWM_OUTPUT,
-                                  digitalIO::E_OUTPUT);
-  m_hardwareInterface->setPinMode(pinMapping::BRAKING_PWM_OUTPUT,
-                                  digitalIO::E_OUTPUT);
-
-  m_hardwareInterface->analogWrite(pinMapping::STEERING_PWM_OUTPUT, 0);
-  m_hardwareInterface->analogWrite(pinMapping::BRAKING_PWM_OUTPUT, 128);
+  m_hardwareInterface->setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
 }
 
 void ArgoRc::setupEncoders() {
