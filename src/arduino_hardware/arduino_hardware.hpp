@@ -15,6 +15,10 @@ public:
   ArduinoHardware() = default;
   ~ArduinoHardware() override = default;
 
+  static void robotSafetyAbort();
+
+  // Overrides
+
   virtual int analogRead(ArduinoEnums::pinMapping pin) const override;
 
   virtual void analogWrite(ArduinoEnums::pinMapping pin,

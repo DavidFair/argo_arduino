@@ -50,8 +50,7 @@ void ArgoEncoder::checkEncoderIsValid(uint8_t encPosition) {
   if (!m_encoders[encPosition].get()) {
     m_hardwareInterface.serialPrint("The encoder at position: ");
     m_hardwareInterface.serialPrint(encPosition);
-    m_hardwareInterface.serialPrint(" was not set. Aborting!");
-    exit(-1);
+    m_hardwareInterface.serialPrint(" was not set.");
   }
 }
 

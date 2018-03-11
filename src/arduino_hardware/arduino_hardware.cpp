@@ -7,6 +7,28 @@ using namespace ArduinoEnums;
 
 namespace Hardware {
 
+void ArduinoHardware::robotSafetyAbort() {
+  /* This should only ever be called if there was a serious bug. We don't call
+   * enterDeadmanSafety mode as the program is no longer in a known sane state.
+   *
+   * On the AVR-GCC creates an infinite loop in assembly when we call exit(-1)
+   */
+
+  // The compiler should inline this as both calls are static
+  auto leftRelayPin = ArduinoHardware::convertPinEnumToArduino(
+      pinMapping::LEFT_FOOTSWITCH_RELAY);
+  auto rightRelayPin = ArduinoHardware::convertPinEnumToArduino(
+      pinMapping::LEFT_FOOTSWITCH_RELAY);
+
+  // Remember as we are connected to a relay E_HIGH = relay off
+  // call direct to Arduino lib for best chances
+  ::digitalWrite(leftRelayPin, HIGH);
+  ::digitalWrite(rightRelayPin, HIGH);
+
+  ::Serial.println("Aborting program. Robot should be in a safe state now.");
+  exit(-1);
+}
+
 int ArduinoHardware::analogRead(pinMapping pin) const {
   return ::analogRead(convertPinEnumToArduino(pin));
 }
@@ -28,8 +50,8 @@ digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
   case LOW:
     return digitalIO::E_LOW;
   default:
-    serialPrintln("Result was unexpected in digitalRead, aborting!");
-    exit(-1);
+    serialPrintln("Result was unexpected in digitalRead");
+    ArduinoHardware::robotSafetyAbort();
   }
 }
 
@@ -43,7 +65,7 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
     return ::digitalWrite(outputPin, LOW);
   default:
     serialPrintln("Attempted to use a pin state as output");
-    break;
+    ArduinoHardware::robotSafetyAbort();
   }
 }
 
@@ -69,7 +91,7 @@ void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
     break;
   default:
     serialPrintln("Attempted to set a pin to a state instead of a mode");
-    break;
+    ArduinoHardware::robotSafetyAbort();
   }
 }
 
@@ -134,8 +156,8 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   case pinMapping::RC_DEADMAN:
     return 2;
   default:
-    ::Serial.println("Unknown pin in pin mapping. Aborting!");
-    exit(-1);
+    ::Serial.println("Unknown pin in pin mapping");
+    ArduinoHardware::robotSafetyAbort();
   }
 }
 
