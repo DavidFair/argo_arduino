@@ -5,8 +5,10 @@
 #include "encoder_interface.hpp"
 #include "mock_arduino.hpp"
 #include "mock_encoder.hpp"
+#include "move.hpp"
 #include "pair.hpp"
 #include "unique_ptr.hpp"
+
 
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -22,8 +24,15 @@ using namespace Hardware;
 namespace { // Anonymous namespace
 
 ArgoRc createArgoObject(EncoderFactoryFunction mockFunc) {
-  // At this point of call the expectations should have been set on the mock
-  Argo::unique_ptr<ArduinoInterface> mockHardware(new NiceMock<MockArduino>);
+  // The function expects the expectations are in the factory function
+
+  // Set deadman switch safe
+  auto mockHardwarePtr = new NiceMock<MockArduino>;
+  ON_CALL(*mockHardwarePtr, digitalRead(pinMapping::RC_DEADMAN))
+      .WillByDefault(Return(digitalIO::E_HIGH));
+
+  Argo::unique_ptr<ArduinoInterface> mockHardware(Argo::move(mockHardwarePtr));
+
   Argo::unique_ptr<EncoderFactory> encoderFactory(new EncoderFactory(mockFunc));
 
   // As ArgoRc takes ownership of the pointer to the mock object this is safe

@@ -55,56 +55,6 @@ void ArduinoHardware::enterDeadmanSafetyMode() const {
   }
 }
 
-void ArduinoHardware::orPortBitmask(portMapping port, uint8_t bitmask) const {
-  switch (port) {
-  case portMapping::E_DDRK:
-    DDRK |= bitmask;
-    break;
-  case portMapping::E_PCICR:
-    PCICR |= bitmask;
-    break;
-  case portMapping::E_PCMSK2:
-    PCMSK2 |= bitmask;
-    break;
-  case portMapping::E_PINK:
-    PINK |= bitmask;
-    break;
-  }
-}
-
-uint8_t ArduinoHardware::readPortBits(portMapping port) const {
-  switch (port) {
-  case portMapping::E_DDRK:
-    return DDRK;
-  case portMapping::E_PCICR:
-    return PCICR;
-  case portMapping::E_PCMSK2:
-    return PCMSK2;
-  case portMapping::E_PINK:
-    return PINK;
-  default:
-    serialPrintln("Uknown port mapping. Aborting!");
-    exit(-1);
-  }
-}
-
-void ArduinoHardware::setPortBitmask(portMapping port, uint8_t bitmask) const {
-  switch (port) {
-  case portMapping::E_DDRK:
-    DDRK = bitmask;
-    break;
-  case portMapping::E_PCICR:
-    PCICR = bitmask;
-    break;
-  case portMapping::E_PCMSK2:
-    PCMSK2 = bitmask;
-    break;
-  case portMapping::E_PINK:
-    PINK = bitmask;
-    break;
-  }
-}
-
 void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
   const auto destPin = convertPinEnumToArduino(pin);
   switch (mode) {
@@ -158,6 +108,11 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   case pinMapping::RIGHT_PWM_OUTPUT:
     return 46;
 
+  case pinMapping::STEERING_PWM_OUTPUT:
+    return 4;
+  case pinMapping::BRAKING_PWM_OUTPUT:
+    return 6;
+
   case pinMapping::LEFT_ENCODER_1:
     return 19;
   case pinMapping::LEFT_ENCODER_2:
@@ -173,7 +128,9 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
     return A7;
 
   case pinMapping::RC_PWM_IN_L:
-    return A11;
+    return A10;
+    // TODO A11 for RC_PWM_IN_R
+
   case pinMapping::RC_DEADMAN:
     return 2;
   default:

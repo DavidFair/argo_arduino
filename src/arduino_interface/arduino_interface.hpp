@@ -31,15 +31,9 @@ public:
 
   virtual unsigned long micros() const = 0;
 
-  virtual void orPortBitmask(ArduinoEnums::portMapping port,
-                             uint8_t bitmask) const = 0;
-
-  virtual uint8_t readPortBits(ArduinoEnums::portMapping port) const = 0;
+  virtual unsigned long millis() const = 0;
 
   virtual void serialBegin(unsigned long baudRate) const = 0;
-
-  virtual void setPortBitmask(ArduinoEnums::portMapping port,
-                              uint8_t bitmask) const = 0;
 
   virtual void serialPrint(int i) const = 0;
 

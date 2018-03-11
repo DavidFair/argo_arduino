@@ -32,17 +32,11 @@ public:
 
   virtual unsigned long micros() const override { return ::micros(); };
 
-  virtual void orPortBitmask(ArduinoEnums::portMapping port,
-                             uint8_t bitmask) const override;
-
-  virtual uint8_t readPortBits(ArduinoEnums::portMapping port) const override;
+  virtual unsigned long millis() const override { return ::millis(); };
 
   virtual void serialBegin(unsigned long baudRate) const override {
     ::Serial.begin(baudRate);
   };
-
-  virtual void setPortBitmask(ArduinoEnums::portMapping port,
-                              uint8_t bitmask) const override;
 
   virtual void serialPrint(const String &s) const override {
     ::Serial.print(s);

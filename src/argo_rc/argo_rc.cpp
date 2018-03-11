@@ -7,6 +7,8 @@
 #include "pinTimingData.hpp"
 #include "unique_ptr.hpp"
 
+// Forward decleration
+void setupInterrupts();
 
 // Instantiate argo_rc library at the global level so it doesn't drop out of
 // scope
@@ -21,9 +23,31 @@ Argo::unique_ptr<ArgoRcLib::ArgoEncoder>
 ArgoRcLib::ArgoRc argoRcLib(Argo::move(hardwareImpl),
                             Argo::move(encoderFactoryImpl));
 
-void setup() { argoRcLib.setup(); }
+void setup() {
+  argoRcLib.setup();
+  // Setup interrupts last so they aren't overwritten
+  setupInterrupts();
+}
 
 void loop() { argoRcLib.loop(); }
+
+// ----- Interrupt Handling - Cannot (easily) be mocked -----
+
+void setupInterrupts() {
+
+  // Set ADC8 - ADC15 to input (0) using the port register
+  DDRK = 0;
+
+  // enable PCINT which allows us to use the PCMSK register by bitshifting
+  // 1 into the correct register location
+  PCICR |= (1 << PCIE2);
+
+  // Set PCINT18 to 23 as ISR triggers
+  // On the Mega 2560 these are pins A10-A15 as ISR
+  PCMSK2 = 0xFC;
+
+  // The ISR is defined below
+}
 
 // Due to the nature of an ISR we cannot unit test it. Place it within this file
 // as it is hardware specific

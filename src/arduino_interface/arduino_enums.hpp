@@ -41,6 +41,10 @@ enum pinMapping {
   // Analogue pins
   LEFT_PWM_OUTPUT,
   RIGHT_PWM_OUTPUT,
+
+  STEERING_PWM_OUTPUT,
+  BRAKING_PWM_OUTPUT,
+
   RC_PWM_IN_L,
   TEST_POT_WIPER
 };
@@ -52,19 +56,6 @@ static const pinMapping allDigitalPins[] = {
     pinMapping::LEFT_ENCODER_1,        pinMapping::LEFT_ENCODER_2,
     pinMapping::RIGHT_ENCODER_1,       pinMapping::RIGHT_ENCODER_2,
     pinMapping::TEST_POT_POSITIVE,     pinMapping::RC_DEADMAN};
-
-enum portMapping {
-  E_DDRK,   // DDRK controls ADC8-ADC15 direction
-  E_PCICR,  // Controls interrupt enable pins
-  E_PCMSK2, // Bitwise controls PCINT 23 - 16 to trigger interupts
-  E_PINK    // PIN K which is A8-A15 on the Mega 2560
-};
-
-enum class portControlValues : uint8_t {
-  // PCIE2 sets enables the PCMSK2 register which allows us to use PCINT 23-16
-  // for ISR
-  E_PCIE2 = 0x04
-};
 
 } // namespace ArduinoEnums
 
