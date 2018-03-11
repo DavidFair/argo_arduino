@@ -32,6 +32,8 @@ public:
 
   virtual unsigned long micros() const override { return ::micros(); };
 
+  virtual unsigned long millis() const override { return ::millis(); };
+
   virtual void serialBegin(unsigned long baudRate) const override {
     ::Serial.begin(baudRate);
   };

@@ -13,13 +13,25 @@
 //#define TEST_POT_ENABLED
 #define RC_PWM_ENABLED
 
-// Encoder left_encoder(pinMapping.LEFT_ENCODER_1,pinMapping.LEFT_ENCODER_2);
-// Encoder
-// right_encoder(pinMapping::RIGHT_ENCODER_1,pinMapping::RIGHT_ENCODER_2);
-
 namespace {
 const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
+const int PWM_MAXIMUM_OUTPUT = 255;
+
+int constrainInput(int initialValue, int minValue, int maxValue,
+                   bool mustBePos = false) {
+  if (initialValue < minValue) {
+    initialValue = minValue;
+  } else if (initialValue > maxValue) {
+    initialValue = maxValue;
+  }
+
+  if (mustBePos)
+    initialValue = abs(initialValue);
+
+  return initialValue;
 }
+
+} // namespace
 
 using namespace ArduinoEnums;
 using namespace EncoderLib;
@@ -136,8 +148,10 @@ void ArgoRc::loop() {
   int rightPwmValue = targetPwmVals.rightPwm;
 
   if ((leftPwmValue > -40 && leftPwmValue < 40) &&
-      (rightPwmValue > -40 && rightPwmValue < 40))
+      (rightPwmValue > -40 && rightPwmValue < 40)) {
     footswitch_off();
+    direction_relays_off();
+  }
 
   if (leftPwmValue >= 40)
     forward_left();
@@ -188,17 +202,6 @@ PwmTargets ArgoRc::setMotorTarget(int speed, int steer) {
   return targetPwmVals;
 }
 
-int ArgoRc::constrainPwmInput(int initialValue) {
-  int returnValue = initialValue;
-  if (returnValue < 0)
-    returnValue = -returnValue;
-
-  if (returnValue > 255)
-    returnValue = 255;
-
-  return returnValue;
-}
-
 void ArgoRc::enterDeadmanFail() {
   timingData::g_pinData[0].lastGoodWidth = 0;
   timingData::g_pinData[1].lastGoodWidth = 0;
@@ -221,12 +224,21 @@ PwmTargets ArgoRc::readPwmInput() {
   m_hardwareInterface->serialPrint("rc_pwm_steering_raw: ");
   m_hardwareInterface->serialPrintln(rcPwmSteeringRaw);
 
-  int throttlePwm = map(rcPwmThrottleRaw, 1520, 1850, 0, 255);
-  int steeringPwm = map(rcPwmSteeringRaw, 1520, 1850, 0, 255);
+  constexpr int centerPoint = 1520;
+  constexpr int range = 330;
 
-  auto calculatedPwmVals = setMotorTarget(throttlePwm, steeringPwm);
+  constexpr int minValue = centerPoint - range;
+  constexpr int maxValue = centerPoint + range;
 
-  return calculatedPwmVals;
+  rcPwmThrottleRaw = constrainInput(rcPwmThrottleRaw, minValue, maxValue);
+  rcPwmSteeringRaw = constrainInput(rcPwmSteeringRaw, minValue, maxValue);
+
+  int throttleTarget = map(rcPwmThrottleRaw, minValue, maxValue,
+                           -PWM_MAXIMUM_OUTPUT, PWM_MAXIMUM_OUTPUT);
+  int steeringTarget = map(rcPwmSteeringRaw, minValue, maxValue,
+                           -PWM_MAXIMUM_OUTPUT, PWM_MAXIMUM_OUTPUT);
+
+  return setMotorTarget(throttleTarget, steeringTarget);
 }
 
 void ArgoRc::setupDigitalPins() {
