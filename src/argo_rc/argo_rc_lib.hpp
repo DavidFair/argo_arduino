@@ -60,8 +60,6 @@ public:
 private:
   bool checkDeadmanSwitch();
 
-  int constrainPwmInput(int initialValue);
-
   void enterDeadmanFail();
 
   PwmTargets readPwmInput();
