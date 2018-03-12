@@ -18,10 +18,7 @@ void setupInterrupts();
 Argo::unique_ptr<Hardware::ArduinoInterface>
     hardwareImpl(new Hardware::ArduinoHardware());
 
-Argo::unique_ptr<Hardware::Encoder>
-    encoderFactoryImpl(new Hardware::Encoder(*hardwareImpl));
-
-ArgoRcLib::ArgoRc argoRcLib(*hardwareImpl, *encoderFactoryImpl);
+ArgoRcLib::ArgoRc argoRcLib(*hardwareImpl);
 
 void setup() {
   argoRcLib.setup();

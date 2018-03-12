@@ -39,9 +39,8 @@ using namespace Hardware;
 
 namespace ArgoRcLib {
 
-ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
-               Hardware::Encoder &encoder)
-    : m_hardwareInterface(hardwareInterface), m_encoders(encoder),
+ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface)
+    : m_hardwareInterface(hardwareInterface), m_encoders(),
       m_commsObject(m_hardwareInterface) {}
 
 void ArgoRc::setup() {
@@ -254,14 +253,10 @@ void ArgoRc::setupDigitalPins() {
   m_hardwareInterface.setPinMode(pinMapping::RIGHT_FOOTSWITCH_RELAY,
                                  digitalIO::E_OUTPUT);
 
-  m_hardwareInterface.setPinMode(pinMapping::LEFT_ENCODER_1,
-                                 digitalIO::E_INPUT_PULLUP);
-  m_hardwareInterface.setPinMode(pinMapping::LEFT_ENCODER_2,
+  m_hardwareInterface.setPinMode(pinMapping::LEFT_ENCODER,
                                  digitalIO::E_INPUT_PULLUP);
 
-  m_hardwareInterface.setPinMode(pinMapping::RIGHT_ENCODER_1,
-                                 digitalIO::E_INPUT_PULLUP);
-  m_hardwareInterface.setPinMode(pinMapping::RIGHT_ENCODER_2,
+  m_hardwareInterface.setPinMode(pinMapping::RIGHT_ENCODER,
                                  digitalIO::E_INPUT_PULLUP);
 
   m_hardwareInterface.setPinMode(pinMapping::TEST_POT_POSITIVE,

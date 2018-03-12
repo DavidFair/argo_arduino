@@ -128,16 +128,15 @@ void returnDeadmanSafe(MockArduino &hardwareInterface) {
 class ArgoRcTest : public ::testing::Test {
 protected:
   ArgoRcTest()
-      : _forwardedPtr(new NiceMock<MockArduino>), encoderMock(),
+      : _forwardedPtr(new NiceMock<MockArduino>),
         hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
-        argoRcLib(*_forwardedPtr, encoderMock) {
+        argoRcLib(*_forwardedPtr) {
     returnDeadmanSafe(hardwareMock);
   }
 
   // This pointer has its ownership transfered to ArgoRc however we still
   // hold a reference so we can set expectations
   Argo::unique_ptr<ArduinoInterface> _forwardedPtr;
-  Encoder encoderMock;
   NiceMock<MockArduino> &hardwareMock;
   ArgoRc argoRcLib;
 };

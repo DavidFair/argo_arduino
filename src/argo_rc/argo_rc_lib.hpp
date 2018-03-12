@@ -18,8 +18,8 @@ struct PwmTargets {
 
 class ArgoRc {
 public:
-  explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
-                  Hardware::Encoder &encoder);
+  explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface);
+
   ~ArgoRc() = default;
 
   // Disable copy constructors that way we don't get temporaries
@@ -67,7 +67,7 @@ private:
   PwmTargets setMotorTarget(int speed, int steer);
 
   Hardware::ArduinoInterface &m_hardwareInterface;
-  Hardware::Encoder &m_encoders;
+  Hardware::Encoder m_encoders;
 
   SerialComms m_commsObject;
 };
