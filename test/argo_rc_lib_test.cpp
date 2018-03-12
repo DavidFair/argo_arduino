@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 #include <string>
 
+#include "ArduinoGlobals.hpp"
 #include "argo_encoder.hpp"
 #include "argo_rc_lib.hpp"
 #include "encoder_interface.hpp"
 #include "mock_arduino.hpp"
 #include "mock_encoder.hpp"
-#include "pinTimingData.hpp"
 #include "unique_ptr.hpp"
 
 using ::testing::An;
@@ -20,6 +20,7 @@ using ::testing::_;
 using namespace ArduinoEnums;
 using namespace ArgoRcLib;
 using namespace EncoderLib;
+using namespace Globals;
 using namespace Mocks;
 using Hardware::ArduinoInterface;
 
@@ -277,8 +278,8 @@ const size_t steeringPwmIndex = 1;
 
 TEST_F(ArgoRcTest, throttleIsForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkForwardLeftIsOn(hardwareMock);
   checkForwardRightIsOn(hardwareMock);
@@ -295,8 +296,8 @@ TEST_F(ArgoRcTest, throttleIsForward) {
 }
 
 TEST_F(ArgoRcTest, throttleIsReverse) {
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkReverseLeftIsOn(hardwareMock);
   checkReverseRightIsOn(hardwareMock);
@@ -313,8 +314,8 @@ TEST_F(ArgoRcTest, throttleIsReverse) {
 }
 
 TEST_F(ArgoRcTest, leftReverse) {
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
 
   checkReverseRightIsOn(hardwareMock);
 
@@ -329,8 +330,8 @@ TEST_F(ArgoRcTest, leftReverse) {
 }
 
 TEST_F(ArgoRcTest, rightReverse) {
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
 
   checkReverseLeftIsOn(hardwareMock);
 
@@ -346,8 +347,8 @@ TEST_F(ArgoRcTest, rightReverse) {
 
 TEST_F(ArgoRcTest, rightForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
 
   checkForwardRightIsOn(hardwareMock);
 
@@ -363,8 +364,8 @@ TEST_F(ArgoRcTest, rightForward) {
 
 TEST_F(ArgoRcTest, leftForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
 
   checkForwardLeftIsOn(hardwareMock);
 
@@ -382,8 +383,8 @@ TEST_F(ArgoRcTest, leftForward) {
 
 TEST_F(ArgoRcTest, pwmNegativeOff) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds + 1;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds + 1;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds + 1;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds + 1;
 
   checkDirectionRelaysAreOff(hardwareMock);
   checkFootSwitchesAreOff(hardwareMock);
@@ -393,8 +394,8 @@ TEST_F(ArgoRcTest, pwmNegativeOff) {
 
 TEST_F(ArgoRcTest, pwmPositiveOff) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds - 1;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds - 1;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds - 1;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds - 1;
 
   checkDirectionRelaysAreOff(hardwareMock);
   checkFootSwitchesAreOff(hardwareMock);
@@ -405,8 +406,8 @@ TEST_F(ArgoRcTest, pwmPositiveOff) {
 // ---------------- PWM turn on the spot ------------
 TEST_F(ArgoRcTest, leftTurnOnSpot) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds;
 
   checkReverseLeftIsOn(hardwareMock);
   checkForwardRightIsOn(hardwareMock);
@@ -424,8 +425,8 @@ TEST_F(ArgoRcTest, leftTurnOnSpot) {
 
 TEST_F(ArgoRcTest, rightTurnOnSpot) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds;
 
   checkForwardLeftIsOn(hardwareMock);
   checkReverseRightIsOn(hardwareMock);

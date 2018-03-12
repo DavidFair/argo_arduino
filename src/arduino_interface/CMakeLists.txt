@@ -1,13 +1,13 @@
 set(SRC_FILES
+    ArduinoGlobals.cpp
     encoder_interface.cpp
-    pinTimingData.cpp
 )
 
 set(HDR_FILES
+    ArduinoGlobals.hpp
     arduino_enums.hpp
     arduino_interface.hpp
     encoder_interface.hpp
-    pinTimingData.hpp
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/src/lib_wrappers")

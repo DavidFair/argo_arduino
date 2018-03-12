@@ -1,11 +1,13 @@
 
 #include <Arduino.h>
 
+#include "ArduinoGlobals.hpp"
 #include "arduino_hardware.hpp"
 #include "argo_rc_lib.hpp"
 #include "move.hpp"
-#include "pinTimingData.hpp"
 #include "unique_ptr.hpp"
+
+using namespace Globals;
 
 // Forward decleration
 void setupInterrupts();
@@ -38,19 +40,52 @@ void setupInterrupts() {
   // Set ADC8 - ADC15 to input (0) using the port register
   DDRK = 0;
 
-  // enable PCINT which allows us to use the PCMSK register by bitshifting
-  // 1 into the correct register location
-  PCICR |= (1 << PCIE2);
+  // enable PCINT0/2 which allows us to use the PCMSK registers
+  // to enable interrupts on the specified pins
+  PCICR = (1 << PCIE2) | (1 << PCIE0);
 
-  // Set PCINT18 to 23 as ISR triggers
+  // Set PCINT18:23 as ISR triggers for RC controls
   // On the Mega 2560 these are pins A10-A15 as ISR
   PCMSK2 = 0xFC;
+
+  // Set PCINT0:1 as ISR triggers for the encoder
+  PCMSK0 = 0x03;
 
   // The ISR is defined below
 }
 
-// Due to the nature of an ISR we cannot unit test it. Place it within this file
-// as it is hardware specific
+ISR(PCINT0_vect) {
+  // Only the first two bits are used currently
+  const uint8_t LEFT_ENC_BITMASK = 0x01;
+  const uint8_t RIGHT_ENC_BITMASK = 0x02;
+
+  // Store PINB reading so it doesn't change underneath us
+  const uint8_t pinBReading = PINB;
+
+  const uint8_t currentLeftReading = pinBReading & LEFT_ENC_BITMASK;
+  const uint8_t currentRightReading = pinBReading & RIGHT_ENC_BITMASK;
+
+  const auto previousReading =
+      InterruptData::g_pinEncoderData.previousBitReading;
+
+  const uint8_t leftDifference = currentLeftReading ^ previousReading;
+  const uint8_t rightDifference = currentRightReading ^ previousReading;
+
+  InterruptData::g_pinEncoderData.previousBitReading = pinBReading;
+
+  // Determine which pin triggered ISR
+  if (leftDifference != 0) {
+    InterruptData::g_pinEncoderData.leftEncoderCount +=
+        ArgoData::g_currentVehicleDirection.leftWheelDirection;
+  } else if (rightDifference != 0) {
+    InterruptData::g_pinEncoderData.rightEncoderCount +=
+        ArgoData::g_currentVehicleDirection.leftWheelDirection;
+  } else {
+    Serial.println("Encoder ISR triggered with no measured change");
+  }
+}
+
+// ISR for the remote control
 ISR(PCINT2_vect) {
   uint8_t bit;
   uint8_t curr;
@@ -60,8 +95,8 @@ ISR(PCINT2_vect) {
 
   // get the pin states for the indicated port.
   curr = PINK & 0xFC;
-  mask = curr ^ timingData::g_pcIntLast;
-  timingData::g_pcIntLast = curr;
+  mask = curr ^ InterruptData::g_pcIntLast;
+  InterruptData::g_pcIntLast = curr;
 
   currentTime = micros();
 
@@ -70,20 +105,20 @@ ISR(PCINT2_vect) {
     bit = 0x04 << i;
     if (bit & mask) {
       // for each pin changed, record time of change
-      if (bit & timingData::g_pcIntLast) {
-        time = currentTime - timingData::g_pinData[i].fallTime;
-        timingData::g_pinData[i].riseTime = currentTime;
+      if (bit & InterruptData::g_pcIntLast) {
+        time = currentTime - InterruptData::g_pinData[i].fallTime;
+        InterruptData::g_pinData[i].riseTime = currentTime;
         if ((time >= 10000) && (time <= 26000))
-          timingData::g_pinData[i].edge = 1;
+          InterruptData::g_pinData[i].edge = 1;
         else
-          timingData::g_pinData[i].edge = 0; // invalid rising edge detected
+          InterruptData::g_pinData[i].edge = 0; // invalid rising edge detected
       } else {
-        time = currentTime - timingData::g_pinData[i].riseTime;
-        timingData::g_pinData[i].fallTime = currentTime;
+        time = currentTime - InterruptData::g_pinData[i].riseTime;
+        InterruptData::g_pinData[i].fallTime = currentTime;
         if ((time >= 800) && (time <= 2200) &&
-            (timingData::g_pinData[i].edge == 1)) {
-          timingData::g_pinData[i].lastGoodWidth = time;
-          timingData::g_pinData[i].edge = 0;
+            (InterruptData::g_pinData[i].edge == 1)) {
+          InterruptData::g_pinData[i].lastGoodWidth = time;
+          InterruptData::g_pinData[i].edge = 0;
         }
       }
     }

@@ -3,10 +3,10 @@
 
 //#include <Encoder.h>
 
+#include "ArduinoGlobals.hpp"
 #include "arduino_enums.hpp"
 #include "arduino_interface.hpp"
 #include "arduino_lib_wrapper.hpp"
-#include "pinTimingData.hpp"
 
 #include "argo_rc_lib.hpp"
 
@@ -35,6 +35,7 @@ int constrainInput(int initialValue, int minValue, int maxValue,
 
 using namespace ArduinoEnums;
 using namespace EncoderLib;
+using namespace Globals;
 using namespace Hardware;
 
 namespace ArgoRcLib {
@@ -203,8 +204,8 @@ PwmTargets ArgoRc::setMotorTarget(int speed, int steer) {
 }
 
 void ArgoRc::enterDeadmanFail() {
-  timingData::g_pinData[0].lastGoodWidth = 0;
-  timingData::g_pinData[1].lastGoodWidth = 0;
+  InterruptData::g_pinData[0].lastGoodWidth = 0;
+  InterruptData::g_pinData[1].lastGoodWidth = 0;
   m_hardwareInterface->analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0);
   m_hardwareInterface->analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0);
 
@@ -215,8 +216,8 @@ void ArgoRc::enterDeadmanFail() {
 }
 
 PwmTargets ArgoRc::readPwmInput() {
-  int rcPwmThrottleRaw = timingData::g_pinData[0].lastGoodWidth;
-  int rcPwmSteeringRaw = timingData::g_pinData[1].lastGoodWidth;
+  int rcPwmThrottleRaw = InterruptData::g_pinData[0].lastGoodWidth;
+  int rcPwmSteeringRaw = InterruptData::g_pinData[1].lastGoodWidth;
 
   m_hardwareInterface->serialPrint("rc_pwm_throttle_raw: ");
   m_hardwareInterface->serialPrintln(rcPwmThrottleRaw);
