@@ -18,8 +18,8 @@ struct PinTimingData {
 
 struct PinEncoderData {
   uint8_t previousBitReading{0};
-  long leftEncoderCount{0};
-  long rightEncoderCount{0};
+  int32_t leftEncoderCount{0};
+  int32_t rightEncoderCount{0};
 };
 
 // These must be global for both the Interrupt routine (which cannot exist in

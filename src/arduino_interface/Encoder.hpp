@@ -16,20 +16,10 @@ struct EncoderData {
 
 class Encoder {
 public:
-  Encoder(Hardware::ArduinoInterface &hardware);
-
-  Encoder(Encoder &&other) : m_hardware(other.m_hardware) {}
-
-  Encoder &operator=(Encoder &&other) {
-    m_hardware = other.m_hardware;
-    return *this;
-  }
-
   EncoderData read() const;
+  void reset() const;
   void write(ArgoEncoderPositions targetEncoder, int32_t val) const;
 
-private:
-  Hardware::ArduinoInterface &m_hardware;
 }; // namespace Hardware
 
 } // namespace Hardware

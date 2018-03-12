@@ -6,9 +6,6 @@
 using namespace Globals;
 
 namespace Hardware {
-
-Encoder::Encoder(ArduinoInterface &hardware) : m_hardware(hardware) {}
-
 EncoderData Encoder::read() const {
   EncoderData encoderData;
   encoderData.encoderVal[ArgoEncoderPositions::LEFT_ENCODER] =
@@ -20,9 +17,17 @@ EncoderData Encoder::read() const {
   return encoderData;
 }
 
-void write(ArgoEncoderPositions targetEncoder, int32_t val) {
-  (void)targetEncoder;
-  (void)val;
+void Encoder::reset() const {
+  write(ArgoEncoderPositions::LEFT_ENCODER, 0);
+  write(ArgoEncoderPositions::RIGHT_ENCODER, 0);
+}
+
+void Encoder::write(ArgoEncoderPositions targetEncoder, int32_t val) const {
+  if (targetEncoder == ArgoEncoderPositions::LEFT_ENCODER) {
+    InterruptData::g_pinEncoderData.leftEncoderCount = val;
+  } else if (targetEncoder == ArgoEncoderPositions::RIGHT_ENCODER) {
+    InterruptData::g_pinEncoderData.rightEncoderCount = val;
+  }
 }
 
 } // namespace Hardware

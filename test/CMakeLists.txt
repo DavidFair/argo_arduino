@@ -57,5 +57,5 @@ target_link_libraries(EncoderTest ${REQUIRED_LIBS})
 target_link_libraries(SerialComms_test ${REQUIRED_LIBS})
 
 add_test(NAME argo_rc_test COMMAND argo_rc_test)
-add_test(NAME EncoderTest COMMAND Encoder_test)
+add_test(NAME EncoderTest COMMAND EncoderTest)
 add_test(NAME SerialComms_test COMMAND SerialComms_test)
