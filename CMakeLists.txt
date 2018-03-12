@@ -60,8 +60,8 @@ else()
 
     # LTO to reduce overhead from using static libs saves a few MB
     # This was taken from the Arduino IDE compilation flags
-    set(LTO_COMPILER_FLAGS "-MMD -flto -fno-fat-lto-objects")
-    set(LINK_TIME_FLAGS "-flto -fuse-linker-plugin -Wl,--gc-sections")
+    set(LTO_COMPILER_FLAGS " -MMD -flto -fno-fat-lto-objects ")
+    set(LINK_TIME_FLAGS " -flto -fuse-linker-plugin -Wl,--gc-sections ")
     CHECK_CXX_COMPILER_FLAG(${LTO_COMPILER_FLAGS} COMPILER_SUPPORTS_LTO)
 
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.0")
@@ -79,9 +79,6 @@ else()
         mark_as_advanced(CMAKE_LINK_LIBRARY_FLAG)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_TIME_FLAGS}" CACHE STRING "" FORCE)
     endif()
-
-    # Add external library files
-    add_subdirectory(ext)
 endif()
 
 # Source directories common to both targets

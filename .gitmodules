@@ -3,9 +3,6 @@
 	url = https://github.com/arduino-cmake/arduino-cmake.git
 	# Normally we would have target develop branch however
 	# we are waiting on an upstream bugfix in issue #75
-[submodule "ext/encoder"]
-	path = ext/encoder
-	url = https://github.com/PaulStoffregen/Encoder.git
 [submodule "ext/rfm69"]
 	path = ext/rfm69
 	url = https://github.com/lowpowerlab/rfm69.git

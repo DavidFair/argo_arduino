@@ -1,8 +1,8 @@
 #ifndef SERIAL_COMMS_HPP
 #define SERIAL_COMMS_HPP
 
+#include "Encoder.hpp"
 #include "arduino_interface.hpp"
-#include "argo_encoder.hpp"
 
 namespace ArgoRcLib {
 
@@ -10,7 +10,7 @@ class SerialComms {
 public:
   SerialComms(Hardware::ArduinoInterface &hardware);
 
-  void sendEncoderRotation(const EncoderData &data);
+  void sendEncoderRotation(const Hardware::EncoderData &data);
 
 private:
   void appendKVPair(const char *key, const char *value);

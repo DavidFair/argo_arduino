@@ -5,11 +5,10 @@
 #include "arduino_hardware.hpp"
 #include "argo_rc_lib.hpp"
 #include "move.hpp"
-#include "unique_ptr.hpp"
 
 using namespace Globals;
 
-// Forward decleration
+// Forward deceleration
 void setupInterrupts();
 
 // Instantiate argo_rc library at the global level so it doesn't drop out of
@@ -19,11 +18,10 @@ void setupInterrupts();
 Argo::unique_ptr<Hardware::ArduinoInterface>
     hardwareImpl(new Hardware::ArduinoHardware());
 
-Argo::unique_ptr<ArgoRcLib::ArgoEncoder>
-    encoderFactoryImpl(new ArgoRcLib::ArgoEncoder(*hardwareImpl));
+Argo::unique_ptr<Hardware::Encoder>
+    encoderFactoryImpl(new Hardware::Encoder(*hardwareImpl));
 
-ArgoRcLib::ArgoRc argoRcLib(Argo::move(hardwareImpl),
-                            Argo::move(encoderFactoryImpl));
+ArgoRcLib::ArgoRc argoRcLib(*hardwareImpl, *encoderFactoryImpl);
 
 void setup() {
   argoRcLib.setup();
