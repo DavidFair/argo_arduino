@@ -126,6 +126,7 @@ void ArgoRc::footswitch_off() {
 #define DEBUG_OUTPUT_PWM
 
 void ArgoRc::loop() {
+  m_hardwareInterface.serialPrintln("-----New loop------");
   m_commsObject.sendEncoderRotation(m_encoders.read());
 
 #ifdef RC_PWM_ENABLED
@@ -142,6 +143,12 @@ void ArgoRc::loop() {
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
+
+  m_hardwareInterface.serialPrint("Setting LeftPwm: ");
+  m_hardwareInterface.serialPrintln(leftPwmValue);
+
+  m_hardwareInterface.serialPrint("Setting RightPwm: ");
+  m_hardwareInterface.serialPrintln(rightPwmValue);
 
   if ((leftPwmValue > -40 && leftPwmValue < 40) &&
       (rightPwmValue > -40 && rightPwmValue < 40)) {
@@ -219,6 +226,11 @@ PwmTargets ArgoRc::readPwmInput() {
 
   m_hardwareInterface.serialPrint("rc_pwm_steering_raw: ");
   m_hardwareInterface.serialPrintln(rcPwmSteeringRaw);
+
+  if (rcPwmThrottleRaw == 0 && rcPwmSteeringRaw == 0) {
+    // Pin probably not connected or no data. Bail setting the PWM to 0
+    return PwmTargets{0, 0};
+  }
 
   constexpr int centerPoint = 1520;
   constexpr int range = 330;
