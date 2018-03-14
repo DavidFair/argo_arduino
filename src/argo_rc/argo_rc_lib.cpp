@@ -10,9 +10,6 @@
 
 #include "argo_rc_lib.hpp"
 
-//#define TEST_POT_ENABLED
-#define RC_PWM_ENABLED
-
 namespace {
 const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
 const int PWM_MAXIMUM_OUTPUT = 255;
@@ -127,9 +124,6 @@ void ArgoRc::footswitch_off() {
 
 void ArgoRc::loop() {
   m_hardwareInterface.serialPrintln("-----New loop------");
-  m_commsObject.sendEncoderRotation(m_encoders.read());
-
-#ifdef RC_PWM_ENABLED
 
   if (!checkDeadmanSwitch()) {
     // This is for unit testing - enterDeadmanSafetyMode on hardware gets
@@ -137,9 +131,11 @@ void ArgoRc::loop() {
     return;
   }
 
+  m_commsObject.sendEncoderRotation(m_encoders.read());
+  m_commsObject.sendVehicleSpeed(m_encoders.calculateSpeed());
+
   // Deadman switch is high at this point
   auto targetPwmVals = readPwmInput();
-#endif
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
