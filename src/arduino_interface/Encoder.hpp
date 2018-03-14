@@ -4,6 +4,7 @@
 
 #include "move.hpp"
 
+#include "Speed.hpp"
 #include "arduino_interface.hpp"
 
 namespace Hardware {
@@ -16,8 +17,8 @@ struct EncoderPulses {
 };
 
 struct WheelSpeeds {
-  int32_t leftMmPerSec{0};
-  int32_t rightMmPerSec{0};
+  Libs::Speed leftWheels;
+  Libs::Speed rightWheels;
 };
 
 class Encoder {
@@ -32,6 +33,8 @@ public:
   Encoder(Encoder &&other);
   Encoder &operator=(Encoder &&other);
 
+  WheelSpeeds calculateSpeed();
+
   EncoderPulses read() const;
   void reset() const;
 
@@ -40,6 +43,7 @@ private:
 
   ArduinoInterface &m_hardware;
   unsigned long m_lastReadTime{0};
+  EncoderPulses m_lastEncValues;
 
 }; // namespace Hardware
 

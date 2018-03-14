@@ -8,6 +8,7 @@ set(HDR_FILES
     Length.hpp
     move.hpp
     pair.hpp
+    Speed.hpp
     unique_ptr.hpp)
 
 include_directories(

@@ -12,54 +12,68 @@ using namespace Libs;
 
 namespace {
 
-constexpr Length calcRadius(Length diameter) {
-  int32_t radius = diameter.getNanoMeters() * M_PI;
-  return Length(radius);
-}
-
-constexpr Length calcDistancePerEncTick(Length wheelRadius,
-                                        int countsPerWheelRotation) {
-  int32_t distancePerTick =
-      wheelRadius.getNanoMeters() / countsPerWheelRotation;
-  return Length(distancePerTick);
-}
-
 constexpr Length WHEEL_DIAMETER = 0.58_m;
 constexpr int ENC_COUNTS_PER_MOTOR_ROT = 25;
 constexpr int MOTOR_ROT_PER_WHEEL_ROT = 20;
 
-constexpr Length WHEEL_RADIUS = calcRadius(WHEEL_DIAMETER);
+constexpr Length WHEEL_RADIUS = WHEEL_DIAMETER * M_PI;
 constexpr int ENC_COUNTS_PER_WHEEL_ROT =
     ENC_COUNTS_PER_MOTOR_ROT * MOTOR_ROT_PER_WHEEL_ROT;
 
 constexpr Length DISTANCE_PER_ENC_COUNT =
-    calcDistancePerEncTick(WHEEL_RADIUS, ENC_COUNTS_PER_WHEEL_ROT);
+    WHEEL_RADIUS / ENC_COUNTS_PER_WHEEL_ROT;
 } // End of anonymous namespace
 
 namespace Hardware {
-Encoder::Encoder(ArduinoInterface &hardware) : m_hardware(hardware) {}
+Encoder::Encoder(ArduinoInterface &hardware)
+    : m_hardware(hardware), m_lastReadTime(m_hardware.millis()),
+      m_lastEncValues() {}
 
 Encoder::Encoder(Encoder &other)
-    : m_hardware(other.m_hardware), m_lastReadTime(other.m_lastReadTime) {}
+    : m_hardware(other.m_hardware), m_lastReadTime(other.m_lastReadTime),
+      m_lastEncValues(other.m_lastEncValues) {}
 
 Encoder &Encoder::operator=(Encoder &other) {
   if (this != &other) {
     m_hardware = other.m_hardware;
     m_lastReadTime = other.m_lastReadTime;
+    m_lastEncValues = other.m_lastEncValues;
   }
   return *this;
 }
 
 // Allow move constructors
 Encoder::Encoder(Encoder &&other)
-    : m_hardware(other.m_hardware), m_lastReadTime(other.m_lastReadTime) {}
+    : m_hardware(other.m_hardware), m_lastReadTime(other.m_lastReadTime),
+      m_lastEncValues(other.m_lastEncValues) {}
 
 Encoder &Encoder::operator=(Encoder &&other) {
   if (this != &other) {
     m_hardware = other.m_hardware;
     m_lastReadTime = other.m_lastReadTime;
+    m_lastEncValues = other.m_lastEncValues;
   }
   return *this;
+}
+
+WheelSpeeds Encoder::calculateSpeed() {
+  auto currentEncoderValues = read();
+  auto currentTime = m_hardware.millis();
+  long timeDifference = currentTime - m_lastReadTime;
+
+  auto leftPulses =
+      currentEncoderValues.leftEncoderVal - m_lastEncValues.leftEncoderVal;
+  auto rightPulses =
+      currentEncoderValues.rightEncoderVal - m_lastEncValues.rightEncoderVal;
+
+  Speed leftSpeed(DISTANCE_PER_ENC_COUNT * leftPulses, timeDifference);
+  Speed rightSpeed(DISTANCE_PER_ENC_COUNT * rightPulses, timeDifference);
+
+  // Update our last values
+  m_lastReadTime = currentTime;
+  m_lastEncValues = currentEncoderValues;
+
+  return WheelSpeeds{leftSpeed, rightSpeed};
 }
 
 EncoderPulses Encoder::read() const {

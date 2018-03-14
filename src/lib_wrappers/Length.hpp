@@ -7,44 +7,49 @@ namespace Libs {
 
 class Length {
 public:
-  explicit constexpr Length(int32_t nanometers) : m_nanometers(nanometers) {}
+  explicit constexpr Length(int32_t micrometers) : m_micrometers(micrometers) {}
 
   explicit constexpr Length(double meters, int32_t millimeters)
-      : m_nanometers(meters * meterToNanoMeter) {
-    m_nanometers += millimeters * millimeterToNanoMeter;
+      : m_micrometers(meters * METER_TO_MICRO) {
+    m_micrometers += millimeters * MILLI_TO_MICRO;
   }
 
-  constexpr Length operator+(const Length &other) {
-    int32_t totalMillis =
-        (other.m_nanometers + m_nanometers) / millimeterToNanoMeter;
-    return Length(0, totalMillis);
+  constexpr bool operator==(const Length &other) const {
+    return m_micrometers == other.m_micrometers;
   }
 
-  constexpr int32_t getNanoMeters() const { return m_nanometers; }
+  constexpr Length operator+(const Length &other) const {
+    return Length(m_micrometers + other.m_micrometers);
+  }
+
+  constexpr Length operator*(const int32_t multi) const {
+    return Length(m_micrometers * multi);
+  }
+
+  constexpr Length operator/(const int32_t div) const {
+    return Length(m_micrometers / div);
+  }
+
+  constexpr int32_t getMicroMeters() const { return m_micrometers; }
 
   constexpr int32_t getMilliMeters() const {
-    return m_nanometers / millimeterToNanoMeter;
+    return m_micrometers / MILLI_TO_MICRO;
   }
   constexpr double getMeters() const {
-    double val = m_nanometers / (double)meterToNanoMeter;
-    return val;
+    return m_micrometers / (double)METER_TO_MICRO;
   }
 
 private:
-  const int32_t meterToNanoMeter = 1e+09;
-  const int32_t millimeterToNanoMeter = 1e+06;
+  static const int32_t METER_TO_MICRO = 1e+06;
+  static const int32_t MILLI_TO_MICRO = 1e+03;
 
-  // Internally store this as micro meters as we have the space
-  int32_t m_nanometers{0};
+  // Internally store this as micrometers so we don't lose precision
+  int32_t m_micrometers{0};
 }; // namespace Libs
 
 constexpr Length operator"" _m(long double meters) {
   // Has to be a long double as per the standard
   return Length(meters, 0);
-}
-
-constexpr Length operator"" _mm(unsigned long long int millimeters) {
-  return Length(0, millimeters);
 }
 
 } // namespace Libs
