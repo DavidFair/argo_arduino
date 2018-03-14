@@ -26,7 +26,10 @@ protected:
 } // Anonymous namespace
 
 TEST_F(SerialCommsFixture, writesEncoderData) {
-  const EncoderPulses expectedData = {101, 102};
+  EncoderPulses expectedData;
+  expectedData.leftEncoderVal = 101;
+  expectedData.rightEncoderVal = 102;
+
   const std::string expectedString = "!D L_ENC:101 R_ENC:102 ";
 
   EXPECT_CALL(mockObj, serialPrintln(expectedString));
