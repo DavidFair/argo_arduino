@@ -135,23 +135,15 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   case pinMapping::BRAKING_PWM_OUTPUT:
     return 6;
 
-  case pinMapping::LEFT_ENCODER_1:
+  case pinMapping::LEFT_ENCODER:
     return 19;
-  case pinMapping::LEFT_ENCODER_2:
-    return 18;
-  case pinMapping::RIGHT_ENCODER_1:
+  case pinMapping::RIGHT_ENCODER:
     return 20;
-  case pinMapping::RIGHT_ENCODER_2:
-    return 21;
 
   case pinMapping::TEST_POT_POSITIVE:
     return A6;
   case pinMapping::TEST_POT_WIPER:
     return A7;
-
-  case pinMapping::RC_PWM_IN_L:
-    return A10;
-    // TODO A11 for RC_PWM_IN_R
 
   case pinMapping::RC_DEADMAN:
     return 2;

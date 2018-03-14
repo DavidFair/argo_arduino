@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
 #include <string>
 
+#include "Encoder.hpp"
 #include "SerialComms.hpp"
-#include "argo_encoder.hpp"
 #include "mock_arduino.hpp"
+
 
 using ::testing::Test;
 

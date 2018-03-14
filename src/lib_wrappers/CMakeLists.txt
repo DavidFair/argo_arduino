@@ -15,7 +15,6 @@ include_directories(
 if (NOT UNIT_TESTING)
     generate_arduino_library(
     lib_wrappers
-    LIBS encoder
     SRCS ${SRC_FILES}
     HDRS ${HDR_FILES}
     BOARD ${BOARD_TYPE}

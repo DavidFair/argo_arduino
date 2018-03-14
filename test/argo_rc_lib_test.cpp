@@ -1,12 +1,11 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "argo_encoder.hpp"
+#include "ArduinoGlobals.hpp"
+#include "Encoder.hpp"
+#include "arduino_interface.hpp"
 #include "argo_rc_lib.hpp"
-#include "encoder_interface.hpp"
 #include "mock_arduino.hpp"
-#include "mock_encoder.hpp"
-#include "pinTimingData.hpp"
 #include "unique_ptr.hpp"
 
 using ::testing::An;
@@ -19,34 +18,11 @@ using ::testing::_;
 
 using namespace ArduinoEnums;
 using namespace ArgoRcLib;
-using namespace EncoderLib;
-using namespace Mocks;
-using Hardware::ArduinoInterface;
+using namespace Globals;
+using namespace Hardware;
 
 // Anonymous namespace
 namespace {
-// Mock object creation helpers
-Argo::unique_ptr<EncoderInterface> blankEncoderFactoryMethod(pinMapping,
-                                                             pinMapping) {
-  // Returns a default mock object with no expectations
-  return Argo::unique_ptr<EncoderInterface>(new NiceMock<MockEncoder>());
-}
-
-Argo::unique_ptr<EncoderFactory> blankEncoderFactory() {
-  // Creates a factory which embeds the default mock object creation
-  return Argo::unique_ptr<EncoderFactory>(
-      new EncoderFactory(&blankEncoderFactoryMethod));
-}
-
-Argo::unique_ptr<ArgoEncoder> createEncoderDep(MockArduino &hardwareMock) {
-  // Passes the factory to ArgoEncoder to create instances on demand
-  auto encoderFactory = blankEncoderFactory();
-  Argo::unique_ptr<ArgoEncoder> newEncoder(
-      new ArgoEncoder(static_cast<ArduinoInterface &>(hardwareMock),
-                      Argo::move(encoderFactory)));
-  return newEncoder;
-}
-
 // ---------- Functions to setup various checks --------
 
 // RetiresOnSaturation() ensures we can setup multiple expectations
@@ -154,7 +130,7 @@ protected:
   ArgoRcTest()
       : _forwardedPtr(new NiceMock<MockArduino>),
         hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
-        argoRcLib(Argo::move(_forwardedPtr), createEncoderDep(hardwareMock)) {
+        argoRcLib(*_forwardedPtr) {
     returnDeadmanSafe(hardwareMock);
   }
 
@@ -277,8 +253,8 @@ const size_t steeringPwmIndex = 1;
 
 TEST_F(ArgoRcTest, throttleIsForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkForwardLeftIsOn(hardwareMock);
   checkForwardRightIsOn(hardwareMock);
@@ -295,8 +271,8 @@ TEST_F(ArgoRcTest, throttleIsForward) {
 }
 
 TEST_F(ArgoRcTest, throttleIsReverse) {
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkReverseLeftIsOn(hardwareMock);
   checkReverseRightIsOn(hardwareMock);
@@ -313,8 +289,8 @@ TEST_F(ArgoRcTest, throttleIsReverse) {
 }
 
 TEST_F(ArgoRcTest, leftReverse) {
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
 
   checkReverseRightIsOn(hardwareMock);
 
@@ -329,8 +305,8 @@ TEST_F(ArgoRcTest, leftReverse) {
 }
 
 TEST_F(ArgoRcTest, rightReverse) {
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
 
   checkReverseLeftIsOn(hardwareMock);
 
@@ -346,8 +322,8 @@ TEST_F(ArgoRcTest, rightReverse) {
 
 TEST_F(ArgoRcTest, rightForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
 
   checkForwardRightIsOn(hardwareMock);
 
@@ -363,8 +339,8 @@ TEST_F(ArgoRcTest, rightForward) {
 
 TEST_F(ArgoRcTest, leftForward) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
 
   checkForwardLeftIsOn(hardwareMock);
 
@@ -382,8 +358,8 @@ TEST_F(ArgoRcTest, leftForward) {
 
 TEST_F(ArgoRcTest, pwmNegativeOff) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds + 1;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds + 1;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negFortyBounds + 1;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds + 1;
 
   checkDirectionRelaysAreOff(hardwareMock);
   checkFootSwitchesAreOff(hardwareMock);
@@ -393,8 +369,8 @@ TEST_F(ArgoRcTest, pwmNegativeOff) {
 
 TEST_F(ArgoRcTest, pwmPositiveOff) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds - 1;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds - 1;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posFortyBounds - 1;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds - 1;
 
   checkDirectionRelaysAreOff(hardwareMock);
   checkFootSwitchesAreOff(hardwareMock);
@@ -405,8 +381,8 @@ TEST_F(ArgoRcTest, pwmPositiveOff) {
 // ---------------- PWM turn on the spot ------------
 TEST_F(ArgoRcTest, leftTurnOnSpot) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = negFortyBounds;
 
   checkReverseLeftIsOn(hardwareMock);
   checkForwardRightIsOn(hardwareMock);
@@ -424,8 +400,8 @@ TEST_F(ArgoRcTest, leftTurnOnSpot) {
 
 TEST_F(ArgoRcTest, rightTurnOnSpot) {
   // Set timing data to the boundary value
-  timingData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
-  timingData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = posFortyBounds;
 
   checkForwardLeftIsOn(hardwareMock);
   checkReverseRightIsOn(hardwareMock);
@@ -444,39 +420,22 @@ TEST_F(ArgoRcTest, rightTurnOnSpot) {
 // --------- Check Encoder data is printed over serial -------
 // As we need to setup our own on call for the encoder mock don't use text
 // fixtures
-TEST(SerialComms, encoderDataIsSent) {
+TEST_F(ArgoRcTest, encoderDataIsSent) {
   const int32_t expectedVal = 123;
 
-  // Create a factory that sets expectations for us
-  auto factoryMethod = [](pinMapping, pinMapping) {
-    auto mockedEncoder = new NiceMock<MockEncoder>();
-
-    ON_CALL(*mockedEncoder, read()).WillByDefault(Return(expectedVal));
-    return Argo::unique_ptr<EncoderInterface>(mockedEncoder);
-  };
-
-  // Wrap the factory and put it in an object ArgoRc understands
-  Argo::unique_ptr<EncoderFactory> encoderFactory(
-      new EncoderFactory(factoryMethod));
-
-  auto mockArduino = new NiceMock<MockArduino>();
-  Argo::unique_ptr<ArgoEncoder> encoderImpl =
-      (new ArgoEncoder(static_cast<ArduinoInterface &>(*mockArduino),
-                       std::move(encoderFactory)));
+  InterruptData::g_pinEncoderData.leftEncoderCount = expectedVal;
+  InterruptData::g_pinEncoderData.rightEncoderCount = expectedVal;
 
   // Ignore other calls to serialPrintln
-  EXPECT_CALL(*mockArduino, serialPrintln(An<int>())).Times(AnyNumber());
-  EXPECT_CALL(*mockArduino, serialPrintln(An<const std::string &>()))
+  EXPECT_CALL(hardwareMock, serialPrintln(An<int>())).Times(AnyNumber());
+  EXPECT_CALL(hardwareMock, serialPrintln(An<const std::string &>()))
       .Times(AnyNumber());
 
   // Set the deadman switch to safe
-  returnDeadmanSafe(*mockArduino);
+  returnDeadmanSafe(hardwareMock);
 
   const std::string expectedOutput("!D L_ENC_1:123 R_ENC_1:123 ");
-  EXPECT_CALL(*mockArduino, serialPrintln(expectedOutput));
+  EXPECT_CALL(hardwareMock, serialPrintln(expectedOutput));
 
-  ArgoRc testInstance(Argo::unique_ptr<ArduinoInterface>(mockArduino),
-                      std::move(encoderImpl));
-
-  testInstance.loop();
+  argoRcLib.loop();
 }

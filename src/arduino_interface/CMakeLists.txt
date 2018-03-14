@@ -1,21 +1,20 @@
 set(SRC_FILES
-    encoder_interface.cpp
-    pinTimingData.cpp
+    ArduinoGlobals.cpp
+    Encoder.cpp
 )
 
 set(HDR_FILES
+    ArduinoGlobals.hpp
     arduino_enums.hpp
     arduino_interface.hpp
-    encoder_interface.hpp
-    pinTimingData.hpp
+    Encoder.hpp
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/src/lib_wrappers")
 
 if (NOT UNIT_TESTING)
     # Bring in hardware definition for factory
-    include_directories("${PROJECT_SOURCE_DIR}/src/arduino_hardware"
-                        "${PROJECT_SOURCE_DIR}/ext/encoder")
+    include_directories("${PROJECT_SOURCE_DIR}/src/arduino_hardware")
 
     generate_arduino_library(
     arduino_interface

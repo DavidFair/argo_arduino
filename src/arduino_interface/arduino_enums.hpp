@@ -17,6 +17,8 @@ enum digitalIO {
   E_LOW
 };
 
+enum Direction { FORWARD = 1, REVERSE = -1 };
+
 enum pinMapping {
   // Digital pins
   LEFT_FORWARD_RELAY,
@@ -28,11 +30,9 @@ enum pinMapping {
   LEFT_FOOTSWITCH_RELAY,
   RIGHT_FOOTSWITCH_RELAY,
 
-  LEFT_ENCODER_1,
-  LEFT_ENCODER_2,
+  LEFT_ENCODER,
 
-  RIGHT_ENCODER_1,
-  RIGHT_ENCODER_2,
+  RIGHT_ENCODER,
 
   TEST_POT_POSITIVE,
 
@@ -45,7 +45,6 @@ enum pinMapping {
   STEERING_PWM_OUTPUT,
   BRAKING_PWM_OUTPUT,
 
-  RC_PWM_IN_L,
   TEST_POT_WIPER
 };
 
@@ -53,8 +52,7 @@ static const pinMapping allDigitalPins[] = {
     pinMapping::LEFT_FORWARD_RELAY,    pinMapping::LEFT_REVERSE_RELAY,
     pinMapping::RIGHT_FORWARD_RELAY,   pinMapping::RIGHT_REVERSE_RELAY,
     pinMapping::LEFT_FOOTSWITCH_RELAY, pinMapping::RIGHT_FOOTSWITCH_RELAY,
-    pinMapping::LEFT_ENCODER_1,        pinMapping::LEFT_ENCODER_2,
-    pinMapping::RIGHT_ENCODER_1,       pinMapping::RIGHT_ENCODER_2,
+    pinMapping::LEFT_ENCODER,          pinMapping::RIGHT_ENCODER,
     pinMapping::TEST_POT_POSITIVE,     pinMapping::RC_DEADMAN};
 
 } // namespace ArduinoEnums

@@ -2,9 +2,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "SerialComms.hpp"
+#include "Encoder.hpp"
 #include "arduino_interface.hpp"
-#include "argo_encoder.hpp"
+
+#include "SerialComms.hpp"
+
+using namespace Hardware;
 
 /* We use char * arrays instead of Strings on the Arduino. This
  * helps reduce memory fragmentation and overhead associated with
@@ -18,8 +21,8 @@ const char SEPERATOR = ' ';
 const char *DATA_TRANSMIT_PREFIX = "!D ";
 
 // Function specific data
-const char *ENCODER_NAMES[ArgoRcLib::ArgoEncoderPositions::_NUM_OF_ENCODERS] = {
-    "L_ENC_1", "R_ENC_1"};
+const char *ENCODER_NAMES[ArgoEncoderPositions::_NUM_OF_ENCODERS] = {"L_ENC_1",
+                                                                     "R_ENC_1"};
 
 } // namespace
 

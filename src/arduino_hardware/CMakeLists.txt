@@ -7,18 +7,16 @@ set(SRC_FILES
 
 set(HDR_FILES
     arduino_hardware.hpp
-    encoder_impl.hpp
 )
 
 include_directories(
     "${PROJECT_SOURCE_DIR}/src/arduino_interface"
     "${PROJECT_SOURCE_DIR}/src/lib_wrappers"
-    "${PROJECT_SOURCE_DIR}/ext/encoder"
 )
 
 generate_arduino_library(
   arduino_hardware
-  LIBS encoder arduino_interface
+  LIBS arduino_interface
   SRCS ${SRC_FILES}
   HDRS ${HDR_FILES}
   BOARD ${BOARD_TYPE}
