@@ -12,6 +12,11 @@
 namespace ArgoRcLib {
 
 struct PwmTargets {
+  PwmTargets() : PwmTargets(0, 0) {}
+
+  PwmTargets(int leftPwmTarget, int rightPwmTarget)
+      : leftPwm(leftPwmTarget), rightPwm(rightPwmTarget) {}
+
   int leftPwm{0};
   int rightPwm{0};
 };

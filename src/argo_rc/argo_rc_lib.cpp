@@ -229,7 +229,7 @@ PwmTargets ArgoRc::readPwmInput() {
 
   if (rcPwmThrottleRaw == 0 && rcPwmSteeringRaw == 0) {
     // Pin probably not connected or no data. Bail setting the PWM to 0
-    return PwmTargets{0, 0};
+    return PwmTargets(0, 0);
   }
 
   constexpr int centerPoint = 1520;
