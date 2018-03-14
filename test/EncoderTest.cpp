@@ -44,17 +44,18 @@ TEST_F(EncoderFixture, startsAtZero) {
   EXPECT_EQ(0, returnedVals.rightEncoderVal);
 }
 
+const Length wheelRadius = 0.58_m * M_PI;
+// 25 counts : 1 motor rotation
+// 20 motor rotations : 1 wheel rotation
+const int countsPerWheelRotation = 25 * 20;
+
 TEST_F(EncoderFixture, calculatesSpeed) {
-  const Length wheelRadius = 0.58_m * M_PI;
   const unsigned long ONE_SEC = 1000;
   const Speed wheelTurnPerSec(wheelRadius, ONE_SEC);
   const auto expectedSpeed = wheelTurnPerSec.getMilliMetersPerSecond();
 
   ASSERT_EQ(expectedSpeed, wheelRadius.getMilliMeters());
 
-  // 25 counts : 1 motor rotation
-  // 20 motor rotations : 1 wheel rotation
-  const int countsPerWheelRotation = 25 * 20;
   InterruptData::g_pinEncoderData.leftEncoderCount = countsPerWheelRotation;
   InterruptData::g_pinEncoderData.rightEncoderCount =
       2 * countsPerWheelRotation;
@@ -65,6 +66,40 @@ TEST_F(EncoderFixture, calculatesSpeed) {
 
   EXPECT_EQ(speed.leftWheel.getMilliMetersPerSecond(), expectedSpeed);
   EXPECT_EQ(speed.rightWheel.getMilliMetersPerSecond(), 2 * expectedSpeed);
+}
+
+TEST_F(EncoderFixture, calculatesSpeedAsTimeVaries) {
+  const unsigned long ONE_SEC = 1000;
+  const unsigned long HALF_SECOND = 500;
+
+  EXPECT_CALL(*mockHardware, millis()).WillOnce(Return(ONE_SEC + HALF_SECOND));
+
+  EXPECT_CALL(*mockHardware, millis())
+      .WillOnce(Return(HALF_SECOND))
+      .RetiresOnSaturation();
+
+  InterruptData::g_pinEncoderData.leftEncoderCount = countsPerWheelRotation;
+  InterruptData::g_pinEncoderData.rightEncoderCount = countsPerWheelRotation;
+
+  const Speed expectedHalfSec(wheelRadius, HALF_SECOND);
+  auto halfSecSpeed = testInstance.calculateSpeed();
+
+  EXPECT_EQ(halfSecSpeed.leftWheel.getMilliMetersPerSecond(),
+            expectedHalfSec.getMilliMetersPerSecond());
+  EXPECT_EQ(halfSecSpeed.rightWheel.getMilliMetersPerSecond(),
+            expectedHalfSec.getMilliMetersPerSecond());
+
+  // Vehicle reverses in one second
+  InterruptData::g_pinEncoderData.leftEncoderCount = 0;
+  InterruptData::g_pinEncoderData.rightEncoderCount = 0;
+
+  const Speed expectedOneSec(wheelRadius, ONE_SEC);
+  auto oneSecSpeed = testInstance.calculateSpeed();
+
+  EXPECT_EQ(oneSecSpeed.leftWheel.getMilliMetersPerSecond(),
+            -(expectedOneSec.getMilliMetersPerSecond()));
+  EXPECT_EQ(oneSecSpeed.rightWheel.getMilliMetersPerSecond(),
+            -(expectedOneSec.getMilliMetersPerSecond()));
 }
 
 TEST_F(EncoderFixture, read) {

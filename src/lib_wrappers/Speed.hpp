@@ -17,14 +17,14 @@ public:
   }
 
   constexpr int32_t getMilliMetersPerSecond() const {
-    return m_distance.getMilliMeters() / (m_millis / MILLIS_PER_SEC);
+    return m_distance.getMilliMeters() / (m_millis / (double)MILLIS_PER_SEC);
   }
 
 private:
   static const int MILLIS_PER_SEC = 1000;
 
   Length m_distance;
-  unsigned long m_millis;
+  int32_t m_millis;
 };
 
 } // namespace Libs
