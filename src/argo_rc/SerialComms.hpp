@@ -10,13 +10,15 @@ class SerialComms {
 public:
   SerialComms(Hardware::ArduinoInterface &hardware);
 
-  void sendEncoderRotation(const Hardware::EncoderData &data);
+  void sendEncoderRotation(const Hardware::EncoderPulses &data);
 
 private:
   void appendKVPair(const char *key, const char *value);
 
   void appendToOutputBuf(const char c);
   void appendToOutputBuf(const char *s);
+
+  void addEncoderValToBuffer(const char *encoderName, int32_t encoderVal);
 
   void sendCurrentBuffer();
 

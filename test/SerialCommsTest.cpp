@@ -5,7 +5,6 @@
 #include "SerialComms.hpp"
 #include "mock_arduino.hpp"
 
-
 using ::testing::Test;
 
 using namespace Hardware;
@@ -24,7 +23,7 @@ protected:
 } // Anonymous namespace
 
 TEST_F(SerialCommsFixture, writesEncoderData) {
-  const EncoderData expectedData = {101, 102};
+  const EncoderPulses expectedData = {101, 102};
   const std::string expectedString = "!D L_ENC_1:101 R_ENC_1:102 ";
 
   EXPECT_CALL(mockObj, serialPrintln(expectedString));

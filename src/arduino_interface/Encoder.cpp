@@ -1,17 +1,23 @@
 #include <stdint.h>
 
 #include "ArduinoGlobals.hpp"
+#include "Length.hpp"
+
 #include "Encoder.hpp"
 
 using namespace Globals;
 
-namespace Hardware {
-EncoderData Encoder::read() const {
-  EncoderData encoderData;
-  encoderData.encoderVal[ArgoEncoderPositions::LEFT_ENCODER] =
-      InterruptData::g_pinEncoderData.leftEncoderCount;
+namespace {
+// constexpr int
 
-  encoderData.encoderVal[ArgoEncoderPositions::RIGHT_ENCODER] =
+} // End of anonymous namespace
+
+namespace Hardware {
+EncoderPulses Encoder::read() const {
+  EncoderPulses encoderData;
+  encoderData.leftEncoderVal = InterruptData::g_pinEncoderData.leftEncoderCount;
+
+  encoderData.rightEncoderVal =
       InterruptData::g_pinEncoderData.rightEncoderCount;
 
   return encoderData;

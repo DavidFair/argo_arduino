@@ -31,32 +31,33 @@ namespace ArgoRcLib {
 SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
     : m_hardwareInterface(hardware) {}
 
-void SerialComms::sendEncoderRotation(const EncoderData &data) {
-  // The maximum number of digits in either encoder output
-  const uint8_t NUM_DEC_PLACES = 10;
+void SerialComms::sendEncoderRotation(const EncoderPulses &data) {
 
   // Prepare our output buffer - prepend that we are sending data
   appendToOutputBuf(DATA_TRANSMIT_PREFIX);
 
-  for (uint8_t i = 0;
-       i < static_cast<uint8_t>(ArgoEncoderPositions::_NUM_OF_ENCODERS); i++) {
-    const auto encoderVal = data.encoderVal[i];
-
-    char convertedNumber[NUM_DEC_PLACES];
-// Abuse snprintf to convert our value
-#ifdef UNIT_TESTING
-    snprintf(convertedNumber, sizeof(convertedNumber), "%d", encoderVal);
-#else
-    // On Arduino a int32_t is equivalent to a long decimal
-    snprintf(convertedNumber, sizeof(convertedNumber), "%ld", encoderVal);
-#endif
-
-    // Convert each number and forward as a K-V pair
-    appendKVPair(ENCODER_NAMES[i], convertedNumber);
-    appendToOutputBuf(SEPERATOR);
-  }
+  addEncoderValToBuffer(ENCODER_NAMES[0], data.leftEncoderVal);
+  addEncoderValToBuffer(ENCODER_NAMES[1], data.rightEncoderVal);
 
   sendCurrentBuffer();
+}
+
+void SerialComms::addEncoderValToBuffer(const char *encoderName,
+                                        int32_t encoderVal) {
+  // The maximum number of digits in either encoder output
+  constexpr int NUM_DEC_PLACES = 10;
+  char convertedNumber[NUM_DEC_PLACES];
+// Abuse snprintf to convert our value
+#ifdef UNIT_TESTING
+  snprintf(convertedNumber, sizeof(convertedNumber), "%d", encoderVal);
+#else
+  // On Arduino a int32_t is equivalent to a long decimal
+  snprintf(convertedNumber, sizeof(convertedNumber), "%ld", encoderVal);
+#endif
+
+  // Convert each number and forward as a K-V pair
+  appendKVPair(encoderName, convertedNumber);
+  appendToOutputBuf(SEPERATOR);
 }
 
 void SerialComms::appendKVPair(const char *key, const char *value) {
