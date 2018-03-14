@@ -38,7 +38,7 @@ public:
 
   ArgoRc &operator=(ArgoRc &&other) {
     m_hardwareInterface = other.m_hardwareInterface;
-    m_encoders = Argo::move(other.m_encoders);
+    m_encoders = Libs::move(other.m_encoders);
     return *this;
   }
 

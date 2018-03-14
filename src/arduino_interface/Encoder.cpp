@@ -6,10 +6,10 @@
 #include "Encoder.hpp"
 
 using namespace Globals;
+using namespace Libs;
 
 namespace {
-// constexpr int
-
+// constexpr Length
 } // End of anonymous namespace
 
 namespace Hardware {

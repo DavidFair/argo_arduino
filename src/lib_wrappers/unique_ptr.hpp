@@ -1,7 +1,7 @@
 #ifndef UNIQUE_PTR_HPP_
 #define UNIQUE_PTR_HPP_
 
-namespace Argo {
+namespace Libs {
 
 template <typename T> class unique_ptr {
 public:
@@ -45,6 +45,6 @@ private:
   T *ptr;
 };
 
-} // namespace Argo
+} // namespace Libs
 
 #endif // UNIQUE_PTR_HPP_

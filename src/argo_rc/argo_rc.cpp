@@ -15,7 +15,7 @@ void setupInterrupts();
 // scope
 // The hardware abstraction must live as long as the program runs so there
 // is no corresponding free
-Argo::unique_ptr<Hardware::ArduinoInterface>
+Libs::unique_ptr<Hardware::ArduinoInterface>
     hardwareImpl(new Hardware::ArduinoHardware());
 
 ArgoRcLib::ArgoRc argoRcLib(*hardwareImpl);

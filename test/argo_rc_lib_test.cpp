@@ -136,7 +136,7 @@ protected:
 
   // This pointer has its ownership transfered to ArgoRc however we still
   // hold a reference so we can set expectations
-  Argo::unique_ptr<ArduinoInterface> _forwardedPtr;
+  Libs::unique_ptr<ArduinoInterface> _forwardedPtr;
   NiceMock<MockArduino> &hardwareMock;
   ArgoRc argoRcLib;
 };

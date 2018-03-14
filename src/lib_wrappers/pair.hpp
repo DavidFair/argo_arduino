@@ -1,7 +1,7 @@
 #ifndef PAIR_HPP_
 #define PAIR_HPP_
 
-namespace Argo {
+namespace Libs {
 
 template <class T1, class T2> struct pair {
   T1 first;
@@ -13,6 +13,6 @@ template <class T1, class T2> struct pair {
   pair(pair &&other) : first(other.first), second(other.second) {}
 };
 
-} // Namespace Argo
+} // namespace Libs
 
 #endif // PAIR_HPP_
