@@ -40,7 +40,7 @@ using namespace Hardware;
 namespace ArgoRcLib {
 
 ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface)
-    : m_hardwareInterface(hardwareInterface), m_encoders(),
+    : m_hardwareInterface(hardwareInterface), m_encoders(m_hardwareInterface),
       m_commsObject(m_hardwareInterface) {}
 
 void ArgoRc::setup() {

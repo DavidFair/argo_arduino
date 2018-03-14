@@ -19,8 +19,10 @@ public:
   }
 
   unique_ptr &operator=(unique_ptr &&other) {
-    ptr = other.ptr;
-    other.ptr = nullptr;
+    if (this != &other) {
+      ptr = other.ptr;
+      other.ptr = nullptr;
+    }
     return *this;
   }
 

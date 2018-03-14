@@ -7,25 +7,36 @@ namespace Libs {
 
 class Length {
 public:
+  explicit constexpr Length(int32_t nanometers) : m_nanometers(nanometers) {}
+
   explicit constexpr Length(double meters, int32_t millimeters)
-      : m_millimeters(millimeters) {
-    m_millimeters += convertMeterToMilliMeter(meters);
+      : m_nanometers(meters * meterToNanoMeter) {
+    m_nanometers += millimeters * millimeterToNanoMeter;
   }
 
   constexpr Length operator+(const Length &other) {
-    int32_t total = other.m_millimeters + m_millimeters;
-    return Length(0, total);
+    int32_t totalMillis =
+        (other.m_nanometers + m_nanometers) / millimeterToNanoMeter;
+    return Length(0, totalMillis);
   }
 
-  constexpr int32_t getMilliMeters() const { return m_millimeters; }
+  constexpr int32_t getNanoMeters() const { return m_nanometers; }
+
+  constexpr int32_t getMilliMeters() const {
+    return m_nanometers / millimeterToNanoMeter;
+  }
+  constexpr double getMeters() const {
+    double val = m_nanometers / (double)meterToNanoMeter;
+    return val;
+  }
 
 private:
-  constexpr int32_t convertMeterToMilliMeter(double meters) {
-    return meters * 1000;
-  }
+  const int32_t meterToNanoMeter = 1e+09;
+  const int32_t millimeterToNanoMeter = 1e+06;
 
-  int32_t m_millimeters{0};
-};
+  // Internally store this as micro meters as we have the space
+  int32_t m_nanometers{0};
+}; // namespace Libs
 
 constexpr Length operator"" _m(long double meters) {
   // Has to be a long double as per the standard

@@ -22,11 +22,24 @@ struct WheelSpeeds {
 
 class Encoder {
 public:
+  Encoder(ArduinoInterface &hardware);
+
+  // Copy constructors
+  Encoder(Encoder &other);
+  Encoder &operator=(Encoder &other);
+
+  // Move constructors
+  Encoder(Encoder &&other);
+  Encoder &operator=(Encoder &&other);
+
   EncoderPulses read() const;
   void reset() const;
 
 private:
   void write(ArgoEncoderPositions targetEncoder, int32_t val) const;
+
+  ArduinoInterface &m_hardware;
+  unsigned long m_lastReadTime{0};
 
 }; // namespace Hardware
 
