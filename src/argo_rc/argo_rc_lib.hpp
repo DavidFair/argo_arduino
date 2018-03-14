@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "Encoder.hpp"
+#include "PidController.hpp"
 #include "SerialComms.hpp"
 #include "arduino_interface.hpp"
 #include "move.hpp"

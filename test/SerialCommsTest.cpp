@@ -2,7 +2,7 @@
 #include <string>
 
 #include "Encoder.hpp"
-#include "Length.hpp"
+#include "Distance.hpp"
 #include "SerialComms.hpp"
 #include "Speed.hpp"
 #include "mock_arduino.hpp"
@@ -37,8 +37,8 @@ TEST_F(SerialCommsFixture, writesEncoderData) {
 }
 
 TEST_F(SerialCommsFixture, writesSpeedData) {
-  const Length oneMeter = 1.0_m;
-  const auto oneSecond = 1000;
+  const Distance oneMeter = 1.0_m;
+  const auto oneSecond = 1_s;
   const Speed oneMeterSecond(oneMeter, oneSecond);
   const Speed twoMeterSecond(oneMeter * 2, oneSecond);
 

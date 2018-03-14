@@ -5,29 +5,32 @@
 
 namespace Libs {
 
-class Length {
+class Distance {
 public:
-  explicit constexpr Length(int32_t micrometers) : m_micrometers(micrometers) {}
+  constexpr Distance() : m_micrometers(0) {}
+
+  explicit constexpr Distance(int32_t micrometers)
+      : m_micrometers(micrometers) {}
 
   // Have to do this all in initialiser for avr-gcc 4.8.x
-  explicit constexpr Length(double meters, int32_t millimeters)
+  explicit constexpr Distance(double meters, int32_t millimeters)
       : m_micrometers((meters * METER_TO_MICRO) +
                       (millimeters * MILLI_TO_MICRO)) {}
 
-  constexpr bool operator==(const Length &other) const {
+  constexpr bool operator==(const Distance &other) const {
     return m_micrometers == other.m_micrometers;
   }
 
-  constexpr Length operator+(const Length &other) const {
-    return Length(m_micrometers + other.m_micrometers);
+  constexpr Distance operator+(const Distance &other) const {
+    return Distance(m_micrometers + other.m_micrometers);
   }
 
-  constexpr Length operator*(const int32_t multi) const {
-    return Length(m_micrometers * multi);
+  constexpr Distance operator*(const int32_t multi) const {
+    return Distance(m_micrometers * multi);
   }
 
-  constexpr Length operator/(const int32_t div) const {
-    return Length(m_micrometers / div);
+  constexpr Distance operator/(const int32_t div) const {
+    return Distance(m_micrometers / div);
   }
 
   constexpr int32_t getMicroMeters() const { return m_micrometers; }
@@ -47,9 +50,13 @@ private:
   int32_t m_micrometers{0};
 }; // namespace Libs
 
-constexpr Length operator"" _m(long double meters) {
+constexpr Distance operator"" _m(unsigned long long meters) {
+  return Distance(meters, 0);
+}
+
+constexpr Distance operator"" _m(long double meters) {
   // Has to be a long double as per the standard
-  return Length(meters, 0);
+  return Distance(meters, 0);
 }
 
 } // namespace Libs

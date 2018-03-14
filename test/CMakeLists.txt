@@ -41,11 +41,16 @@ include_directories(
     "${PROJECT_SOURCE_DIR}/src/lib_wrappers"
     )
 
-add_executable(argo_rc_test argo_rc_lib_test.cpp main.cpp)
-add_executable(EncoderTest EncoderTest.cpp main.cpp)
-add_executable(SerialComms_test SerialCommsTest.cpp main.cpp)
+add_library(test_main STATIC main.cpp)
+target_link_libraries(test_main gmock_main)
+
+add_executable(argo_rc_test argo_rc_lib_test.cpp)
+add_executable(EncoderTest EncoderTest.cpp)
+add_executable(SerialComms_test SerialCommsTest.cpp)
+add_executable(PidControllerTest PidControllerTest.cpp)
 
 set(REQUIRED_LIBS
+  test_main
   gmock_main 
   argo_lib 
   arduino_interface
@@ -55,7 +60,9 @@ set(REQUIRED_LIBS
 target_link_libraries(argo_rc_test ${REQUIRED_LIBS})
 target_link_libraries(EncoderTest ${REQUIRED_LIBS})
 target_link_libraries(SerialComms_test ${REQUIRED_LIBS})
+target_link_libraries(PidControllerTest ${REQUIRED_LIBS})
 
 add_test(NAME argo_rc_test COMMAND argo_rc_test)
 add_test(NAME EncoderTest COMMAND EncoderTest)
 add_test(NAME SerialComms_test COMMAND SerialComms_test)
+add_test(NAME PidControllerTest COMMAND PidControllerTest)

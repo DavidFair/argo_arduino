@@ -3,28 +3,29 @@
 
 #include <stdint.h>
 
-#include "Length.hpp"
+#include "Distance.hpp"
+#include "Time.hpp"
 
 namespace Libs {
 
 class Speed {
 public:
-  constexpr Speed(Length length, unsigned long millisTime)
-      : m_distance(length), m_millis(millisTime) {}
+  constexpr Speed() : m_distance(), m_time(1_s) {}
+
+  constexpr Speed(Distance length, Time time)
+      : m_distance(length), m_time(time) {}
 
   constexpr bool operator==(Speed other) const {
-    return m_distance == other.m_distance && m_millis == other.m_millis;
+    return m_distance == other.m_distance && m_time == other.m_time;
   }
 
   constexpr int32_t getMilliMetersPerSecond() const {
-    return m_distance.getMilliMeters() / (m_millis / (double)MILLIS_PER_SEC);
+    return m_distance.getMilliMeters() / m_time.seconds();
   }
 
 private:
-  static const int MILLIS_PER_SEC = 1000;
-
-  Length m_distance;
-  int32_t m_millis;
+  Distance m_distance;
+  Time m_time;
 };
 
 } // namespace Libs
