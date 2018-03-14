@@ -1,7 +1,7 @@
 #ifndef MOVE_HPP_
 #define MOVE_HPP_
 
-namespace Argo {
+namespace Libs {
 
 // --------------------------------------
 // Minimal remove reference by Jonathan Wakely
@@ -20,6 +20,6 @@ constexpr typename remove_reference<T>::type &&move(T &&obj) {
   return static_cast<typename remove_reference<T>::type &&>(obj);
 }
 
-} // Namespace Argo
+} // namespace Libs
 
 #endif // MOVE_HPP_

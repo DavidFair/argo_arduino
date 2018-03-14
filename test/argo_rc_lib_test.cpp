@@ -136,7 +136,7 @@ protected:
 
   // This pointer has its ownership transfered to ArgoRc however we still
   // hold a reference so we can set expectations
-  Argo::unique_ptr<ArduinoInterface> _forwardedPtr;
+  Libs::unique_ptr<ArduinoInterface> _forwardedPtr;
   NiceMock<MockArduino> &hardwareMock;
   ArgoRc argoRcLib;
 };
@@ -434,7 +434,7 @@ TEST_F(ArgoRcTest, encoderDataIsSent) {
   // Set the deadman switch to safe
   returnDeadmanSafe(hardwareMock);
 
-  const std::string expectedOutput("!D L_ENC_1:123 R_ENC_1:123 ");
+  const std::string expectedOutput("!D L_ENC:123 R_ENC:123 ");
   EXPECT_CALL(hardwareMock, serialPrintln(expectedOutput));
 
   argoRcLib.loop();
