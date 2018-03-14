@@ -9,10 +9,10 @@ class Length {
 public:
   explicit constexpr Length(int32_t micrometers) : m_micrometers(micrometers) {}
 
+  // Have to do this all in initialiser for avr-gcc 4.8.x
   explicit constexpr Length(double meters, int32_t millimeters)
-      : m_micrometers(meters * METER_TO_MICRO) {
-    m_micrometers += millimeters * MILLI_TO_MICRO;
-  }
+      : m_micrometers((meters * METER_TO_MICRO) +
+                      (millimeters * MILLI_TO_MICRO)) {}
 
   constexpr bool operator==(const Length &other) const {
     return m_micrometers == other.m_micrometers;
