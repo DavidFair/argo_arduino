@@ -87,14 +87,14 @@ EncoderPulses Encoder::read() const {
 }
 
 void Encoder::reset() const {
-  write(ArgoEncoderPositions::LEFT_ENCODER, 0);
-  write(ArgoEncoderPositions::RIGHT_ENCODER, 0);
+  write(EncoderPositions::LEFT_ENCODER, 0);
+  write(EncoderPositions::RIGHT_ENCODER, 0);
 }
 
-void Encoder::write(ArgoEncoderPositions targetEncoder, int32_t val) const {
-  if (targetEncoder == ArgoEncoderPositions::LEFT_ENCODER) {
+void Encoder::write(EncoderPositions targetEncoder, int32_t val) const {
+  if (targetEncoder == EncoderPositions::LEFT_ENCODER) {
     InterruptData::g_pinEncoderData.leftEncoderCount = val;
-  } else if (targetEncoder == ArgoEncoderPositions::RIGHT_ENCODER) {
+  } else if (targetEncoder == EncoderPositions::RIGHT_ENCODER) {
     InterruptData::g_pinEncoderData.rightEncoderCount = val;
   }
 }

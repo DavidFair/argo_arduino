@@ -9,7 +9,7 @@
 
 namespace Hardware {
 
-enum ArgoEncoderPositions { LEFT_ENCODER, RIGHT_ENCODER, _NUM_OF_ENCODERS };
+enum EncoderPositions { LEFT_ENCODER, RIGHT_ENCODER, _NUM_OF_ENCODERS };
 
 struct EncoderPulses {
   int32_t leftEncoderVal{0};
@@ -17,8 +17,8 @@ struct EncoderPulses {
 };
 
 struct WheelSpeeds {
-  Libs::Speed leftWheels;
-  Libs::Speed rightWheels;
+  Libs::Speed leftWheel;
+  Libs::Speed rightWheel;
 };
 
 class Encoder {
@@ -39,7 +39,7 @@ public:
   void reset() const;
 
 private:
-  void write(ArgoEncoderPositions targetEncoder, int32_t val) const;
+  void write(EncoderPositions targetEncoder, int32_t val) const;
 
   ArduinoInterface &m_hardware;
   unsigned long m_lastReadTime{0};

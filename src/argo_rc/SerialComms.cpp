@@ -1,9 +1,9 @@
-#include "cstring_wrapper.hpp"
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "Encoder.hpp"
 #include "arduino_interface.hpp"
+#include "cstring_wrapper.hpp"
 
 #include "SerialComms.hpp"
 
@@ -21,8 +21,10 @@ const char SEPERATOR = ' ';
 const char *DATA_TRANSMIT_PREFIX = "!D ";
 
 // Function specific data
-const char *ENCODER_NAMES[ArgoEncoderPositions::_NUM_OF_ENCODERS] = {"L_ENC_1",
-                                                                     "R_ENC_1"};
+constexpr int NUM_ENCODER = EncoderPositions::_NUM_OF_ENCODERS;
+
+const char *ENCODER_NAMES[NUM_ENCODER] = {"L_ENC", "R_ENC"};
+const char *SPEED_PREFIX[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
 
 } // namespace
 
@@ -32,38 +34,47 @@ SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
     : m_hardwareInterface(hardware) {}
 
 void SerialComms::sendEncoderRotation(const EncoderPulses &data) {
-
   // Prepare our output buffer - prepend that we are sending data
   appendToOutputBuf(DATA_TRANSMIT_PREFIX);
 
-  addEncoderValToBuffer(ENCODER_NAMES[0], data.leftEncoderVal);
-  addEncoderValToBuffer(ENCODER_NAMES[1], data.rightEncoderVal);
+  // The maximum number of digits in either encoder output
+  constexpr int NUM_DEC_PLACES = 6;
+  char convertedNumber[NUM_DEC_PLACES];
+
+  // Convert each number and forward as a K-V pair
+  convertValue(convertedNumber, NUM_DEC_PLACES, data.leftEncoderVal);
+  appendKVPair(ENCODER_NAMES[EncoderPositions::LEFT_ENCODER], convertedNumber);
+
+  convertValue(convertedNumber, NUM_DEC_PLACES, data.rightEncoderVal);
+  appendKVPair(ENCODER_NAMES[EncoderPositions::RIGHT_ENCODER], convertedNumber);
 
   sendCurrentBuffer();
 }
 
-void SerialComms::addEncoderValToBuffer(const char *encoderName,
-                                        int32_t encoderVal) {
-  // The maximum number of digits in either encoder output
+void SerialComms::sendVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
+  appendToOutputBuf(DATA_TRANSMIT_PREFIX);
+
   constexpr int NUM_DEC_PLACES = 10;
   char convertedNumber[NUM_DEC_PLACES];
-// Abuse snprintf to convert our value
-#ifdef UNIT_TESTING
-  snprintf(convertedNumber, sizeof(convertedNumber), "%d", encoderVal);
-#else
-  // On Arduino a int32_t is equivalent to a long decimal
-  snprintf(convertedNumber, sizeof(convertedNumber), "%ld", encoderVal);
-#endif
 
-  // Convert each number and forward as a K-V pair
-  appendKVPair(encoderName, convertedNumber);
-  appendToOutputBuf(SEPERATOR);
+  convertValue(convertedNumber, NUM_DEC_PLACES,
+               speeds.leftWheel.getMilliMetersPerSecond());
+  appendKVPair(SPEED_PREFIX[EncoderPositions::LEFT_ENCODER], convertedNumber);
+
+  convertValue(convertedNumber, NUM_DEC_PLACES,
+               speeds.rightWheel.getMilliMetersPerSecond());
+  appendKVPair(SPEED_PREFIX[EncoderPositions::RIGHT_ENCODER], convertedNumber);
+
+  sendCurrentBuffer();
 }
+
+// --------- Private methods ------------
 
 void SerialComms::appendKVPair(const char *key, const char *value) {
   appendToOutputBuf(key);
   appendToOutputBuf(K_V_SEPERATOR);
   appendToOutputBuf(value);
+  appendToOutputBuf(SEPERATOR);
 }
 
 void SerialComms::appendToOutputBuf(const char c) {
@@ -81,6 +92,16 @@ void SerialComms::appendToOutputBuf(const char *s) {
     strcat(m_outBuffer, s);
     m_currentIndex += length;
   }
+}
+
+void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
+// Abuse snprintf to convert our value
+#ifdef UNIT_TESTING
+  snprintf(buf, bufSize, "%d", val);
+#else
+  // On Arduino a int32_t is equivalent to a long decimal
+  snprintf(buf, bufSize, "%ld", val);
+#endif
 }
 
 void SerialComms::sendCurrentBuffer() {

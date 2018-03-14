@@ -63,8 +63,8 @@ TEST_F(EncoderFixture, calculatesSpeed) {
 
   auto speed = testInstance.calculateSpeed();
 
-  EXPECT_EQ(speed.leftWheels.getMilliMetersPerSecond(), expectedSpeed);
-  EXPECT_EQ(speed.rightWheels.getMilliMetersPerSecond(), 2 * expectedSpeed);
+  EXPECT_EQ(speed.leftWheel.getMilliMetersPerSecond(), expectedSpeed);
+  EXPECT_EQ(speed.rightWheel.getMilliMetersPerSecond(), 2 * expectedSpeed);
 }
 
 TEST_F(EncoderFixture, read) {

@@ -12,13 +12,15 @@ public:
 
   void sendEncoderRotation(const Hardware::EncoderPulses &data);
 
+  void sendVehicleSpeed(const Hardware::WheelSpeeds &speeds);
+
 private:
   void appendKVPair(const char *key, const char *value);
 
   void appendToOutputBuf(const char c);
   void appendToOutputBuf(const char *s);
 
-  void addEncoderValToBuffer(const char *encoderName, int32_t encoderVal);
+  void convertValue(char *buf, int bufSize, int32_t val);
 
   void sendCurrentBuffer();
 
