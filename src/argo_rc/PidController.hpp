@@ -3,9 +3,8 @@
 
 #include <stdint.h>
 
+#include "Distance.hpp"
 #include "Encoder.hpp"
-#include "Speed.hpp"
-#include "Time.hpp"
 #include "arduino_interface.hpp"
 #include "argo_rc_lib.hpp"
 
@@ -15,9 +14,14 @@ namespace ArgoRcLib {
 struct PwmTargets;
 
 struct PidConstants {
-  float proportional{1};
-  float integral{1};
-  float derivative{1};
+  //  Boundary speed in mm/s where we switch to less aggressive constants
+  float boundarySpeed{700};
+
+  float propLower{0.040};
+  float propUpper{0.085};
+
+  float integralUpper{0.1};
+  float derivative{0.1};
 };
 
 class PidController {
@@ -26,8 +30,7 @@ public:
 
   PwmTargets calculatePwmTargets(const Hardware::WheelSpeeds &targetSpeeds);
 
-  int16_t calcProportional(const Libs::Speed &speedError,
-                           const Libs::Time &timeDifference);
+  int16_t calcProportional(const Libs::Distance &errorPerSec);
 
   int16_t calcIntegral(const Libs::Speed &speedError,
                        const Libs::Time &timeDifference);
@@ -38,8 +41,6 @@ public:
   void resetPid();
 
 private:
-  static const PidConstants m_pidConstants;
-
   Hardware::ArduinoInterface &m_hardware;
 
   Libs::Speed m_previousError;
