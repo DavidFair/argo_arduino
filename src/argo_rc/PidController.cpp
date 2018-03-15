@@ -7,7 +7,7 @@
 using namespace Libs;
 
 namespace {
-ArgoRcLib::PidConstants PID_CONSTANTS;
+constexpr int MAX_PWM_VAL = 255;
 }
 
 namespace ArgoRcLib {
@@ -25,20 +25,28 @@ PidController::calculatePwmTargets(const Hardware::WheelSpeeds &targetSpeeds) {
 int16_t PidController::calcProportional(const Distance &errorPerSec) {
   auto errorSpeed = errorPerSec.getMilliMeters();
 
-  int16_t targetSpeed{0};
-  if (errorSpeed < PID_CONSTANTS.boundarySpeed) {
-    targetSpeed = errorSpeed * PID_CONSTANTS.propLower;
-  } else {
-    targetSpeed = errorSpeed * PID_CONSTANTS.propUpper;
-  }
+  int16_t targetSpeed = isLowerThanBoundary(errorSpeed)
+                            ? errorSpeed * PID_CONSTANTS::propLower
+                            : errorSpeed * PID_CONSTANTS::propUpper;
   return targetSpeed;
 }
 
-int16_t PidController::calcIntegral(const Libs::Speed &speedError,
-                                    const Libs::Time &timeDifference) {
-  (void)speedError;
-  (void)timeDifference;
-  return 0;
+int16_t PidController::calcIntegral(const Distance &errorPerSec) {
+  auto errorSpeed = errorPerSec.getMilliMeters();
+
+  int16_t integralVal = isLowerThanBoundary(errorSpeed)
+                            ? errorSpeed * PID_CONSTANTS::integralLower
+                            : errorSpeed * PID_CONSTANTS::integralUpper;
+  m_totalIntegral += integralVal;
+
+  // Constrain to a maximum of 255 to prevent "lag" whilst the integral drains
+  if (m_totalIntegral > MAX_PWM_VAL) {
+    m_totalIntegral = MAX_PWM_VAL;
+  } else if (m_totalIntegral < -MAX_PWM_VAL) {
+    m_totalIntegral = -MAX_PWM_VAL;
+  }
+
+  return m_totalIntegral;
 }
 
 int16_t PidController::calcDifferential(const Libs::Speed &speedError,
@@ -49,5 +57,10 @@ int16_t PidController::calcDifferential(const Libs::Speed &speedError,
 }
 
 void PidController::resetPid() {}
+
+// -------- Private Methods ------
+bool PidController::isLowerThanBoundary(const int32_t &val) {
+  return val < PID_CONSTANTS::boundarySpeed;
+}
 
 } // namespace ArgoRcLib

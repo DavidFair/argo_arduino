@@ -13,7 +13,6 @@ using namespace Libs;
 
 namespace {
 const unsigned long ONE_SEC = 1000;
-constexpr PidConstants pidConsts;
 
 unique_ptr<StrictMock<MockArduino>> createMockHardware() {
 
@@ -36,18 +35,19 @@ TEST_F(PidControllerFixture, proportionalLowerMin) {
   // Set the current error to 0.1 meter - second
   constexpr Distance error = 0.1_m;
   constexpr int16_t expectedResult =
-      pidConsts.propLower * error.getMilliMeters();
+      PID_CONSTANTS::propLower * error.getMilliMeters();
 
   auto result = testInstance.calcProportional(error);
   EXPECT_EQ(result, expectedResult);
+  EXPECT_GE(result, 1);
 }
 
 TEST_F(PidControllerFixture, proportionalLowerMax) {
   // Set the current error to one mm below boundary speed for lower
-  constexpr Distance error(0,
-                           static_cast<int32_t>(pidConsts.boundarySpeed - 1));
+  constexpr Distance error(
+      0, static_cast<int32_t>(PID_CONSTANTS::boundarySpeed - 1));
   constexpr int16_t expectedResult =
-      pidConsts.propLower * error.getMilliMeters();
+      PID_CONSTANTS::propLower * error.getMilliMeters();
 
   auto result = testInstance.calcProportional(error);
   EXPECT_EQ(result, expectedResult);
@@ -55,10 +55,11 @@ TEST_F(PidControllerFixture, proportionalLowerMax) {
 
 TEST_F(PidControllerFixture, proportionalUpperBottom) {
   // Set the current error to one mm to boundary speed for upper
-  constexpr Distance error(0, static_cast<int32_t>(pidConsts.boundarySpeed));
+  constexpr Distance error(0,
+                           static_cast<int32_t>(PID_CONSTANTS::boundarySpeed));
 
   constexpr int16_t expectedResult =
-      pidConsts.propUpper * error.getMilliMeters();
+      PID_CONSTANTS::propUpper * error.getMilliMeters();
 
   auto result = testInstance.calcProportional(error);
   EXPECT_EQ(result, expectedResult);
@@ -69,11 +70,64 @@ TEST_F(PidControllerFixture, proportionalUpperMaxVal) {
   constexpr Distance error = 5_m;
 
   constexpr int16_t expectedResult =
-      pidConsts.propUpper * error.getMilliMeters();
+      PID_CONSTANTS::propUpper * error.getMilliMeters();
 
   auto result = testInstance.calcProportional(error);
   EXPECT_EQ(result, expectedResult);
   EXPECT_GE(result, 255);
+}
+
+TEST_F(PidControllerFixture, integralLowerBottom) {
+  constexpr Distance error = 0.1_m;
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::integralLower * error.getMilliMeters();
+
+  auto result = testInstance.calcIntegral(error);
+  EXPECT_EQ(result, expectedResult);
+  EXPECT_GE(result, 1);
+}
+
+TEST_F(PidControllerFixture, integralLowerMax) {
+  constexpr Distance error(
+      0, static_cast<int32_t>(PID_CONSTANTS::boundarySpeed - 1));
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::integralLower * error.getMilliMeters();
+
+  auto result = testInstance.calcIntegral(error);
+  EXPECT_EQ(result, expectedResult);
+}
+
+TEST_F(PidControllerFixture, integralUpperBottom) {
+  constexpr Distance error(0,
+                           static_cast<int32_t>(PID_CONSTANTS::boundarySpeed));
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::integralUpper * error.getMilliMeters();
+
+  auto result = testInstance.calcIntegral(error);
+  EXPECT_EQ(result, expectedResult);
+}
+
+TEST_F(PidControllerFixture, integralUpperMaxVal) {
+  constexpr Distance error = 20_m;
+
+  auto result = testInstance.calcIntegral(error);
+  ASSERT_EQ(result, 255);
+}
+
+TEST_F(PidControllerFixture, integralIsCumulative) {
+  constexpr Distance error = 2_m;
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::integralUpper * error.getMilliMeters();
+
+  auto result = testInstance.calcIntegral(error);
+  ASSERT_EQ(result, expectedResult);
+  // Now it should be cumulative
+  auto secondResult = testInstance.calcIntegral(error);
+  EXPECT_EQ(secondResult, 2 * expectedResult);
 }
 
 } // namespace
