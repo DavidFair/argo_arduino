@@ -17,6 +17,10 @@ struct EncoderPulses {
 };
 
 struct WheelSpeeds {
+  WheelSpeeds() : leftWheel(), rightWheel() {}
+  WheelSpeeds(Libs::Speed left, Libs::Speed right)
+      : leftWheel(left), rightWheel(right) {}
+
   Libs::Speed leftWheel;
   Libs::Speed rightWheel;
 };

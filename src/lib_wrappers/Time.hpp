@@ -23,6 +23,10 @@ public:
 
   constexpr int32_t millis() const { return m_millis; }
 
+  constexpr int32_t micros() const { return m_millis * 1e+03; }
+
+  constexpr int32_t native() const { return m_millis; }
+
 private:
   static const int16_t MILLIS_PER_SEC = 1000;
 

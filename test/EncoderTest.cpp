@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 
 #include "ArduinoGlobals.hpp"
-#include "Encoder.hpp"
 #include "Distance.hpp"
+#include "Encoder.hpp"
 #include "Speed.hpp"
 #include "Time.hpp"
 #include "mock_arduino.hpp"
@@ -56,9 +56,9 @@ const int countsPerWheelRotation = 25 * 20;
 
 TEST_F(EncoderFixture, calculatesSpeed) {
   const Speed wheelTurnPerSec(wheelRadius, oneSecond);
-  const auto expectedSpeed = wheelTurnPerSec.getMilliMetersPerSecond();
+  const auto expectedSpeed = wheelTurnPerSec.getUnitDistance().millimeters();
 
-  ASSERT_EQ(expectedSpeed, wheelRadius.getMilliMeters());
+  ASSERT_EQ(expectedSpeed, wheelRadius.millimeters());
 
   InterruptData::g_pinEncoderData.leftEncoderCount = countsPerWheelRotation;
   InterruptData::g_pinEncoderData.rightEncoderCount =
@@ -68,8 +68,9 @@ TEST_F(EncoderFixture, calculatesSpeed) {
 
   auto speed = testInstance.calculateSpeed();
 
-  EXPECT_EQ(speed.leftWheel.getMilliMetersPerSecond(), expectedSpeed);
-  EXPECT_EQ(speed.rightWheel.getMilliMetersPerSecond(), 2 * expectedSpeed);
+  EXPECT_EQ(speed.leftWheel.getUnitDistance().millimeters(), expectedSpeed);
+  EXPECT_EQ(speed.rightWheel.getUnitDistance().millimeters(),
+            2 * expectedSpeed);
 }
 
 TEST_F(EncoderFixture, calculatesSpeedAsTimeVaries) {
@@ -86,10 +87,10 @@ TEST_F(EncoderFixture, calculatesSpeedAsTimeVaries) {
   const Speed expectedHalfSec(wheelRadius, halfSecond);
   auto halfSecSpeed = testInstance.calculateSpeed();
 
-  EXPECT_EQ(halfSecSpeed.leftWheel.getMilliMetersPerSecond(),
-            expectedHalfSec.getMilliMetersPerSecond());
-  EXPECT_EQ(halfSecSpeed.rightWheel.getMilliMetersPerSecond(),
-            expectedHalfSec.getMilliMetersPerSecond());
+  EXPECT_EQ(halfSecSpeed.leftWheel.getUnitDistance().millimeters(),
+            expectedHalfSec.getUnitDistance().millimeters());
+  EXPECT_EQ(halfSecSpeed.rightWheel.getUnitDistance().millimeters(),
+            expectedHalfSec.getUnitDistance().millimeters());
 
   // Vehicle reverses in one second
   InterruptData::g_pinEncoderData.leftEncoderCount = 0;
@@ -98,10 +99,10 @@ TEST_F(EncoderFixture, calculatesSpeedAsTimeVaries) {
   const Speed expectedOneSec(wheelRadius, oneSecond);
   auto oneSecSpeed = testInstance.calculateSpeed();
 
-  EXPECT_EQ(oneSecSpeed.leftWheel.getMilliMetersPerSecond(),
-            -(expectedOneSec.getMilliMetersPerSecond()));
-  EXPECT_EQ(oneSecSpeed.rightWheel.getMilliMetersPerSecond(),
-            -(expectedOneSec.getMilliMetersPerSecond()));
+  EXPECT_EQ(oneSecSpeed.leftWheel.getUnitDistance().millimeters(),
+            -(expectedOneSec.getUnitDistance().millimeters()));
+  EXPECT_EQ(oneSecSpeed.rightWheel.getUnitDistance().millimeters(),
+            -(expectedOneSec.getUnitDistance().millimeters()));
 }
 
 TEST_F(EncoderFixture, read) {

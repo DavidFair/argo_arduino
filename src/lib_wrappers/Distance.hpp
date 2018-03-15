@@ -37,14 +37,16 @@ public:
     return Distance(m_micrometers / div);
   }
 
-  constexpr int32_t getMicroMeters() const { return m_micrometers; }
+  constexpr int32_t micrometers() const { return m_micrometers; }
 
-  constexpr int32_t getMilliMeters() const {
+  constexpr int32_t millimeters() const {
     return m_micrometers / MILLI_TO_MICRO;
   }
-  constexpr double getMeters() const {
+  constexpr double meters() const {
     return m_micrometers / (double)METER_TO_MICRO;
   }
+
+  constexpr int32_t native() const { return m_micrometers; }
 
 private:
   static const int32_t METER_TO_MICRO = 1e+06;

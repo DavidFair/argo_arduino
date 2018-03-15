@@ -15,12 +15,33 @@ public:
   constexpr Speed(Distance length, Time time)
       : m_distance(length), m_time(time) {}
 
-  constexpr bool operator==(Speed other) const {
+  constexpr Speed operator-(const Speed &other) const {
+    /* we can show that (d1.t1^-1) - (d2.t2^-1) is
+     * equal to (d1.t2 - d2.t1) / (t2.t1) thereby saving
+     * a division by turning it into a multiplication */
+
+    if (m_distance.native() == 0) {
+      Distance negDistance(-other.m_distance.native());
+      return Speed(negDistance, other.m_time);
+    } else if (other.m_distance.native() == 0) {
+      return Speed(m_distance, m_time);
+    }
+
+    Time newTime(m_time.native() * other.m_time.native());
+
+    auto newDistanceOne = m_distance * other.m_time.native();
+    auto newDistanceTwo = other.m_distance * m_time.native();
+    auto distanceDiff = newDistanceOne - newDistanceTwo;
+
+    return Speed(distanceDiff, newTime);
+  }
+
+  constexpr bool operator==(const Speed &other) const {
     return m_distance == other.m_distance && m_time == other.m_time;
   }
 
-  constexpr int32_t getMilliMetersPerSecond() const {
-    return m_distance.getMilliMeters() / m_time.seconds();
+  constexpr Distance getUnitDistance() const {
+    return Distance(m_distance.native() / m_time.seconds());
   }
 
 private:

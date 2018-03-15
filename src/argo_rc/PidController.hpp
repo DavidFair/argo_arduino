@@ -36,25 +36,32 @@ class PidController {
 public:
   PidController(Hardware::ArduinoInterface &hardware);
 
-  PwmTargets calculatePwmTargets(const Hardware::WheelSpeeds &targetSpeeds);
+  PwmTargets calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
+                                 const Hardware::WheelSpeeds &targetSpeeds);
 
   int16_t calcProportional(const Libs::Distance &errorPerSec);
 
-  int16_t calcIntegral(const Libs::Distance &errorPerSec);
+  int16_t calcIntegral(const Libs::Distance &errorPerSec,
+                       Hardware::EncoderPositions position);
 
-  int16_t calcDeriv(const Libs::Distance &errorPerSec);
+  int16_t calcDeriv(const Libs::Distance &errorPerSec,
+                    Hardware::EncoderPositions position);
 
   void resetPid();
 
 private:
   static bool isLowerThanBoundary(const int32_t &val);
 
+  int16_t calculatePwmValue(const Libs::Speed &currentSpeed,
+                            const Libs::Speed &targetSpeed,
+                            Hardware::EncoderPositions position);
+
   Hardware::ArduinoInterface &m_hardware;
 
-  Libs::Distance m_previousError;
   unsigned long m_previousTime;
 
-  int16_t m_totalIntegral{0};
+  Libs::Distance m_previousError[Hardware::EncoderPositions::_NUM_OF_ENCODERS];
+  int16_t m_totalIntegral[Hardware::EncoderPositions::_NUM_OF_ENCODERS];
 };
 
 } // namespace ArgoRcLib
