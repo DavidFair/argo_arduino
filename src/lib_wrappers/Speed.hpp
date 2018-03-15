@@ -20,13 +20,6 @@ public:
      * equal to (d1.t2 - d2.t1) / (t2.t1) thereby saving
      * a division by turning it into a multiplication */
 
-    if (m_distance.native() == 0) {
-      Distance negDistance(-other.m_distance.native());
-      return Speed(negDistance, other.m_time);
-    } else if (other.m_distance.native() == 0) {
-      return Speed(m_distance, m_time);
-    }
-
     Time newTime(m_time.native() * other.m_time.native());
 
     auto newDistanceOne = m_distance * other.m_time.native();

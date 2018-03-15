@@ -133,7 +133,10 @@ void ArgoRc::loop() {
   }
 
   m_commsObject.sendEncoderRotation(m_encoders.read());
-  m_commsObject.sendVehicleSpeed(m_encoders.calculateSpeed());
+  auto currentSpeed = m_encoders.calculateSpeed();
+  m_commsObject.sendVehicleSpeed(currentSpeed);
+
+  // m_pidController.calculatePwmTargets(currentSpeed, )
 
   // Deadman switch is high at this point
   auto targetPwmVals = readPwmInput();
