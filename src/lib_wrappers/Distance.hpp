@@ -25,6 +25,10 @@ public:
     return Distance(m_micrometers + other.m_micrometers);
   }
 
+  constexpr Distance operator-(const Distance &other) const {
+    return Distance(m_micrometers - other.m_micrometers);
+  }
+
   constexpr Distance operator*(const int32_t multi) const {
     return Distance(m_micrometers * multi);
   }

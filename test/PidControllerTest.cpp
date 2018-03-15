@@ -130,4 +130,57 @@ TEST_F(PidControllerFixture, integralIsCumulative) {
   EXPECT_EQ(secondResult, 2 * expectedResult);
 }
 
+TEST_F(PidControllerFixture, derivLowerBottom) {
+  constexpr Distance error = 0.1_m;
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::derivLower * error.getMilliMeters() * -1;
+
+  auto result = testInstance.calcDeriv(error);
+  EXPECT_EQ(result, expectedResult);
+}
+
+TEST_F(PidControllerFixture, derivTracksPrevious) {
+  constexpr Distance errorOne = 0.1_m;
+  constexpr Distance errorTwo = 0.5_m;
+
+  constexpr Distance difference = errorTwo - errorOne;
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::derivLower * difference.getMilliMeters() * -1;
+
+  testInstance.calcDeriv(errorOne);
+  auto result = testInstance.calcDeriv(errorTwo);
+  EXPECT_EQ(result, expectedResult);
+}
+
+TEST_F(PidControllerFixture, derivLowerMax) {
+  constexpr Distance error(
+      0, static_cast<int32_t>(PID_CONSTANTS::boundarySpeed - 1));
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::derivLower * error.getMilliMeters() * -1;
+
+  auto result = testInstance.calcDeriv(error);
+  EXPECT_EQ(result, expectedResult);
+}
+
+TEST_F(PidControllerFixture, derivUpperBottom) {
+  constexpr Distance error(0,
+                           static_cast<int32_t>(PID_CONSTANTS::boundarySpeed));
+
+  constexpr int16_t expectedResult =
+      PID_CONSTANTS::derivUpper * error.getMilliMeters() * -1;
+
+  auto result = testInstance.calcDeriv(error);
+  EXPECT_EQ(result, expectedResult);
+}
+
+TEST_F(PidControllerFixture, derivUpperMax) {
+  constexpr Distance error = 10_m;
+
+  auto result = testInstance.calcDeriv(error);
+  EXPECT_GE(-255, result);
+}
+
 } // namespace

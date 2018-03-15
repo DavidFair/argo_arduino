@@ -17,13 +17,19 @@ struct PID_CONSTANTS {
   //  Boundary speed in mm/s where we switch to less aggressive constants
   constexpr static float boundarySpeed{700};
 
+  // Controls how quickly the vehicle accelerates
   constexpr static float propLower{0.040};
   constexpr static float propUpper{0.085};
 
+  // Helps the vehicle reach target speed -
+  // if too high the vehicle speed oscillates
   constexpr static float integralLower{0.01};
   constexpr static float integralUpper{0.03};
 
-  constexpr static float derivative{0.1};
+  // Controls how quickly the acceleration ramps up preventing large spikes
+  // Aka derivative on measurement
+  constexpr static float derivLower{0.01};
+  constexpr static float derivUpper{0.03};
 };
 
 class PidController {
@@ -36,8 +42,7 @@ public:
 
   int16_t calcIntegral(const Libs::Distance &errorPerSec);
 
-  int16_t calcDifferential(const Libs::Speed &speedError,
-                           const Libs::Time &timeDifference);
+  int16_t calcDeriv(const Libs::Distance &errorPerSec);
 
   void resetPid();
 
@@ -46,7 +51,7 @@ private:
 
   Hardware::ArduinoInterface &m_hardware;
 
-  Libs::Speed m_previousError;
+  Libs::Distance m_previousError;
   unsigned long m_previousTime;
 
   int16_t m_totalIntegral{0};

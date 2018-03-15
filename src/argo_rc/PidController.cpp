@@ -49,11 +49,18 @@ int16_t PidController::calcIntegral(const Distance &errorPerSec) {
   return m_totalIntegral;
 }
 
-int16_t PidController::calcDifferential(const Libs::Speed &speedError,
-                                        const Libs::Time &timeDifference) {
-  (void)speedError;
-  (void)timeDifference;
-  return 0;
+int16_t PidController::calcDeriv(const Distance &errorPerSec) {
+  const auto errorDifference = errorPerSec - m_previousError;
+  m_previousError = errorPerSec;
+
+  const auto errorDelta = errorDifference.getMilliMeters();
+  int16_t derivVal = isLowerThanBoundary(errorDelta)
+                         ? errorDelta * PID_CONSTANTS::derivLower
+                         : errorDelta * PID_CONSTANTS::derivUpper;
+  // As we want to resist kicking the motors up power when the set
+  // point changes this is a negative contribution
+  derivVal = -derivVal;
+  return derivVal;
 }
 
 void PidController::resetPid() {}
