@@ -20,13 +20,11 @@ public:
      * equal to (d1.t2 - d2.t1) / (t2.t1) thereby saving
      * a division by turning it into a multiplication */
 
-    Time newTime(m_time.native() * other.m_time.native());
-
-    auto newDistanceOne = m_distance * other.m_time.native();
-    auto newDistanceTwo = other.m_distance * m_time.native();
-    auto distanceDiff = newDistanceOne - newDistanceTwo;
-
-    return Speed(distanceDiff, newTime);
+    // We have to do this all in one return statement for
+    // c++-11 support.
+    return Speed(Distance(m_distance * other.m_time.native() -
+                          other.m_distance * m_time.native()),
+                 Time(m_time.native() * other.m_time.native()));
   }
 
   constexpr bool operator==(const Speed &other) const {
