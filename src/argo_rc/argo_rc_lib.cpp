@@ -38,7 +38,8 @@ namespace ArgoRcLib {
 
 ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface)
     : m_hardwareInterface(hardwareInterface), m_encoders(m_hardwareInterface),
-      m_commsObject(m_hardwareInterface) {}
+      m_commsObject(m_hardwareInterface), m_pidController(m_hardwareInterface) {
+}
 
 void ArgoRc::setup() {
   m_hardwareInterface.serialBegin(115200);

@@ -6,12 +6,8 @@
 #include "Distance.hpp"
 #include "Encoder.hpp"
 #include "arduino_interface.hpp"
-#include "argo_rc_lib.hpp"
 
 namespace ArgoRcLib {
-
-// Forward declarations to solve cyclic deps
-struct PwmTargets;
 
 struct PID_CONSTANTS {
   //  Boundary speed in mm/s where we switch to less aggressive constants
@@ -32,9 +28,25 @@ struct PID_CONSTANTS {
   constexpr static float derivUpper{0.03};
 };
 
+struct PwmTargets {
+  PwmTargets() : PwmTargets(0, 0) {}
+
+  PwmTargets(int leftPwmTarget, int rightPwmTarget)
+      : leftPwm(leftPwmTarget), rightPwm(rightPwmTarget) {}
+
+  int leftPwm{0};
+  int rightPwm{0};
+};
+
 class PidController {
 public:
   PidController(Hardware::ArduinoInterface &hardware);
+
+  PidController(PidController &) = delete;
+  PidController &operator=(PidController &) = delete;
+
+  PidController(PidController &&other);
+  PidController &operator=(PidController &&other);
 
   PwmTargets calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
                                  const Hardware::WheelSpeeds &targetSpeeds);
@@ -56,7 +68,7 @@ private:
                             const Libs::Speed &targetSpeed,
                             Hardware::EncoderPositions position);
 
-  Hardware::ArduinoInterface &m_hardware;
+  Hardware::ArduinoInterface &m_hardwareInterface;
 
   unsigned long m_previousTime;
 

@@ -15,8 +15,29 @@ constexpr int MAX_PWM_VAL = 255;
 namespace ArgoRcLib {
 
 PidController::PidController(Hardware::ArduinoInterface &hardware)
-    : m_hardware(hardware), m_previousTime(m_hardware.millis()),
+    : m_hardwareInterface(hardware),
+      m_previousTime(m_hardwareInterface.millis()),
       m_previousError(), m_totalIntegral{0, 0} {}
+
+PidController::PidController(PidController &&other)
+    : m_hardwareInterface(other.m_hardwareInterface),
+      m_previousTime(other.m_previousTime), m_previousError(),
+      m_totalIntegral() {
+  for (int i = 0; i < EncoderPositions::_NUM_OF_ENCODERS; i++) {
+    m_previousError[i] = other.m_previousError[i];
+    m_totalIntegral[i] = other.m_totalIntegral[i];
+  }
+}
+
+PidController &PidController::operator=(PidController &&other) {
+  m_hardwareInterface = other.m_hardwareInterface;
+  m_previousTime = other.m_previousTime;
+  for (int i = 0; i < EncoderPositions::_NUM_OF_ENCODERS; i++) {
+    m_previousError[i] = other.m_previousError[i];
+    m_totalIntegral[i] = other.m_totalIntegral[i];
+  }
+  return *this;
+}
 
 PwmTargets
 PidController::calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,

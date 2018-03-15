@@ -5,7 +5,7 @@ namespace Libs {
 
 template <typename T> class unique_ptr {
 public:
-  unique_ptr(T *passedPtr) : ptr(passedPtr) {}
+  constexpr unique_ptr(T *passedPtr) : ptr(passedPtr) {}
   ~unique_ptr() { delete ptr; }
 
   // Copy
@@ -13,7 +13,7 @@ public:
   unique_ptr &operator=(const unique_ptr &a) = delete;
 
   // Move
-  unique_ptr(unique_ptr &&other) {
+  constexpr unique_ptr(unique_ptr &&other) {
     ptr = other.ptr;
     other.ptr = nullptr;
   }
@@ -26,22 +26,22 @@ public:
     return *this;
   }
 
-  T *get() const { return ptr; }
+  constexpr T *get() const { return ptr; }
 
-  void reset(T *newPtr) {
+  constexpr void reset(T *newPtr) {
     delete ptr;
     ptr = newPtr;
   }
 
-  T *release() {
+  constexpr T *release() {
     T *ptrToReturn = ptr;
     ptr = nullptr;
     return ptrToReturn;
   }
 
-  T &operator*() { return *ptr; }
+  constexpr T &operator*() { return *ptr; }
 
-  T *operator->() { return ptr; }
+  constexpr T *operator->() { return ptr; }
 
 private:
   T *ptr;
