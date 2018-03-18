@@ -3,12 +3,24 @@
 
 #include "Encoder.hpp"
 #include "arduino_interface.hpp"
+#include "move.hpp"
 
 namespace ArgoRcLib {
 
 class SerialComms {
 public:
   SerialComms(Hardware::ArduinoInterface &hardware);
+
+  SerialComms(SerialComms &) = delete;
+  SerialComms &operator=(SerialComms &) = delete;
+
+  SerialComms(SerialComms &&other)
+      : m_hardwareInterface(other.m_hardwareInterface){};
+
+  SerialComms &operator=(SerialComms &&other) {
+    m_hardwareInterface = other.m_hardwareInterface;
+    return *this;
+  }
 
   void sendEncoderRotation(const Hardware::EncoderPulses &data);
 

@@ -1,10 +1,12 @@
 set(ARGO_LIB_SRC 
     argo_rc_lib.cpp
+    PidController.cpp
     SerialComms.cpp)
 
 set(ARGO_LIB_HDR 
     argo_rc_lib.hpp
-    SerialComms.cpp)
+    PidController.hpp
+    SerialComms.hpp)
 
 include_directories(
     "${PROJECT_SOURCE_DIR}/src/arduino_interface"

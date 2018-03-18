@@ -58,11 +58,11 @@ void SerialComms::sendVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   char convertedNumber[NUM_DEC_PLACES];
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
-               speeds.leftWheel.getMilliMetersPerSecond());
+               speeds.leftWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_PREFIX[EncoderPositions::LEFT_ENCODER], convertedNumber);
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
-               speeds.rightWheel.getMilliMetersPerSecond());
+               speeds.rightWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_PREFIX[EncoderPositions::RIGHT_ENCODER], convertedNumber);
 
   sendCurrentBuffer();
