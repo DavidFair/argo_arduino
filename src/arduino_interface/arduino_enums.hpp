@@ -17,7 +17,7 @@ enum digitalIO {
   E_LOW
 };
 
-enum Direction { FORWARD = 1, REVERSE = -1 };
+enum Direction { FORWARD = 1, STOP = 0, REVERSE = -1 };
 
 enum pinMapping {
   // Digital pins

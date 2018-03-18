@@ -30,54 +30,34 @@ void loop() { argoRcLib.loop(); }
 
 // ----- Interrupt Handling - Cannot (easily) be mocked -----
 
+void leftEncoderInterrupt() {
+  InterruptData::g_pinEncoderData.leftEncoderCount +=
+      ArgoData::g_currentVehicleDirection.leftWheelDirection;
+}
+
+void rightEncoderInterrupt() {
+  InterruptData::g_pinEncoderData.rightEncoderCount +=
+      ArgoData::g_currentVehicleDirection.rightWheelDirection;
+}
+
 void setupInterrupts() {
+  constexpr int leftInterruptNo = 5;
+  constexpr int rightInterruptNo = 3;
+  attachInterrupt(leftInterruptNo, leftEncoderInterrupt, FALLING);
+  attachInterrupt(rightInterruptNo, rightEncoderInterrupt, FALLING);
 
   // Set ADC8 - ADC15 to input (0) using the port register
   DDRK = 0;
 
-  // enable PCINT0/2 which allows us to use the PCMSK registers
+  // enable PCINT2 which allows us to use the PCMSK registers
   // to enable interrupts on the specified pins
-  PCICR = (1 << PCIE2) | (1 << PCIE0);
+  PCICR = (1 << PCIE2);
 
   // Set PCINT18:23 as ISR triggers for RC controls
   // On the Mega 2560 these are pins A10-A15 as ISR
   PCMSK2 = 0xFC;
 
-  // Set PCINT0:1 as ISR triggers for the encoder
-  PCMSK0 = 0x03;
-
   // The ISR is defined below
-}
-
-ISR(PCINT0_vect) {
-  // Only the first two bits are used currently
-  const uint8_t LEFT_ENC_BITMASK = 0x01;
-  const uint8_t RIGHT_ENC_BITMASK = 0x02;
-
-  // Store PINB reading so it doesn't change underneath us
-  const uint8_t pinBReading = PINB;
-
-  const uint8_t currentLeftReading = pinBReading & LEFT_ENC_BITMASK;
-  const uint8_t currentRightReading = pinBReading & RIGHT_ENC_BITMASK;
-
-  const auto previousReading =
-      InterruptData::g_pinEncoderData.previousBitReading;
-
-  const uint8_t leftDifference = currentLeftReading ^ previousReading;
-  const uint8_t rightDifference = currentRightReading ^ previousReading;
-
-  InterruptData::g_pinEncoderData.previousBitReading = pinBReading;
-
-  // Determine which pin triggered ISR
-  if (leftDifference != 0) {
-    InterruptData::g_pinEncoderData.leftEncoderCount +=
-        ArgoData::g_currentVehicleDirection.leftWheelDirection;
-  } else if (rightDifference != 0) {
-    InterruptData::g_pinEncoderData.rightEncoderCount +=
-        ArgoData::g_currentVehicleDirection.leftWheelDirection;
-  } else {
-    Serial.println("Encoder ISR triggered with no measured change");
-  }
 }
 
 // ISR for the remote control

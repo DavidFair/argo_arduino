@@ -56,8 +56,8 @@ void ArgoRc::setup() {
 }
 
 void ArgoRc::direction_relays_off() {
-
-  m_hardwareInterface.serialPrintln("RELAYS OFF");
+  ArgoData::g_currentVehicleDirection.leftWheelDirection = Direction::STOP;
+  ArgoData::g_currentVehicleDirection.rightWheelDirection = Direction::STOP;
   m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
                                    digitalIO::E_HIGH);
   m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,
@@ -70,7 +70,7 @@ void ArgoRc::direction_relays_off() {
 
 void ArgoRc::forward_left() {
   footswitch_on();
-  m_hardwareInterface.serialPrintln("forward_left");
+  ArgoData::g_currentVehicleDirection.leftWheelDirection = Direction::FORWARD;
   m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,
                                    digitalIO::E_LOW);
   m_hardwareInterface.digitalWrite(pinMapping::LEFT_REVERSE_RELAY,
@@ -79,7 +79,7 @@ void ArgoRc::forward_left() {
 
 void ArgoRc::forward_right() {
   footswitch_on();
-  m_hardwareInterface.serialPrintln("                  forward_right");
+  ArgoData::g_currentVehicleDirection.rightWheelDirection = Direction::FORWARD;
   m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
                                    digitalIO::E_LOW);
   m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,
@@ -88,8 +88,7 @@ void ArgoRc::forward_right() {
 
 void ArgoRc::reverse_left() {
   footswitch_on();
-  m_hardwareInterface.serialPrintln(
-      "                                    reverse_left");
+  ArgoData::g_currentVehicleDirection.leftWheelDirection = Direction::REVERSE;
   m_hardwareInterface.digitalWrite(pinMapping::LEFT_FORWARD_RELAY,
                                    digitalIO::E_HIGH);
   m_hardwareInterface.digitalWrite(pinMapping::LEFT_REVERSE_RELAY,
@@ -98,8 +97,7 @@ void ArgoRc::reverse_left() {
 
 void ArgoRc::reverse_right() {
   footswitch_on();
-  m_hardwareInterface.serialPrintln(
-      "                                                      reverse_right");
+  ArgoData::g_currentVehicleDirection.rightWheelDirection = Direction::REVERSE;
   m_hardwareInterface.digitalWrite(pinMapping::RIGHT_FORWARD_RELAY,
                                    digitalIO::E_HIGH);
   m_hardwareInterface.digitalWrite(pinMapping::RIGHT_REVERSE_RELAY,
@@ -120,12 +118,7 @@ void ArgoRc::footswitch_off() {
                                    digitalIO::E_HIGH);
 }
 
-  //#define DEBUG_OUTPUT
-#define DEBUG_OUTPUT_PWM
-
 void ArgoRc::loop() {
-  m_hardwareInterface.serialPrintln("-----New loop------");
-
   if (!checkDeadmanSwitch()) {
     // This is for unit testing - enterDeadmanSafetyMode on hardware gets
     // stuck in an infinite loop
@@ -144,29 +137,25 @@ void ArgoRc::loop() {
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
 
-  m_hardwareInterface.serialPrint("Setting LeftPwm: ");
-  m_hardwareInterface.serialPrintln(leftPwmValue);
-
-  m_hardwareInterface.serialPrint("Setting RightPwm: ");
-  m_hardwareInterface.serialPrintln(rightPwmValue);
-
-  if ((leftPwmValue > -40 && leftPwmValue < 40) &&
-      (rightPwmValue > -40 && rightPwmValue < 40)) {
+  if ((leftPwmValue > -20 && leftPwmValue < 20) &&
+      (rightPwmValue > -20 && rightPwmValue < 20)) {
     footswitch_off();
     direction_relays_off();
   }
 
-  if (leftPwmValue >= 40)
+  if (leftPwmValue >= 20)
     forward_left();
-  if (rightPwmValue >= 40)
+  if (rightPwmValue >= 20)
     forward_right();
-  if (leftPwmValue <= -40)
+  if (leftPwmValue <= -20)
     reverse_left();
-  if (rightPwmValue <= -40)
+  if (rightPwmValue <= -20)
     reverse_right();
 
-  m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT, leftPwmValue);
-  m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT, rightPwmValue);
+  m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT,
+                                  abs(leftPwmValue));
+  m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
+                                  abs(rightPwmValue));
 }
 
 // ---------- Private Methods --------------
@@ -195,7 +184,7 @@ bool ArgoRc::checkDeadmanSwitch() {
 PwmTargets ArgoRc::setMotorTarget(int speed, int steer) {
   PwmTargets targetPwmVals;
 
-  if (abs(speed) < 40 && abs(steer) > 2) {
+  if (abs(speed) < 20 && abs(steer) > 2) {
     targetPwmVals.leftPwm = steer;
     targetPwmVals.rightPwm = -steer;
   } else {
@@ -220,12 +209,6 @@ void ArgoRc::enterDeadmanFail() {
 PwmTargets ArgoRc::readPwmInput() {
   int rcPwmThrottleRaw = InterruptData::g_pinData[0].lastGoodWidth;
   int rcPwmSteeringRaw = InterruptData::g_pinData[1].lastGoodWidth;
-
-  m_hardwareInterface.serialPrint("rc_pwm_throttle_raw: ");
-  m_hardwareInterface.serialPrintln(rcPwmThrottleRaw);
-
-  m_hardwareInterface.serialPrint("rc_pwm_steering_raw: ");
-  m_hardwareInterface.serialPrintln(rcPwmSteeringRaw);
 
   if (rcPwmThrottleRaw == 0 && rcPwmSteeringRaw == 0) {
     // Pin probably not connected or no data. Bail setting the PWM to 0
