@@ -3,14 +3,12 @@
 
 #include <stdint.h>
 
-namespace ArduinoEnums
-{
+namespace ArduinoEnums {
 /* Wherever the Arduino header pollutes the global namespace with
  * these defines we prefix them with "E_"
  */
 
-enum digitalIO
-{
+enum digitalIO {
   E_INPUT,
   E_INPUT_PULLUP,
   E_OUTPUT,
@@ -19,15 +17,9 @@ enum digitalIO
   E_LOW
 };
 
-enum Direction
-{
-  FORWARD = 1,
-  STOP = 0,
-  REVERSE = -1
-};
+enum Direction { FORWARD = 1, STOP = 0, REVERSE = -1 };
 
-enum pinMapping
-{
+enum pinMapping {
   // Digital pins
   LEFT_FORWARD_RELAY,
   LEFT_REVERSE_RELAY,
@@ -57,11 +49,11 @@ enum pinMapping
 };
 
 static const pinMapping allDigitalPins[] = {
-    pinMapping::LEFT_FORWARD_RELAY, pinMapping::LEFT_REVERSE_RELAY,
-    pinMapping::RIGHT_FORWARD_RELAY, pinMapping::RIGHT_REVERSE_RELAY,
+    pinMapping::LEFT_FORWARD_RELAY,    pinMapping::LEFT_REVERSE_RELAY,
+    pinMapping::RIGHT_FORWARD_RELAY,   pinMapping::RIGHT_REVERSE_RELAY,
     pinMapping::LEFT_FOOTSWITCH_RELAY, pinMapping::RIGHT_FOOTSWITCH_RELAY,
-    pinMapping::LEFT_ENCODER, pinMapping::RIGHT_ENCODER,
-    pinMapping::TEST_POT_POSITIVE, pinMapping::RC_DEADMAN};
+    pinMapping::LEFT_ENCODER,          pinMapping::RIGHT_ENCODER,
+    pinMapping::TEST_POT_POSITIVE,     pinMapping::RC_DEADMAN};
 
 } // namespace ArduinoEnums
 

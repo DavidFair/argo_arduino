@@ -118,8 +118,6 @@ void ArgoRc::footswitch_off() {
                                    digitalIO::E_HIGH);
 }
 
-unsigned long startingTime = millis();
-
 void ArgoRc::loop() {
   if (!checkDeadmanSwitch()) {
     // This is for unit testing - enterDeadmanSafetyMode on hardware gets
