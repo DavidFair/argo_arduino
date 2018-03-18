@@ -8,13 +8,7 @@
 #include "mock_arduino.hpp"
 #include "unique_ptr.hpp"
 
-using ::testing::An;
-using ::testing::AnyNumber;
-using ::testing::Ge;
-using ::testing::NiceMock;
-using ::testing::Return;
-using ::testing::Test;
-using ::testing::_;
+using namespace ::testing;
 
 using namespace ArduinoEnums;
 using namespace ArgoRcLib;
@@ -118,6 +112,12 @@ void checkReverseRightIsOn(MockArduino &hardwareInterface) {
       .Times(1);
 }
 
+unsigned long time = 0;
+unsigned long incrementMillis() {
+  time += 100;
+  return time;
+}
+
 void returnDeadmanSafe(MockArduino &hardwareInterface) {
   ON_CALL(hardwareInterface, digitalRead(pinMapping::RC_DEADMAN))
       .WillByDefault(Return(digitalIO::E_HIGH));
@@ -132,6 +132,10 @@ protected:
         hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
         argoRcLib(*_forwardedPtr) {
     returnDeadmanSafe(hardwareMock);
+
+    time = 0;
+    ON_CALL(hardwareMock, millis())
+        .WillByDefault(InvokeWithoutArgs(&incrementMillis));
   }
 
   // This pointer has its ownership transfered to ArgoRc however we still
@@ -437,7 +441,8 @@ TEST_F(ArgoRcTest, encoderDataIsSent) {
   // Set the deadman switch to safe
   returnDeadmanSafe(hardwareMock);
 
-  const std::string expectedOutput("!D L_ENC:123 R_ENC:123 ");
+  const std::string expectedOutput(
+      "!D L_ENC:123 R_ENC:123 \n!D L_SPEED:4280 R_SPEED:4280 \n");
   EXPECT_CALL(hardwareMock, serialPrintln(expectedOutput));
 
   argoRcLib.loop();

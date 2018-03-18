@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "Encoder.hpp"
 #include "Distance.hpp"
+#include "Encoder.hpp"
 #include "SerialComms.hpp"
 #include "Speed.hpp"
 #include "mock_arduino.hpp"
@@ -30,10 +30,11 @@ TEST_F(SerialCommsFixture, writesEncoderData) {
   expectedData.leftEncoderVal = 101;
   expectedData.rightEncoderVal = 102;
 
-  const std::string expectedString = "!D L_ENC:101 R_ENC:102 ";
+  const std::string expectedString = "!D L_ENC:101 R_ENC:102 \n";
 
   EXPECT_CALL(mockObj, serialPrintln(expectedString));
-  testInstance.sendEncoderRotation(expectedData);
+  testInstance.addEncoderRotation(expectedData);
+  testInstance.sendCurrentBuffer();
 }
 
 TEST_F(SerialCommsFixture, writesSpeedData) {
@@ -44,8 +45,15 @@ TEST_F(SerialCommsFixture, writesSpeedData) {
 
   WheelSpeeds expectedSpeeds{oneMeterSecond, twoMeterSecond};
 
-  const std::string expectedString = "!D L_SPEED:1000 R_SPEED:2000 ";
+  const std::string expectedString = "!D L_SPEED:1000 R_SPEED:2000 \n";
 
   EXPECT_CALL(mockObj, serialPrintln(expectedString));
-  testInstance.sendVehicleSpeed(expectedSpeeds);
+  testInstance.addVehicleSpeed(expectedSpeeds);
+  testInstance.sendCurrentBuffer();
+}
+
+TEST_F(SerialCommsFixture, parseSpeedCommand) {
+  const std::string inputString = "!C L_SPEED:1200, R_SPEED:1200 \n";
+
+  // EXPECT_CALL()
 }

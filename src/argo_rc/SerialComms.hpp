@@ -22,9 +22,17 @@ public:
     return *this;
   }
 
-  void sendEncoderRotation(const Hardware::EncoderPulses &data);
+  // Write methods
+  void addEncoderRotation(const Hardware::EncoderPulses &data);
 
-  void sendVehicleSpeed(const Hardware::WheelSpeeds &speeds);
+  void addVehicleSpeed(const Hardware::WheelSpeeds &speeds);
+
+  // Read methods
+  Hardware::WheelSpeeds getTargetSpeed();
+
+  // Buffer Management
+  void parseCurrentBuffer();
+  void sendCurrentBuffer();
 
 private:
   void appendKVPair(const char *key, const char *value);
@@ -34,14 +42,14 @@ private:
 
   void convertValue(char *buf, int bufSize, int32_t val);
 
-  void sendCurrentBuffer();
+  // Set the output buffer to 64 characters this is reasonable for all
+  // commands and matches the Arduino buffer
+  static const uint8_t BUFFER_SIZE = 64;
 
-  // Set the output buffer to 100 characters this is resonable for all
-  // commands
-  static const uint8_t OUT_BUFFER_SIZE = 100;
-
-  uint8_t m_currentIndex{0};
-  char m_outBuffer[OUT_BUFFER_SIZE]{'\0'};
+  uint8_t m_outIndex{0};
+  uint8_t m_inputIndex{0};
+  char m_outBuffer[BUFFER_SIZE]{'\0'};
+  char m_inputBuffer[BUFFER_SIZE]{'\0'};
 
   Hardware::ArduinoInterface &m_hardwareInterface;
 };

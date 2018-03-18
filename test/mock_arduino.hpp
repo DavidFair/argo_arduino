@@ -29,6 +29,8 @@ public:
 
   MOCK_CONST_METHOD0(millis, unsigned long());
 
+  MOCK_CONST_METHOD0(serialAvailable, int());
+
   MOCK_CONST_METHOD1(serialBegin, void(unsigned long));
 
   MOCK_CONST_METHOD1(serialPrint, void(const std::string &));
@@ -38,6 +40,8 @@ public:
   MOCK_CONST_METHOD1(serialPrintln, void(const std::string &));
 
   MOCK_CONST_METHOD1(serialPrintln, void(int));
+
+  MOCK_CONST_METHOD0(serialRead, char());
 
   MOCK_CONST_METHOD2(setPinMode,
                      void(ArduinoEnums::pinMapping, ArduinoEnums::digitalIO));

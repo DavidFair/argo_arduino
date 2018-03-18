@@ -125,9 +125,9 @@ void ArgoRc::loop() {
     return;
   }
 
-  m_commsObject.sendEncoderRotation(m_encoders.read());
+  m_commsObject.addEncoderRotation(m_encoders.read());
   auto currentSpeed = m_encoders.calculateSpeed();
-  m_commsObject.sendVehicleSpeed(currentSpeed);
+  m_commsObject.addVehicleSpeed(currentSpeed);
 
   // m_pidController.calculatePwmTargets(currentSpeed, )
 
@@ -156,6 +156,8 @@ void ArgoRc::loop() {
                                   abs(leftPwmValue));
   m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
                                   abs(rightPwmValue));
+
+  m_commsObject.sendCurrentBuffer();
 }
 
 // ---------- Private Methods --------------

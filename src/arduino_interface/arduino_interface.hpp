@@ -33,11 +33,15 @@ public:
 
   virtual unsigned long millis() const = 0;
 
+  virtual int serialAvailable() const = 0;
+
   virtual void serialBegin(unsigned long baudRate) const = 0;
 
   virtual void serialPrint(int i) const = 0;
 
   virtual void serialPrintln(int i) const = 0;
+
+  virtual char serialRead() const = 0;
 
   virtual void setPinMode(ArduinoEnums::pinMapping pin,
                           ArduinoEnums::digitalIO mode) const = 0;

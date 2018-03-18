@@ -18,6 +18,7 @@ namespace {
 // A ':' character indicates a key - value pair
 const char K_V_SEPERATOR = ':';
 const char SEPERATOR = ' ';
+const char EOL = '\n';
 const char *DATA_TRANSMIT_PREFIX = "!D ";
 
 // Function specific data
@@ -33,7 +34,7 @@ namespace ArgoRcLib {
 SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
     : m_hardwareInterface(hardware) {}
 
-void SerialComms::sendEncoderRotation(const EncoderPulses &data) {
+void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   // Prepare our output buffer - prepend that we are sending data
   appendToOutputBuf(DATA_TRANSMIT_PREFIX);
 
@@ -47,11 +48,10 @@ void SerialComms::sendEncoderRotation(const EncoderPulses &data) {
 
   convertValue(convertedNumber, NUM_DEC_PLACES, data.rightEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::RIGHT_ENCODER], convertedNumber);
-
-  sendCurrentBuffer();
+  appendToOutputBuf(EOL);
 }
 
-void SerialComms::sendVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
+void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   appendToOutputBuf(DATA_TRANSMIT_PREFIX);
 
   constexpr int NUM_DEC_PLACES = 10;
@@ -64,9 +64,10 @@ void SerialComms::sendVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   convertValue(convertedNumber, NUM_DEC_PLACES,
                speeds.rightWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_PREFIX[EncoderPositions::RIGHT_ENCODER], convertedNumber);
-
-  sendCurrentBuffer();
+  appendToOutputBuf(EOL);
 }
+
+void SerialComms::parseCurrentBuffer() {}
 
 // --------- Private methods ------------
 
@@ -85,13 +86,12 @@ void SerialComms::appendToOutputBuf(const char c) {
 
 void SerialComms::appendToOutputBuf(const char *s) {
   auto length = strlen(s);
-  if (length + m_currentIndex >= OUT_BUFFER_SIZE) {
-    m_hardwareInterface.serialPrintln(
-        "Serial Comm Buffer was not large enough. Dropping output");
-  } else {
-    strcat(m_outBuffer, s);
-    m_currentIndex += length;
+  if (length + m_outIndex >= BUFFER_SIZE) {
+    // Flush the current buffer regardless
+    sendCurrentBuffer();
   }
+  strcat(m_outBuffer, s);
+  m_outIndex += length;
 }
 
 void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
@@ -107,7 +107,7 @@ void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
 void SerialComms::sendCurrentBuffer() {
   m_hardwareInterface.serialPrintln(m_outBuffer);
   m_outBuffer[0] = '\0';
-  m_currentIndex = 0;
+  m_outIndex = 0;
 }
 
 } // namespace ArgoRcLib
