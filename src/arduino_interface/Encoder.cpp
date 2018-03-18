@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "ArduinoGlobals.hpp"
-#include "Length.hpp"
+#include "Distance.hpp"
 #include "arduino_interface.hpp"
 
 #include "Encoder.hpp"
@@ -12,15 +12,15 @@ using namespace Libs;
 
 namespace {
 
-constexpr Length WHEEL_DIAMETER = 0.58_m;
+constexpr Distance WHEEL_DIAMETER = 0.58_m;
 constexpr int ENC_COUNTS_PER_MOTOR_ROT = 25;
 constexpr int MOTOR_ROT_PER_WHEEL_ROT = 20;
 
-constexpr Length WHEEL_RADIUS = WHEEL_DIAMETER * M_PI;
+constexpr Distance WHEEL_RADIUS = WHEEL_DIAMETER * M_PI;
 constexpr int ENC_COUNTS_PER_WHEEL_ROT =
     ENC_COUNTS_PER_MOTOR_ROT * MOTOR_ROT_PER_WHEEL_ROT;
 
-constexpr Length DISTANCE_PER_ENC_COUNT =
+constexpr Distance DISTANCE_PER_ENC_COUNT =
     WHEEL_RADIUS / ENC_COUNTS_PER_WHEEL_ROT;
 } // End of anonymous namespace
 
@@ -59,7 +59,7 @@ Encoder &Encoder::operator=(Encoder &&other) {
 WheelSpeeds Encoder::calculateSpeed() {
   auto currentEncoderValues = read();
   auto currentTime = m_hardware.millis();
-  long timeDifference = currentTime - m_lastReadTime;
+  Time timeDifference(currentTime - m_lastReadTime);
 
   auto leftPulses =
       currentEncoderValues.leftEncoderVal - m_lastEncValues.leftEncoderVal;

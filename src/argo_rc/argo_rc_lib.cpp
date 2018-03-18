@@ -38,7 +38,8 @@ namespace ArgoRcLib {
 
 ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface)
     : m_hardwareInterface(hardwareInterface), m_encoders(m_hardwareInterface),
-      m_commsObject(m_hardwareInterface) {}
+      m_commsObject(m_hardwareInterface), m_pidController(m_hardwareInterface) {
+}
 
 void ArgoRc::setup() {
   m_hardwareInterface.serialBegin(115200);
@@ -132,7 +133,10 @@ void ArgoRc::loop() {
   }
 
   m_commsObject.sendEncoderRotation(m_encoders.read());
-  m_commsObject.sendVehicleSpeed(m_encoders.calculateSpeed());
+  auto currentSpeed = m_encoders.calculateSpeed();
+  m_commsObject.sendVehicleSpeed(currentSpeed);
+
+  // m_pidController.calculatePwmTargets(currentSpeed, )
 
   // Deadman switch is high at this point
   auto targetPwmVals = readPwmInput();

@@ -5,10 +5,11 @@ set(SRC_FILES
 set(HDR_FILES
     arduino_lib_wrapper.hpp
     cstring_wrapper.hpp
-    Length.hpp
+    Distance.hpp
     move.hpp
     pair.hpp
     Speed.hpp
+    Time.hpp
     unique_ptr.hpp)
 
 include_directories(
