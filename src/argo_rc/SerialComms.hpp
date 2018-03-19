@@ -2,8 +2,10 @@
 #define SERIAL_COMMS_HPP
 
 #include "Encoder.hpp"
+#include "MinString.hpp"
 #include "arduino_interface.hpp"
 #include "move.hpp"
+#include "pair.hpp"
 
 namespace ArgoRcLib {
 
@@ -28,28 +30,36 @@ public:
   void addVehicleSpeed(const Hardware::WheelSpeeds &speeds);
 
   // Read methods
-  Hardware::WheelSpeeds getTargetSpeed();
+  Hardware::WheelSpeeds getTargetSpeeds() { return m_currentTargetSpeeds; }
 
   // Buffer Management
-  void parseCurrentBuffer();
+  void parseIncomingBuffer();
   void sendCurrentBuffer();
 
 private:
   void appendKVPair(const char *key, const char *value);
 
   void appendToOutputBuf(const char c);
-  void appendToOutputBuf(const char *s);
+  void appendToOutputBuf(const Libs::MinString &s);
 
   void convertValue(char *buf, int bufSize, int32_t val);
+
+  void findInputCommands();
+
+  void parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange);
 
   // Set the output buffer to 64 characters this is reasonable for all
   // commands and matches the Arduino buffer
   static const uint8_t BUFFER_SIZE = 64;
 
+  // Buffer management
   uint8_t m_outIndex{0};
   uint8_t m_inputIndex{0};
   char m_outBuffer[BUFFER_SIZE]{'\0'};
   char m_inputBuffer[BUFFER_SIZE]{'\0'};
+
+  // Previous results
+  Hardware::WheelSpeeds m_currentTargetSpeeds;
 
   Hardware::ArduinoInterface &m_hardwareInterface;
 };

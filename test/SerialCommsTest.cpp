@@ -7,6 +7,10 @@
 #include "Speed.hpp"
 #include "mock_arduino.hpp"
 
+using ::testing::InSequence;
+using ::testing::InvokeWithoutArgs;
+using ::testing::NiceMock;
+using ::testing::Return;
 using ::testing::Test;
 
 using namespace ArgoRcLib;
@@ -19,7 +23,7 @@ protected:
   SerialCommsFixture()
       : mockObj(), testInstance(static_cast<ArduinoInterface &>(mockObj)) {}
 
-  MockArduino mockObj;
+  NiceMock<MockArduino> mockObj;
   SerialComms testInstance;
 };
 
@@ -53,7 +57,28 @@ TEST_F(SerialCommsFixture, writesSpeedData) {
 }
 
 TEST_F(SerialCommsFixture, parseSpeedCommand) {
-  const std::string inputString = "!C L_SPEED:1200, R_SPEED:1200 \n";
+  const std::string speedCommand = "!C L_SPEED:1200 R_SPEED:1300 \n";
 
-  // EXPECT_CALL()
+  InSequence s;
+  EXPECT_CALL(mockObj, serialAvailable())
+      .Times(speedCommand.length())
+      .WillRepeatedly(Return(1));
+  EXPECT_CALL(mockObj, serialAvailable()).WillOnce(Return(0));
+
+  int currentBufferPos = 0;
+  ON_CALL(mockObj, serialRead())
+      .WillByDefault(InvokeWithoutArgs([&currentBufferPos, &speedCommand]() {
+        char nextChar = speedCommand[currentBufferPos];
+        currentBufferPos++;
+        return nextChar;
+      }));
+
+  testInstance.parseIncomingBuffer();
+  auto targetSpeeds = testInstance.getTargetSpeeds();
+
+  Speed leftExpectedSpeed(1.2_m, 1_s);
+  Speed rightExpectedSpeed(1.3_m, 1_s);
+
+  EXPECT_EQ(targetSpeeds.leftWheel, leftExpectedSpeed);
+  EXPECT_EQ(targetSpeeds.rightWheel, rightExpectedSpeed);
 }
