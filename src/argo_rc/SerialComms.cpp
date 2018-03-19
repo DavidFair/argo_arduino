@@ -47,7 +47,7 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
 
   // The maximum number of digits in either encoder output
   constexpr int NUM_DEC_PLACES = 6;
-  char convertedNumber[NUM_DEC_PLACES];
+  char convertedNumber[NUM_DEC_PLACES]{0};
 
   // Convert each number and forward as a K-V pair
   convertValue(convertedNumber, NUM_DEC_PLACES, data.leftEncoderVal);
@@ -79,21 +79,24 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
 }
 
 void SerialComms::parseIncomingBuffer() {
-  m_inputBuffer[0] = '\0';
-  m_inputIndex = 0;
   while (m_hardwareInterface.serialAvailable() > 0) {
     if ((m_inputIndex + 1) >= BUFFER_SIZE) {
       m_hardwareInterface.serialPrintln(
           "Input buffer not large enough - ignoring");
       m_inputIndex = 0;
-      m_inputBuffer[0] = '\0';
       return;
     }
 
     m_inputBuffer[m_inputIndex++] = m_hardwareInterface.serialRead();
   }
 
-  findInputCommands();
+  bool containsEOLChar = (strchr(m_inputBuffer, EOL) != NULL);
+
+  if (m_inputIndex > 0 && containsEOLChar) {
+    findInputCommands();
+    resetBuffer(m_inputBuffer, BUFFER_SIZE);
+    m_inputIndex = 0;
+  }
 }
 
 // --------- Private methods ------------
@@ -132,55 +135,42 @@ void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
 }
 
 void SerialComms::findInputCommands() {
-  Libs::pair<uint8_t, uint8_t> commandIndexes(0, 0);
-  int currentPos = m_inputIndex;
-  // Find each command pair - currently we only look for one
-  do {
-    char currentChar = m_inputBuffer[currentPos];
-    if (currentChar == EOL && commandIndexes.second == 0) {
-      commandIndexes.second = currentPos;
-    } else if (currentChar == EOL && commandIndexes.second != 0) {
-      commandIndexes.first = currentPos;
-    }
-    currentPos--;
-  } while (currentPos > 0 && commandIndexes.first == 0);
+  Libs::pair<uint8_t, uint8_t> commandIndexes(0, m_inputIndex);
 
   if (DATA_RECIEVE_PREFIX.equalsCString(&m_inputBuffer[commandIndexes.first])) {
     // We have a command
     parseTargetSpeed(Libs::move(commandIndexes));
+  } else {
+    Serial.println("Ignoring - buffer contains");
+    Serial.println(m_inputBuffer);
   }
 }
 
 void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
-  uint8_t currentPos = 0 + DATA_RECIEVE_PREFIX.length() +
-                       SPEED_PREFIX[EncoderPositions::LEFT_ENCODER].length() +
-                       1; // K-V seperator
-  if (currentPos > charRange.second) {
-    return;
-  }
+  char *foundPtr = strchr(&m_inputBuffer[charRange.first], K_V_SEPERATOR);
+  uint8_t currentPos = foundPtr - m_inputBuffer + 1; // Move to next char
 
   const uint8_t maxLength = 8;
 
   // Get left number
   uint8_t leftNumDigits = 0;
-  char leftBuf[maxLength];
+  char leftBuf[maxLength]{0};
   while (isdigit(m_inputBuffer[currentPos]) && leftNumDigits < maxLength) {
     leftBuf[leftNumDigits] = m_inputBuffer[currentPos];
     leftNumDigits++;
     currentPos++;
   }
-
   // Move forward to the next numbers
-  currentPos += SPEED_PREFIX[EncoderPositions::RIGHT_ENCODER].length() +
-                1    // whitespace char
-                + 1; // K-V seperator bool isValid =
+  foundPtr = strchr(&m_inputBuffer[currentPos + 1], K_V_SEPERATOR);
+  currentPos = foundPtr - m_inputBuffer + 1;
 
   if (currentPos > charRange.second) {
+    Serial.println("Bailed here");
     return;
   }
 
   uint8_t rightNumDigits = 0;
-  char rightBuf[maxLength];
+  char rightBuf[maxLength]{0};
   while (isdigit(m_inputBuffer[currentPos]) && rightNumDigits < maxLength) {
     rightBuf[rightNumDigits] = m_inputBuffer[currentPos];
     rightNumDigits++;
@@ -189,10 +179,14 @@ void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
 
   bool isValid = leftNumDigits != 0 && rightNumDigits != 0;
   if (!isValid) {
+    Serial.println("Was invalid");
     return;
   }
 
   // Parse and store as millimeters
+  Serial.println("AtoI: ");
+  Serial.println(atoi(leftBuf));
+
   Distance leftDist(0, atoi(leftBuf)), rightDist(0, atoi(rightBuf));
 
   Speed leftVal(leftDist, 1_s), rightVal(rightDist, 1_s);
@@ -202,8 +196,12 @@ void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
   m_currentTargetSpeeds = newTargets;
 }
 
+void SerialComms::resetBuffer(char *targetBuffer, uint8_t bufferSize) {
+  memset(targetBuffer, 0, sizeof(targetBuffer[0]) * bufferSize);
+}
+
 void SerialComms::sendCurrentBuffer() {
-  m_hardwareInterface.serialPrintln(m_outBuffer);
+  m_hardwareInterface.serialPrint(m_outBuffer);
   m_outBuffer[0] = '\0';
   m_outIndex = 0;
 }

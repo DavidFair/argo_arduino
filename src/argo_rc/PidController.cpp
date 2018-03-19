@@ -42,6 +42,10 @@ PidController &PidController::operator=(PidController &&other) {
 PwmTargets
 PidController::calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
                                    const Hardware::WheelSpeeds &targetSpeeds) {
+  if (m_hardwareInterface.millis() - m_previousTime <
+      PID_CONSTANTS::timeBetween) {
+    return m_previousTargets;
+  }
   PwmTargets target;
   target.leftPwm =
       calculatePwmValue(currentSpeeds.leftWheel, targetSpeeds.leftWheel,
@@ -49,15 +53,16 @@ PidController::calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
   target.rightPwm =
       calculatePwmValue(currentSpeeds.rightWheel, targetSpeeds.rightWheel,
                         EncoderPositions::RIGHT_ENCODER);
+
+  m_previousTargets = target;
+  m_previousTime = m_hardwareInterface.millis();
   return target;
 }
 
 int16_t PidController::calcProportional(const Distance &errorPerSec) {
   auto errorSpeed = errorPerSec.millimeters();
 
-  int16_t targetSpeed = isLowerThanBoundary(errorSpeed)
-                            ? errorSpeed * PID_CONSTANTS::propLower
-                            : errorSpeed * PID_CONSTANTS::propUpper;
+  int16_t targetSpeed = errorSpeed * PID_CONSTANTS::prop;
   return targetSpeed;
 }
 
@@ -65,9 +70,7 @@ int16_t PidController::calcIntegral(const Distance &errorPerSec,
                                     EncoderPositions position) {
   auto errorSpeed = errorPerSec.millimeters();
 
-  int16_t integralVal = isLowerThanBoundary(errorSpeed)
-                            ? errorSpeed * PID_CONSTANTS::integralLower
-                            : errorSpeed * PID_CONSTANTS::integralUpper;
+  int16_t integralVal = errorSpeed * PID_CONSTANTS::integral;
   auto newIntegralVal = m_totalIntegral[position] + integralVal;
 
   // Constrain to a maximum of 255 to prevent "lag" whilst the integral drains
@@ -87,9 +90,7 @@ int16_t PidController::calcDeriv(const Distance &errorPerSec,
   m_previousError[position] = errorPerSec;
 
   const auto errorDelta = errorDifference.millimeters();
-  int16_t derivVal = isLowerThanBoundary(errorDelta)
-                         ? errorDelta * PID_CONSTANTS::derivLower
-                         : errorDelta * PID_CONSTANTS::derivUpper;
+  int16_t derivVal = errorDelta * PID_CONSTANTS::deriv;
   // As we want to resist kicking the motors up power when the set
   // point changes this is a negative contribution
   derivVal = -derivVal;
@@ -105,15 +106,22 @@ int16_t PidController::calculatePwmValue(const Libs::Speed &currentSpeed,
   const auto speedError = targetSpeed - currentSpeed;
   const Distance unitError = speedError.getUnitDistance();
 
+  const auto basePower = targetSpeed.getUnitDistance().millimeters() *
+                         PID_CONSTANTS::powerConstant;
+
   auto p = calcProportional(unitError);
   auto i = calcIntegral(unitError, position);
   auto d = calcDeriv(unitError, position);
 
-  return p + i + d;
-}
+  auto sum = basePower + (p + i + d);
 
-bool PidController::isLowerThanBoundary(const int32_t &val) {
-  return val < PID_CONSTANTS::boundarySpeed;
+  if (sum > MAX_PWM_VAL) {
+    sum = MAX_PWM_VAL;
+  } else if (sum < -MAX_PWM_VAL) {
+    sum = -MAX_PWM_VAL;
+  }
+
+  return sum;
 }
 
 } // namespace ArgoRcLib

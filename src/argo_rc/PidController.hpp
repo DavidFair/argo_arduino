@@ -10,22 +10,22 @@
 namespace ArgoRcLib {
 
 struct PID_CONSTANTS {
-  //  Boundary speed in mm/s where we switch to less aggressive constants
-  constexpr static float boundarySpeed{700};
+  // Every n milliseconds check PWM value
+  constexpr static int timeBetween{500};
+
+  // PWM constant
+  constexpr static float powerConstant{1e-2};
 
   // Controls how quickly the vehicle accelerates
-  constexpr static float propLower{0.040};
-  constexpr static float propUpper{0.085};
+  constexpr static float prop{0};
 
   // Helps the vehicle reach target speed -
   // if too high the vehicle speed oscillates
-  constexpr static float integralLower{0.01};
-  constexpr static float integralUpper{0.03};
+  constexpr static float integral{0};
 
   // Controls how quickly the acceleration ramps up preventing large spikes
   // Aka derivative on measurement
-  constexpr static float derivLower{0.01};
-  constexpr static float derivUpper{0.03};
+  constexpr static float deriv{0};
 };
 
 struct PwmTargets {
@@ -62,8 +62,6 @@ public:
   void resetPid();
 
 private:
-  static bool isLowerThanBoundary(const int32_t &val);
-
   int16_t calculatePwmValue(const Libs::Speed &currentSpeed,
                             const Libs::Speed &targetSpeed,
                             Hardware::EncoderPositions position);
@@ -71,6 +69,7 @@ private:
   Hardware::ArduinoInterface &m_hardwareInterface;
 
   unsigned long m_previousTime;
+  PwmTargets m_previousTargets;
 
   Libs::Distance m_previousError[Hardware::EncoderPositions::_NUM_OF_ENCODERS];
   int16_t m_totalIntegral[Hardware::EncoderPositions::_NUM_OF_ENCODERS];

@@ -12,11 +12,10 @@ using namespace Libs;
 
 namespace {
 
-constexpr Distance WHEEL_DIAMETER = 0.58_m;
 constexpr int ENC_COUNTS_PER_MOTOR_ROT = 25;
 constexpr int MOTOR_ROT_PER_WHEEL_ROT = 20;
 
-constexpr Distance WHEEL_RADIUS = WHEEL_DIAMETER * M_PI;
+constexpr Distance WHEEL_RADIUS = 1.91_m;
 constexpr int ENC_COUNTS_PER_WHEEL_ROT =
     ENC_COUNTS_PER_MOTOR_ROT * MOTOR_ROT_PER_WHEEL_ROT;
 
@@ -61,19 +60,38 @@ WheelSpeeds Encoder::calculateSpeed() {
   auto currentTime = m_hardware.millis();
   Time timeDifference(currentTime - m_lastReadTime);
 
+  if (timeDifference.millis() < m_minTimeBetweenSpeedCalc) {
+    return m_previousCalcSpeeds;
+  }
+
   auto leftPulses =
       currentEncoderValues.leftEncoderVal - m_lastEncValues.leftEncoderVal;
   auto rightPulses =
       currentEncoderValues.rightEncoderVal - m_lastEncValues.rightEncoderVal;
 
-  Speed leftSpeed(DISTANCE_PER_ENC_COUNT * leftPulses, timeDifference);
-  Speed rightSpeed(DISTANCE_PER_ENC_COUNT * rightPulses, timeDifference);
+  Distance leftDist(DISTANCE_PER_ENC_COUNT * leftPulses);
+  Distance rightDist(DISTANCE_PER_ENC_COUNT * rightPulses);
+
+  Speed leftSpeed(leftDist, timeDifference);
+  Speed rightSpeed(rightDist, timeDifference);
+
+  if (leftSpeed.getUnitDistance().millimeters() != 0) {
+    Serial.println("distDiff was");
+    Serial.println(leftDist.millimeters());
+    Serial.println("Pulses was");
+    Serial.println(leftPulses);
+    Serial.println("Dist per rot:");
+    Serial.println(DISTANCE_PER_ENC_COUNT.native());
+  }
 
   // Update our last values
   m_lastReadTime = currentTime;
   m_lastEncValues = currentEncoderValues;
 
-  return WheelSpeeds{leftSpeed, rightSpeed};
+  WheelSpeeds newSpeeds{leftSpeed, rightSpeed};
+  m_previousCalcSpeeds = newSpeeds;
+
+  return newSpeeds;
 }
 
 EncoderPulses Encoder::read() const {

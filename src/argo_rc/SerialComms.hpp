@@ -48,6 +48,8 @@ private:
 
   void parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange);
 
+  void resetBuffer(char *targetBuffer, uint8_t bufferSize);
+
   // Set the output buffer to 64 characters this is reasonable for all
   // commands and matches the Arduino buffer
   static const uint8_t BUFFER_SIZE = 64;

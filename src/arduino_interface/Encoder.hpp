@@ -49,6 +49,10 @@ private:
   unsigned long m_lastReadTime{0};
   EncoderPulses m_lastEncValues;
 
+  // Milliseconds between each speed calculation
+  const static uint8_t m_minTimeBetweenSpeedCalc{100};
+  WheelSpeeds m_previousCalcSpeeds;
+
 }; // namespace Hardware
 
 } // namespace Hardware

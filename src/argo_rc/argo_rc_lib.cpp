@@ -118,24 +118,47 @@ void ArgoRc::footswitch_off() {
                                    digitalIO::E_HIGH);
 }
 
+static unsigned long startTime = millis();
+
 void ArgoRc::loop() {
-  if (!checkDeadmanSwitch()) {
-    // This is for unit testing - enterDeadmanSafetyMode on hardware gets
-    // stuck in an infinite loop
-    return;
-  }
+  // if (!checkDeadmanSwitch()) {
+  //   // This is for unit testing - enterDeadmanSafetyMode on hardware gets
+  //   // stuck in an infinite loop
+  //   return;
+  // }
 
-  m_commsObject.addEncoderRotation(m_encoders.read());
+  m_commsObject.parseIncomingBuffer();
+
   auto currentSpeed = m_encoders.calculateSpeed();
-  m_commsObject.addVehicleSpeed(currentSpeed);
-
-  // m_pidController.calculatePwmTargets(currentSpeed, )
+  auto targetSpeed = m_commsObject.getTargetSpeeds();
 
   // Deadman switch is high at this point
-  auto targetPwmVals = readPwmInput();
+  // auto targetPwmVals = readPwmInput();
+  auto targetPwmVals =
+      m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
+
+  // delay(1000);
+
+  if (millis() - startTime >= 1000) {
+    Serial.println(" ");
+    Serial.println("L Target speed: ");
+    Serial.println(targetSpeed.leftWheel.getUnitDistance().millimeters());
+    Serial.println("R Target speed: ");
+    Serial.println(targetSpeed.rightWheel.getUnitDistance().millimeters());
+
+    Serial.println("L Target PWM: ");
+    Serial.println(leftPwmValue);
+
+    Serial.println("R Target PWM: ");
+    Serial.println(leftPwmValue);
+
+    m_commsObject.addEncoderRotation(m_encoders.read());
+    m_commsObject.addVehicleSpeed(currentSpeed);
+    startTime = millis();
+  }
 
   if ((leftPwmValue > -20 && leftPwmValue < 20) &&
       (rightPwmValue > -20 && rightPwmValue < 20)) {
