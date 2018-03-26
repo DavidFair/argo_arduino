@@ -7,17 +7,16 @@
 #include "Encoder.hpp"
 #include "arduino_interface.hpp"
 
-namespace ArgoRcLib {
+namespace ArgoRcLib
+{
 
-struct PID_CONSTANTS {
+struct PID_CONSTANTS
+{
   // Every n milliseconds check PWM value
-  constexpr static int timeBetween{500};
-
-  // PWM constant
-  constexpr static float powerConstant{1e-2};
+  constexpr static float timeBetween{50};
 
   // Controls how quickly the vehicle accelerates
-  constexpr static float prop{0};
+  constexpr static float prop{0.2};
 
   // Helps the vehicle reach target speed -
   // if too high the vehicle speed oscillates
@@ -28,17 +27,24 @@ struct PID_CONSTANTS {
   constexpr static float deriv{0};
 };
 
-struct PwmTargets {
+struct PwmTargets
+{
   PwmTargets() : PwmTargets(0, 0) {}
 
-  PwmTargets(int leftPwmTarget, int rightPwmTarget)
+  PwmTargets(float leftPwmTarget, float rightPwmTarget)
       : leftPwm(leftPwmTarget), rightPwm(rightPwmTarget) {}
 
-  int leftPwm{0};
-  int rightPwm{0};
+  PwmTargets operator+(const PwmTargets &other)
+  {
+    return PwmTargets(leftPwm + other.leftPwm, rightPwm + other.rightPwm);
+  }
+
+  float leftPwm{0};
+  float rightPwm{0};
 };
 
-class PidController {
+class PidController
+{
 public:
   PidController(Hardware::ArduinoInterface &hardware);
 
@@ -51,28 +57,30 @@ public:
   PwmTargets calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
                                  const Hardware::WheelSpeeds &targetSpeeds);
 
-  int16_t calcProportional(const Libs::Distance &errorPerSec);
+  float calcProportional(const Libs::Distance &errorPerSec);
 
-  int16_t calcIntegral(const Libs::Distance &errorPerSec,
-                       Hardware::EncoderPositions position);
+  float calcIntegral(const Libs::Distance &errorPerSec,
+                     Hardware::EncoderPositions position);
 
-  int16_t calcDeriv(const Libs::Distance &errorPerSec,
-                    Hardware::EncoderPositions position);
+  float calcDeriv(const Libs::Distance &errorPerSec,
+                  Hardware::EncoderPositions position);
 
   void resetPid();
 
 private:
-  int16_t calculatePwmValue(const Libs::Speed &currentSpeed,
-                            const Libs::Speed &targetSpeed,
-                            Hardware::EncoderPositions position);
+  float calculatePwmValue(const Libs::Speed &currentSpeed,
+                          const Libs::Speed &targetSpeed,
+                          Hardware::EncoderPositions position);
 
   Hardware::ArduinoInterface &m_hardwareInterface;
 
   unsigned long m_previousTime;
+  unsigned long m_timeDiff;
+
   PwmTargets m_previousTargets;
 
   Libs::Distance m_previousError[Hardware::EncoderPositions::_NUM_OF_ENCODERS];
-  int16_t m_totalIntegral[Hardware::EncoderPositions::_NUM_OF_ENCODERS];
+  float m_totalIntegral[Hardware::EncoderPositions::_NUM_OF_ENCODERS];
 };
 
 } // namespace ArgoRcLib
