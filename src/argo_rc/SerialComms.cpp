@@ -140,9 +140,6 @@ void SerialComms::findInputCommands() {
   if (DATA_RECIEVE_PREFIX.equalsCString(&m_inputBuffer[commandIndexes.first])) {
     // We have a command
     parseTargetSpeed(Libs::move(commandIndexes));
-  } else {
-    Serial.println("Ignoring - buffer contains");
-    Serial.println(m_inputBuffer);
   }
 }
 
@@ -165,7 +162,6 @@ void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
   currentPos = foundPtr - m_inputBuffer + 1;
 
   if (currentPos > charRange.second) {
-    Serial.println("Bailed here");
     return;
   }
 
@@ -179,14 +175,10 @@ void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
 
   bool isValid = leftNumDigits != 0 && rightNumDigits != 0;
   if (!isValid) {
-    Serial.println("Was invalid");
     return;
   }
 
   // Parse and store as millimeters
-  Serial.println("AtoI: ");
-  Serial.println(atoi(leftBuf));
-
   Distance leftDist(0, atoi(leftBuf)), rightDist(0, atoi(rightBuf));
 
   Speed leftVal(leftDist, 1_s), rightVal(rightDist, 1_s);

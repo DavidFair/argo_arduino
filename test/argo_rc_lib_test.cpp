@@ -423,27 +423,3 @@ TEST_F(ArgoRcTest, rightTurnOnSpot) {
 
   argoRcLib.loop();
 }
-
-// --------- Check Encoder data is printed over serial -------
-// As we need to setup our own on call for the encoder mock don't use text
-// fixtures
-TEST_F(ArgoRcTest, encoderDataIsSent) {
-  const int32_t expectedVal = 123;
-
-  InterruptData::g_pinEncoderData.leftEncoderCount = expectedVal;
-  InterruptData::g_pinEncoderData.rightEncoderCount = expectedVal;
-
-  // Ignore other calls to serialPrintln
-  EXPECT_CALL(hardwareMock, serialPrintln(An<int>())).Times(AnyNumber());
-  EXPECT_CALL(hardwareMock, serialPrintln(An<const std::string &>()))
-      .Times(AnyNumber());
-
-  // Set the deadman switch to safe
-  returnDeadmanSafe(hardwareMock);
-
-  const std::string expectedOutput(
-      "!D L_ENC:123 R_ENC:123 \n!D L_SPEED:4280 R_SPEED:4280 \n");
-  EXPECT_CALL(hardwareMock, serialPrintln(expectedOutput));
-
-  argoRcLib.loop();
-}

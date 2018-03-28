@@ -7,11 +7,9 @@
 #include "Encoder.hpp"
 #include "arduino_interface.hpp"
 
-namespace ArgoRcLib
-{
+namespace ArgoRcLib {
 
-struct PID_CONSTANTS
-{
+struct PID_CONSTANTS {
   // Every n milliseconds check PWM value
   constexpr static float timeBetween{50};
 
@@ -20,22 +18,20 @@ struct PID_CONSTANTS
 
   // Helps the vehicle reach target speed -
   // if too high the vehicle speed oscillates
-  constexpr static float integral{0};
+  constexpr static float integral{0.01};
 
   // Controls how quickly the acceleration ramps up preventing large spikes
   // Aka derivative on measurement
-  constexpr static float deriv{0};
+  constexpr static float deriv{0.01};
 };
 
-struct PwmTargets
-{
+struct PwmTargets {
   PwmTargets() : PwmTargets(0, 0) {}
 
   PwmTargets(float leftPwmTarget, float rightPwmTarget)
       : leftPwm(leftPwmTarget), rightPwm(rightPwmTarget) {}
 
-  PwmTargets operator+(const PwmTargets &other)
-  {
+  PwmTargets operator+(const PwmTargets &other) {
     return PwmTargets(leftPwm + other.leftPwm, rightPwm + other.rightPwm);
   }
 
@@ -43,8 +39,7 @@ struct PwmTargets
   float rightPwm{0};
 };
 
-class PidController
-{
+class PidController {
 public:
   PidController(Hardware::ArduinoInterface &hardware);
 
@@ -60,10 +55,12 @@ public:
   float calcProportional(const Libs::Distance &errorPerSec);
 
   float calcIntegral(const Libs::Distance &errorPerSec,
-                     Hardware::EncoderPositions position);
+                     Hardware::EncoderPositions position,
+                     const Libs::Time &timeDiff);
 
   float calcDeriv(const Libs::Distance &errorPerSec,
-                  Hardware::EncoderPositions position);
+                  Hardware::EncoderPositions position,
+                  const Libs::Time &timeDiff);
 
   void resetPid();
 
@@ -74,8 +71,8 @@ private:
 
   Hardware::ArduinoInterface &m_hardwareInterface;
 
-  unsigned long m_previousTime;
-  unsigned long m_timeDiff;
+  Libs::Time m_previousTime;
+  Libs::Time m_timeDiff;
 
   PwmTargets m_previousTargets;
 

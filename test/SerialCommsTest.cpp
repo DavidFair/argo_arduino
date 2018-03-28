@@ -18,10 +18,23 @@ using namespace Hardware;
 using namespace Libs;
 
 namespace {
+
+const unsigned long SERIAL_DELAY = 500;
+
+unsigned long time = 0;
+unsigned long incrementMillis() {
+  time += SERIAL_DELAY;
+  return time;
+}
+
 class SerialCommsFixture : public ::testing::Test {
 protected:
   SerialCommsFixture()
-      : mockObj(), testInstance(static_cast<ArduinoInterface &>(mockObj)) {}
+      : mockObj(), testInstance(static_cast<ArduinoInterface &>(mockObj)) {
+    time = 0;
+    ON_CALL(mockObj, millis())
+        .WillByDefault(InvokeWithoutArgs(&incrementMillis));
+  }
 
   NiceMock<MockArduino> mockObj;
   SerialComms testInstance;
@@ -36,7 +49,7 @@ TEST_F(SerialCommsFixture, writesEncoderData) {
 
   const std::string expectedString = "!D L_ENC:101 R_ENC:102 \n";
 
-  EXPECT_CALL(mockObj, serialPrintln(expectedString));
+  EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addEncoderRotation(expectedData);
   testInstance.sendCurrentBuffer();
 }
@@ -51,7 +64,7 @@ TEST_F(SerialCommsFixture, writesSpeedData) {
 
   const std::string expectedString = "!D L_SPEED:1000 R_SPEED:2000 \n";
 
-  EXPECT_CALL(mockObj, serialPrintln(expectedString));
+  EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addVehicleSpeed(expectedSpeeds);
   testInstance.sendCurrentBuffer();
 }

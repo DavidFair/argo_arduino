@@ -11,6 +11,11 @@ public:
 
   explicit constexpr Time(int32_t milliseconds) : m_millis(milliseconds) {}
 
+  constexpr Time &operator=(const int32_t milliseconds) {
+    m_millis = milliseconds;
+    return *this;
+  }
+
   constexpr bool operator==(const Time &other) const {
     return m_millis == other.m_millis;
   }
@@ -22,8 +27,6 @@ public:
   constexpr double seconds() const { return m_millis / (double)MILLIS_PER_SEC; }
 
   constexpr int32_t millis() const { return m_millis; }
-
-  constexpr int32_t micros() const { return m_millis * 1e+03; }
 
   constexpr int32_t native() const { return m_millis; }
 
