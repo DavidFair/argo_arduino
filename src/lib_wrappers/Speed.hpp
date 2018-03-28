@@ -26,11 +26,9 @@ public:
   }
 
   constexpr Distance getUnitDistance() const {
-    if (!m_isOneSecond) {
-      return Distance(m_distance.native() / m_time.seconds());
-    } else {
-      return m_distance;
-    }
+    // Have to do this in one return statement for C++11 constexpr support
+    return m_isOneSecond ? m_distance
+                         : Distance(m_distance.native() / m_time.seconds());
   }
 
 private:

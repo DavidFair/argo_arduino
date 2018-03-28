@@ -11,7 +11,7 @@ public:
 
   explicit constexpr Time(int32_t milliseconds) : m_millis(milliseconds) {}
 
-  constexpr Time &operator=(const int32_t milliseconds) {
+  const Time &operator=(const int32_t milliseconds) {
     m_millis = milliseconds;
     return *this;
   }
