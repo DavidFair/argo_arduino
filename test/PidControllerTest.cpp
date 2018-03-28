@@ -136,7 +136,8 @@ TEST_F(PidControllerFixture, derivMax) {
 TEST_F(PidControllerFixture, calculatePwmTargets) {
   Speed zeroSpeed;
   constexpr Distance oneMeter = 1_m;
-  constexpr Speed oneMeterSecond(Libs::move(1_m), Libs::move(1_s));
+  constexpr Time oneSecond = 1_s;
+  constexpr Speed oneMeterSecond(oneMeter, oneSecond);
 
   Hardware::WheelSpeeds zeroSpeedCurrent(zeroSpeed, zeroSpeed);
   Hardware::WheelSpeeds targetSpeed(oneMeterSecond, oneMeterSecond);
