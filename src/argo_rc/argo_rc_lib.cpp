@@ -12,6 +12,8 @@
 
 namespace {
 const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
+const unsigned long OUTPUT_DELAY = 500;
+
 const int PWM_MAXIMUM_OUTPUT = 255;
 
 int constrainInput(int initialValue, int minValue, int maxValue,
@@ -125,14 +127,25 @@ void ArgoRc::loop() {
     return;
   }
 
-  m_commsObject.sendEncoderRotation(m_encoders.read());
-  auto currentSpeed = m_encoders.calculateSpeed();
-  m_commsObject.sendVehicleSpeed(currentSpeed);
+  auto currentTime = m_hardwareInterface.millis();
 
-  // m_pidController.calculatePwmTargets(currentSpeed, )
+  m_commsObject.parseIncomingBuffer();
+
+  auto currentSpeed = m_encoders.calculateSpeed();
+
+  // Check if were ready to send our buffer details over serial yet
+  if (m_serialTimer - currentTime > OUTPUT_DELAY) {
+    m_serialTimer = currentTime;
+    m_commsObject.addEncoderRotation(m_encoders.read());
+    m_commsObject.addVehicleSpeed(currentSpeed);
+  }
 
   // Deadman switch is high at this point
   auto targetPwmVals = readPwmInput();
+
+  // auto targetPwmVals =
+  //     m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
+  // auto targetSpeed = m_commsObject.getTargetSpeeds();
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
@@ -156,6 +169,8 @@ void ArgoRc::loop() {
                                   abs(leftPwmValue));
   m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
                                   abs(rightPwmValue));
+
+  m_commsObject.sendCurrentBuffer();
 }
 
 // ---------- Private Methods --------------

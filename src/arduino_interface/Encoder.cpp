@@ -11,17 +11,11 @@ using namespace Globals;
 using namespace Libs;
 
 namespace {
-
-constexpr Distance WHEEL_DIAMETER = 0.58_m;
-constexpr int ENC_COUNTS_PER_MOTOR_ROT = 25;
-constexpr int MOTOR_ROT_PER_WHEEL_ROT = 20;
-
-constexpr Distance WHEEL_RADIUS = WHEEL_DIAMETER * M_PI;
-constexpr int ENC_COUNTS_PER_WHEEL_ROT =
-    ENC_COUNTS_PER_MOTOR_ROT * MOTOR_ROT_PER_WHEEL_ROT;
+constexpr Distance WHEEL_CIRC = 1.91_m;
+constexpr int ENC_COUNTS_PER_WHEEL_ROT = 490;
 
 constexpr Distance DISTANCE_PER_ENC_COUNT =
-    WHEEL_RADIUS / ENC_COUNTS_PER_WHEEL_ROT;
+    WHEEL_CIRC / ENC_COUNTS_PER_WHEEL_ROT;
 } // End of anonymous namespace
 
 namespace Hardware {
@@ -61,19 +55,29 @@ WheelSpeeds Encoder::calculateSpeed() {
   auto currentTime = m_hardware.millis();
   Time timeDifference(currentTime - m_lastReadTime);
 
+  if (timeDifference.millis() < m_minTimeBetweenSpeedCalc) {
+    return m_previousCalcSpeeds;
+  }
+
   auto leftPulses =
       currentEncoderValues.leftEncoderVal - m_lastEncValues.leftEncoderVal;
   auto rightPulses =
       currentEncoderValues.rightEncoderVal - m_lastEncValues.rightEncoderVal;
 
-  Speed leftSpeed(DISTANCE_PER_ENC_COUNT * leftPulses, timeDifference);
-  Speed rightSpeed(DISTANCE_PER_ENC_COUNT * rightPulses, timeDifference);
+  Distance leftDist(DISTANCE_PER_ENC_COUNT * leftPulses);
+  Distance rightDist(DISTANCE_PER_ENC_COUNT * rightPulses);
+
+  Speed leftSpeed(Libs::move(leftDist), timeDifference);
+  Speed rightSpeed(Libs::move(rightDist), timeDifference);
 
   // Update our last values
   m_lastReadTime = currentTime;
   m_lastEncValues = currentEncoderValues;
 
-  return WheelSpeeds{leftSpeed, rightSpeed};
+  WheelSpeeds newSpeeds{Libs::move(leftSpeed), Libs::move(rightSpeed)};
+  m_previousCalcSpeeds = newSpeeds;
+
+  return newSpeeds;
 }
 
 EncoderPulses Encoder::read() const {

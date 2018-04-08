@@ -49,28 +49,23 @@ TEST_F(EncoderFixture, startsAtZero) {
   EXPECT_EQ(0, returnedVals.rightEncoderVal);
 }
 
-const Distance wheelRadius = 0.58_m * M_PI;
-// 25 counts : 1 motor rotation
-// 20 motor rotations : 1 wheel rotation
-const int countsPerWheelRotation = 25 * 20;
+constexpr Distance wheelCirc = 1.91_m;
+constexpr int countsPerWheelRotation = 490;
+constexpr Distance distPerCount = wheelCirc / countsPerWheelRotation;
 
 TEST_F(EncoderFixture, calculatesSpeed) {
-  const Speed wheelTurnPerSec(wheelRadius, oneSecond);
-  const auto expectedSpeed = wheelTurnPerSec.getUnitDistance().millimeters();
-
-  ASSERT_EQ(expectedSpeed, wheelRadius.millimeters());
+  const auto expectedSpeed = distPerCount * countsPerWheelRotation;
 
   InterruptData::g_pinEncoderData.leftEncoderCount = countsPerWheelRotation;
   InterruptData::g_pinEncoderData.rightEncoderCount =
-      2 * countsPerWheelRotation;
+      countsPerWheelRotation * 2;
 
   EXPECT_CALL(*mockHardware, millis()).WillOnce(Return(oneSecond.millis()));
 
   auto speed = testInstance.calculateSpeed();
 
-  EXPECT_EQ(speed.leftWheel.getUnitDistance().millimeters(), expectedSpeed);
-  EXPECT_EQ(speed.rightWheel.getUnitDistance().millimeters(),
-            2 * expectedSpeed);
+  EXPECT_EQ(speed.leftWheel.getUnitDistance(), expectedSpeed);
+  EXPECT_EQ(speed.rightWheel.getUnitDistance(), expectedSpeed * 2);
 }
 
 TEST_F(EncoderFixture, calculatesSpeedAsTimeVaries) {
@@ -84,19 +79,21 @@ TEST_F(EncoderFixture, calculatesSpeedAsTimeVaries) {
   InterruptData::g_pinEncoderData.leftEncoderCount = countsPerWheelRotation;
   InterruptData::g_pinEncoderData.rightEncoderCount = countsPerWheelRotation;
 
-  const Speed expectedHalfSec(wheelRadius, halfSecond);
+  const Distance expectedDistance = distPerCount * countsPerWheelRotation;
+  const Speed expectedHalfSec(expectedDistance, halfSecond);
+
   auto halfSecSpeed = testInstance.calculateSpeed();
 
-  EXPECT_EQ(halfSecSpeed.leftWheel.getUnitDistance().millimeters(),
-            expectedHalfSec.getUnitDistance().millimeters());
-  EXPECT_EQ(halfSecSpeed.rightWheel.getUnitDistance().millimeters(),
-            expectedHalfSec.getUnitDistance().millimeters());
+  EXPECT_EQ(halfSecSpeed.leftWheel.getUnitDistance(),
+            expectedHalfSec.getUnitDistance());
+  EXPECT_EQ(halfSecSpeed.rightWheel.getUnitDistance(),
+            expectedHalfSec.getUnitDistance());
 
   // Vehicle reverses in one second
   InterruptData::g_pinEncoderData.leftEncoderCount = 0;
   InterruptData::g_pinEncoderData.rightEncoderCount = 0;
 
-  const Speed expectedOneSec(wheelRadius, oneSecond);
+  const Speed expectedOneSec(expectedDistance, oneSecond);
   auto oneSecSpeed = testInstance.calculateSpeed();
 
   EXPECT_EQ(oneSecSpeed.leftWheel.getUnitDistance().millimeters(),

@@ -66,6 +66,8 @@ private:
 
   PwmTargets setMotorTarget(int speed, int steer);
 
+  unsigned long m_serialTimer;
+
   Hardware::ArduinoInterface &m_hardwareInterface;
   Hardware::Encoder m_encoders;
 

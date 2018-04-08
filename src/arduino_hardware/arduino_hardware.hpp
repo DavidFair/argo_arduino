@@ -38,6 +38,8 @@ public:
 
   virtual unsigned long millis() const override { return ::millis(); };
 
+  virtual int serialAvailable() const override { return ::Serial.available(); }
+
   virtual void serialBegin(unsigned long baudRate) const override {
     ::Serial.begin(baudRate);
   };
@@ -53,6 +55,8 @@ public:
   };
 
   virtual void serialPrintln(int i) const override { ::Serial.println(i); };
+
+  virtual char serialRead() const override { return ::Serial.read(); }
 
   virtual void setPinMode(ArduinoEnums::pinMapping pin,
                           ArduinoEnums::digitalIO mode) const override;
