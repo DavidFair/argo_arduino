@@ -47,7 +47,7 @@ TEST_F(SerialCommsFixture, writesEncoderData) {
   expectedData.leftEncoderVal = 101;
   expectedData.rightEncoderVal = 102;
 
-  const std::string expectedString = "!D L_ENC:101 R_ENC:102 \n";
+  const std::string expectedString = "!e L_ENC:101 R_ENC:102 \n";
 
   EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addEncoderRotation(expectedData);
@@ -62,7 +62,7 @@ TEST_F(SerialCommsFixture, writesSpeedData) {
 
   WheelSpeeds expectedSpeeds{oneMeterSecond, twoMeterSecond};
 
-  const std::string expectedString = "!D L_SPEED:1000 R_SPEED:2000 \n";
+  const std::string expectedString = "!s L_SPEED:1000 R_SPEED:2000 \n";
 
   EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addVehicleSpeed(expectedSpeeds);
@@ -70,7 +70,7 @@ TEST_F(SerialCommsFixture, writesSpeedData) {
 }
 
 TEST_F(SerialCommsFixture, parseSpeedCommand) {
-  const std::string speedCommand = "!C L_SPEED:1200 R_SPEED:1300 \n";
+  const std::string speedCommand = "!T L_SPEED:1200 R_SPEED:1300 \n";
 
   InSequence s;
   EXPECT_CALL(mockObj, serialAvailable())
