@@ -134,7 +134,7 @@ void ArgoRc::loop() {
   auto currentSpeed = m_encoders.calculateSpeed();
 
   // Check if were ready to send our buffer details over serial yet
-  if (m_serialTimer - currentTime > OUTPUT_DELAY) {
+  if (currentTime - m_serialTimer > OUTPUT_DELAY) {
     m_serialTimer = currentTime;
     m_commsObject.addEncoderRotation(m_encoders.read());
     m_commsObject.addVehicleSpeed(currentSpeed);
