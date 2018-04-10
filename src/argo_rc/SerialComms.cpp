@@ -25,8 +25,12 @@ constexpr char K_V_SEPERATOR = ':';
 constexpr char SEPERATOR = ' ';
 constexpr char EOL = '\n';
 
-constexpr MinString DATA_RECIEVE_PREFIX = "!C ";
-constexpr MinString DATA_TRANSMIT_PREFIX = "!D ";
+// Transmit prefixes
+constexpr MinString ENCODER_TRANSMIT_PRE = "!e ";
+constexpr MinString SPEED_TRANSMIT_PRE = "!s ";
+
+// Command prefixes
+constexpr MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
 
 // Function specific data
 constexpr int NUM_ENCODER = EncoderPositions::_NUM_OF_ENCODERS;
@@ -43,7 +47,7 @@ SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
 
 void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   // Prepare our output buffer - prepend that we are sending data
-  appendToOutputBuf(DATA_TRANSMIT_PREFIX);
+  appendToOutputBuf(ENCODER_TRANSMIT_PRE);
 
   // The maximum number of digits in either encoder output
   constexpr int NUM_DEC_PLACES = 6;
@@ -61,7 +65,7 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
 }
 
 void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
-  appendToOutputBuf(DATA_TRANSMIT_PREFIX);
+  appendToOutputBuf(SPEED_TRANSMIT_PRE);
 
   constexpr int NUM_DEC_PLACES = 10;
   char convertedNumber[NUM_DEC_PLACES];
@@ -137,7 +141,7 @@ void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
 void SerialComms::findInputCommands() {
   Libs::pair<uint8_t, uint8_t> commandIndexes(0, m_inputIndex);
 
-  if (DATA_RECIEVE_PREFIX.equalsCString(&m_inputBuffer[commandIndexes.first])) {
+  if (SPEED_COMMAND_PRE.equalsCString(&m_inputBuffer[commandIndexes.first])) {
     // We have a command
     parseTargetSpeed(Libs::move(commandIndexes));
   }
