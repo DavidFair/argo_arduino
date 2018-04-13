@@ -143,11 +143,19 @@ void ArgoRc::loop() {
   }
 
   // Deadman switch is high at this point
+  // ---- RC control ----
   auto targetPwmVals = readPwmInput();
 
+  // ------- ROS control ------
+  // auto targetSpeed = m_commsObject.getTargetSpeeds();
+  // if (m_usePingTimeout && !m_commsObject->isPingGood()) {
+  //   // TODO put a warning here for timeout
+  //   targetSpeed.leftWheel = 0;
+  //   targetSpeed.rightWheel = 0;
+  // }
   // auto targetPwmVals =
   //     m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
-  // auto targetSpeed = m_commsObject.getTargetSpeeds();
+  // --------------
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
@@ -180,25 +188,17 @@ void ArgoRc::loop() {
 
 bool ArgoRc::checkDeadmanSwitch() {
 
-  const bool deadmanSwitchGood =
-      m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH;
-
-  const bool pingGood = m_usePingTimeout ? m_commsObject.isPingGood() : true;
-
-  if (deadmanSwitchGood && pingGood) {
+  if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH) {
     return true;
   }
 
-  if (!deadmanSwitchGood) {
-    // Check for switch bounce
-    unsigned long startingTime = m_hardwareInterface.millis();
+  unsigned long startingTime = m_hardwareInterface.millis();
 
-    while ((m_hardwareInterface.millis() - startingTime) <
-           DEADMAN_TIMEOUT_DELAY) {
-      if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH)
-        // It was noise
-        return true;
-    }
+  while ((m_hardwareInterface.millis() - startingTime) <
+         DEADMAN_TIMEOUT_DELAY) {
+    // Check its not a switch bounce
+    if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH)
+      return true;
   }
 
   // Pin still has not driven high after DEADMAN_TIMEOUT seconds
