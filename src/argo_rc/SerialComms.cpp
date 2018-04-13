@@ -19,6 +19,8 @@ using namespace Libs;
  * strings, and keeps a consistent interface with the unit tests too. */
 namespace {
 
+const unsigned long PING_TIMEOUT = 250; // milliseconds
+
 // Whitespace seperates various data fields we are transmitting
 // A ':' character indicates a key - value pair
 constexpr char K_V_SEPERATOR = ':';
@@ -45,7 +47,8 @@ constexpr MinString SPEED_PREFIX[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
 namespace ArgoRcLib {
 
 SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
-    : m_currentTargetSpeeds(), m_hardwareInterface(hardware) {}
+    : m_currentTargetSpeeds(), m_hardwareInterface(hardware),
+      m_lastPingTime(hardware.millis()) {}
 
 void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   // Prepare our output buffer - prepend that we are sending data
@@ -89,6 +92,11 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   appendToOutputBuf(EOL);
 }
 
+bool SerialComms::isPingGood() const {
+  const auto timeSinceLastPing = m_hardwareInterface.millis() - m_lastPingTime;
+  return (timeSinceLastPing < PING_TIMEOUT);
+}
+
 void SerialComms::parseIncomingBuffer() {
   while (m_hardwareInterface.serialAvailable() > 0) {
     if ((m_inputIndex + 1) >= BUFFER_SIZE) {
@@ -110,6 +118,12 @@ void SerialComms::parseIncomingBuffer() {
     resetBuffer(m_inputBuffer, BUFFER_SIZE);
     m_inputIndex = 0;
   }
+}
+
+void SerialComms::sendCurrentBuffer() {
+  m_hardwareInterface.serialPrint(m_outBuffer);
+  m_outBuffer[0] = '\0';
+  m_outIndex = 0;
 }
 
 // --------- Private methods ------------
@@ -254,7 +268,7 @@ void SerialComms::processIndividualCommand(
   const char *strPtr = &m_inputBuffer[charPosition.first];
 
   if (PING_COMMAND_PRE.isPresentInString(strPtr)) {
-    // TODO
+    m_lastPingTime = m_hardwareInterface.millis();
   } else if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
     parseTargetSpeed(charPosition);
   } else {
@@ -264,12 +278,6 @@ void SerialComms::processIndividualCommand(
 
 void SerialComms::resetBuffer(char *targetBuffer, uint8_t bufferSize) {
   memset(targetBuffer, 0, sizeof(targetBuffer[0]) * bufferSize);
-}
-
-void SerialComms::sendCurrentBuffer() {
-  m_hardwareInterface.serialPrint(m_outBuffer);
-  m_outBuffer[0] = '\0';
-  m_outIndex = 0;
 }
 
 } // namespace ArgoRcLib

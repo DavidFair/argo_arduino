@@ -9,8 +9,6 @@
 
 namespace ArgoRcLib {
 
-enum class CommandType { NONE, PING, SPEED };
-
 class SerialComms {
 public:
   SerialComms(Hardware::ArduinoInterface &hardware);
@@ -35,6 +33,7 @@ public:
 
   // Read methods
   Hardware::WheelSpeeds getTargetSpeeds() { return m_currentTargetSpeeds; }
+  bool isPingGood() const;
 
   // Buffer Management
   void parseIncomingBuffer();
@@ -58,9 +57,8 @@ private:
 
   void resetBuffer(char *targetBuffer, uint8_t bufferSize);
 
-  // Set the output buffer to 64 characters this is reasonable for all
-  // commands and matches the Arduino buffer
-  static const uint8_t BUFFER_SIZE = 64;
+  // Set the output buffer to 100 characters which should be reasonable
+  static const uint8_t BUFFER_SIZE = 100;
 
   // Buffer management
   uint8_t m_outIndex{0};
@@ -70,8 +68,9 @@ private:
 
   // Previous results
   Hardware::WheelSpeeds m_currentTargetSpeeds;
-
   Hardware::ArduinoInterface &m_hardwareInterface;
+
+  unsigned long m_lastPingTime;
 };
 
 } // Namespace ArgoRcLib
