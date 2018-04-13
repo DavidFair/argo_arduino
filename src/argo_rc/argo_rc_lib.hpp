@@ -14,7 +14,8 @@ namespace ArgoRcLib {
 
 class ArgoRc {
 public:
-  explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface);
+  explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
+                  bool usePingTimeout = true);
 
   ~ArgoRc() = default;
 
@@ -67,6 +68,7 @@ private:
   PwmTargets setMotorTarget(int speed, int steer);
 
   unsigned long m_serialTimer;
+  bool m_usePingTimeout;
 
   Hardware::ArduinoInterface &m_hardwareInterface;
   Hardware::Encoder m_encoders;

@@ -38,8 +38,10 @@ using namespace Hardware;
 
 namespace ArgoRcLib {
 
-ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface)
-    : m_hardwareInterface(hardwareInterface), m_encoders(m_hardwareInterface),
+ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
+               bool usePingTimeout)
+    : m_serialTimer(0), m_usePingTimeout(usePingTimeout),
+      m_hardwareInterface(hardwareInterface), m_encoders(m_hardwareInterface),
       m_commsObject(m_hardwareInterface), m_pidController(m_hardwareInterface) {
 }
 
@@ -170,23 +172,33 @@ void ArgoRc::loop() {
   m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
                                   abs(rightPwmValue));
 
+  m_commsObject.addPing();
   m_commsObject.sendCurrentBuffer();
 }
 
 // ---------- Private Methods --------------
 
 bool ArgoRc::checkDeadmanSwitch() {
-  if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH) {
+
+  const bool deadmanSwitchGood =
+      m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH;
+
+  const bool pingGood = m_usePingTimeout ? m_commsObject.isPingGood() : true;
+
+  if (deadmanSwitchGood && pingGood) {
     return true;
   }
 
-  unsigned long startingTime = m_hardwareInterface.millis();
+  if (!deadmanSwitchGood) {
+    // Check for switch bounce
+    unsigned long startingTime = m_hardwareInterface.millis();
 
-  while ((m_hardwareInterface.millis() - startingTime) <
-         DEADMAN_TIMEOUT_DELAY) {
-    // Check its not a switch bounce
-    if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH)
-      return true;
+    while ((m_hardwareInterface.millis() - startingTime) <
+           DEADMAN_TIMEOUT_DELAY) {
+      if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH)
+        // It was noise
+        return true;
+    }
   }
 
   // Pin still has not driven high after DEADMAN_TIMEOUT seconds
