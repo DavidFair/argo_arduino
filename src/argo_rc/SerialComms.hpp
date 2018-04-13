@@ -9,6 +9,8 @@
 
 namespace ArgoRcLib {
 
+enum class CommandType { NONE, PING, SPEED };
+
 class SerialComms {
 public:
   SerialComms(Hardware::ArduinoInterface &hardware);
@@ -27,6 +29,8 @@ public:
   // Write methods
   void addEncoderRotation(const Hardware::EncoderPulses &data);
 
+  void addPing();
+
   void addVehicleSpeed(const Hardware::WheelSpeeds &speeds);
 
   // Read methods
@@ -42,11 +46,15 @@ private:
   void appendToOutputBuf(const char c);
   void appendToOutputBuf(const Libs::MinString &s);
 
+  bool convertBufStrToInt(uint8_t startingPos, int &result);
   void convertValue(char *buf, int bufSize, int32_t val);
 
   void findInputCommands();
 
-  void parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange);
+  void parseTargetSpeed(const Libs::pair<uint8_t, uint8_t> &charRange);
+
+  void
+  processIndividualCommand(const Libs::pair<uint8_t, uint8_t> &charPosition);
 
   void resetBuffer(char *targetBuffer, uint8_t bufferSize);
 

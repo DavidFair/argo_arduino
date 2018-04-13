@@ -1,6 +1,8 @@
 #ifndef MIN_STRING_HPP_
 #define MIN_STRING_HPP_
 
+#include <stdint.h>
+
 #include "cstring_wrapper.hpp"
 
 namespace Libs {
@@ -10,7 +12,7 @@ public:
   constexpr MinString(const char *string)
       : m_string(string), m_length(strlen(string)) {}
 
-  constexpr bool equalsCString(const char *cStr) const {
+  constexpr bool isPresentInString(const char *cStr) const {
     return (strncmp(cStr, m_string, m_length) == 0);
   }
 

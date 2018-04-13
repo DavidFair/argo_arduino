@@ -92,6 +92,8 @@ TEST_F(SerialCommsFixture, parseSpeedCommand) {
   Speed leftExpectedSpeed(1.2_m, 1_s);
   Speed rightExpectedSpeed(1.3_m, 1_s);
 
-  EXPECT_EQ(targetSpeeds.leftWheel, leftExpectedSpeed);
-  EXPECT_EQ(targetSpeeds.rightWheel, rightExpectedSpeed);
+  EXPECT_EQ(targetSpeeds.leftWheel.getUnitDistance().millimeters(),
+            leftExpectedSpeed.getUnitDistance().millimeters());
+  EXPECT_EQ(targetSpeeds.rightWheel.getUnitDistance().millimeters(),
+            rightExpectedSpeed.getUnitDistance().millimeters());
 }
