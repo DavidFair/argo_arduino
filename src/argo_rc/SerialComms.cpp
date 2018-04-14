@@ -19,7 +19,7 @@ using namespace Libs;
  * strings, and keeps a consistent interface with the unit tests too. */
 namespace {
 
-const unsigned long PING_TIMEOUT = 250; // milliseconds
+const unsigned long PING_TIMEOUT = 500; // milliseconds
 
 // Whitespace seperates various data fields we are transmitting
 // A ':' character indicates a key - value pair

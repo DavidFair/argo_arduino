@@ -13,7 +13,7 @@
 namespace {
 const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
 const unsigned long OUTPUT_DELAY = 500;
-const unsigned long PING_DELAY = 50;
+const unsigned long PING_DELAY = 100;
 
 const int PWM_MAXIMUM_OUTPUT = 255;
 
