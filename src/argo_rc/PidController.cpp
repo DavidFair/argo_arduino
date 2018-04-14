@@ -10,9 +10,8 @@ using namespace Hardware;
 
 namespace {
 constexpr int MAX_PWM_VAL = 255;
-constexpr Distance STOP_SPEED_DIST(0, 100); // 100 mm
-constexpr Speed STOP_SPEED{STOP_SPEED_DIST,
-                           1_s}; // Below 0.1 m/s we consider stopped
+const Distance STOP_SPEED_DIST(0, 100); // 100 mm
+const Speed STOP_SPEED{STOP_SPEED_DIST, 1_s}; // < 0.1m/s is stopped
 
 float constrainPwmValue(float val) {
   if (val > MAX_PWM_VAL) {
