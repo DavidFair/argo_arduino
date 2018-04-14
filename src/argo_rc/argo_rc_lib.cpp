@@ -13,6 +13,7 @@
 namespace {
 const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
 const unsigned long OUTPUT_DELAY = 500;
+const unsigned long PING_DELAY = 50;
 
 const int PWM_MAXIMUM_OUTPUT = 255;
 
@@ -40,7 +41,9 @@ namespace ArgoRcLib {
 
 ArgoRc::ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
                bool usePingTimeout)
-    : m_serialTimer(0), m_usePingTimeout(usePingTimeout),
+    : m_usePingTimeout(usePingTimeout),
+      m_pingTimer(PING_DELAY, hardwareInterface.millis()),
+      m_serialOutputTimer(OUTPUT_DELAY, hardwareInterface.millis()),
       m_hardwareInterface(hardwareInterface), m_encoders(m_hardwareInterface),
       m_commsObject(m_hardwareInterface), m_pidController(m_hardwareInterface) {
 }
@@ -136,8 +139,8 @@ void ArgoRc::loop() {
   auto currentSpeed = m_encoders.calculateSpeed();
 
   // Check if were ready to send our buffer details over serial yet
-  if (currentTime - m_serialTimer > OUTPUT_DELAY) {
-    m_serialTimer = currentTime;
+  if (m_serialOutputTimer.hasTimerFired(currentTime)) {
+    m_serialOutputTimer.reset(currentTime);
     m_commsObject.addEncoderRotation(m_encoders.read());
     m_commsObject.addVehicleSpeed(currentSpeed);
   }
@@ -180,7 +183,11 @@ void ArgoRc::loop() {
   m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
                                   abs(rightPwmValue));
 
-  m_commsObject.addPing();
+  if (m_pingTimer.hasTimerFired(currentTime)) {
+    m_commsObject.addPing();
+    m_pingTimer.reset(currentTime);
+  }
+
   m_commsObject.sendCurrentBuffer();
 }
 
