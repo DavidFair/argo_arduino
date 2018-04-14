@@ -72,7 +72,7 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
 void ArduinoHardware::enterDeadmanSafetyMode() const {
   while (1) {
     // wait here forever - requires a reset
-    serialPrintln("!w DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
+    serialPrintln("!f DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
     delay(500);
   }
 }
