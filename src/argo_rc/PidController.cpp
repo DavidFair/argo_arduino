@@ -10,6 +10,8 @@ using namespace Hardware;
 
 namespace {
 constexpr int MAX_PWM_VAL = 255;
+const Distance STOP_SPEED_DIST(0, 100); // 100 mm
+const Speed STOP_SPEED{STOP_SPEED_DIST, 1_s}; // < 0.1m/s is stopped
 
 float constrainPwmValue(float val) {
   if (val > MAX_PWM_VAL) {
@@ -51,6 +53,18 @@ PidController &PidController::operator=(PidController &&other) {
 PwmTargets
 PidController::calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
                                    const Hardware::WheelSpeeds &targetSpeeds) {
+  const bool stopLeft = targetSpeeds.leftWheel >= -STOP_SPEED &&
+                        targetSpeeds.leftWheel <= STOP_SPEED;
+  const bool stopRight = targetSpeeds.rightWheel >= -STOP_SPEED &&
+                         targetSpeeds.rightWheel <= STOP_SPEED;
+
+  // If we are between -STOP_SPEED and STOP_SPEED interval
+  if (stopLeft && stopRight) {
+    // Don't use a PID controller to stop - set the target to 0
+    resetPid();
+    return m_previousTargets;
+  }
+
   const auto timeDiff = m_hardwareInterface.millis() - m_previousTime.millis();
   if (timeDiff < PID_CONSTANTS::timeBetween) {
     return m_previousTargets;
@@ -111,7 +125,16 @@ float PidController::calcDeriv(const Distance &errorPerSec,
   return derivVal;
 }
 
-void PidController::resetPid() {}
+void PidController::resetPid() {
+  PwmTargets stopTarget{0, 0};
+  m_previousTargets = stopTarget;
+  m_previousTime = m_hardwareInterface.millis();
+
+  for (int i = 0; i < EncoderPositions::_NUM_OF_ENCODERS; i++) {
+    m_previousError[i] = Distance{};
+    m_totalIntegral[i] = 0;
+  }
+}
 
 // -------- Private Methods ------
 

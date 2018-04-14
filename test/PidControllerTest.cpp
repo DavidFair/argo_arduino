@@ -17,7 +17,7 @@ using namespace Libs;
 using namespace Hardware;
 
 namespace {
-constexpr auto ONE_UNIT_SEC = 1_s;
+const auto ONE_UNIT_SEC = 1_s;
 
 unsigned long time = 0;
 unsigned long incrementMillis() {
@@ -159,6 +159,72 @@ TEST_F(PidControllerFixture, calculatePwmTargets) {
   EXPECT_EQ(val.rightPwm, expectedVal);
 }
 
-TEST_F(PidControllerFixture, resetPid) {}
+TEST_F(PidControllerFixture, calculateNegPwmTargets) {
+  Speed zeroSpeed;
+  const Distance oneMeter = -1_m;
+  const Time oneSecond = 1_s;
+  const Speed oneMeterSecond(oneMeter, oneSecond);
+
+  Hardware::WheelSpeeds zeroSpeedCurrent(zeroSpeed, zeroSpeed);
+  Hardware::WheelSpeeds targetSpeed(oneMeterSecond, oneMeterSecond);
+
+  float expectedVal = 0;
+  expectedVal += testInstance.calcProportional(oneMeter);
+  expectedVal += testInstance.calcIntegral(
+      oneMeter, EncoderPositions::LEFT_ENCODER, ONE_UNIT_SEC);
+  expectedVal += testInstance.calcDeriv(
+      oneMeter, EncoderPositions::LEFT_ENCODER, ONE_UNIT_SEC);
+
+  // Create a new instance so we have a fresh state
+  auto mockHardware = createMockHardware();
+  PidController newController(*mockHardware);
+
+  PwmTargets val =
+      newController.calculatePwmTargets(zeroSpeedCurrent, targetSpeed);
+  EXPECT_EQ(val.leftPwm, expectedVal);
+  EXPECT_EQ(val.rightPwm, expectedVal);
+}
+
+TEST_F(PidControllerFixture, resetPid) {
+  Speed zeroSpeed;
+  const Distance oneMeter = 1_m;
+  const Time oneSecond = 1_s;
+  const Speed oneMeterSecond(oneMeter, oneSecond);
+
+  Hardware::WheelSpeeds zeroSpeedCurrent(zeroSpeed, zeroSpeed);
+  Hardware::WheelSpeeds targetSpeed(oneMeterSecond, oneMeterSecond);
+
+  // Create a new instance so we have a fresh state
+  auto mockHardware = createMockHardware();
+  PidController newController(*mockHardware);
+
+  PwmTargets val =
+      newController.calculatePwmTargets(zeroSpeedCurrent, targetSpeed);
+  ASSERT_NE(val.leftPwm, 0);
+  ASSERT_NE(val.rightPwm, 0);
+
+  newController.resetPid();
+  auto newTarget =
+      newController.calculatePwmTargets(zeroSpeedCurrent, targetSpeed);
+
+  // If the PID reset these should be equal now
+  EXPECT_EQ(newTarget.leftPwm, val.leftPwm);
+  EXPECT_EQ(newTarget.rightPwm, val.rightPwm);
+}
+
+TEST_F(PidControllerFixture, speedUnderThresholdStops) {
+  Speed zeroSpeed;
+  const Distance thresholdDistance(0, 100);
+  const Time oneSecond = 1_s;
+  const Speed stopThreshold(thresholdDistance, oneSecond);
+
+  Hardware::WheelSpeeds zeroSpeedCurrent(zeroSpeed, zeroSpeed);
+  Hardware::WheelSpeeds targetSpeed(stopThreshold, stopThreshold);
+
+  PwmTargets val =
+      testInstance.calculatePwmTargets(zeroSpeedCurrent, targetSpeed);
+  EXPECT_EQ(val.leftPwm, 0);
+  EXPECT_EQ(val.rightPwm, 0);
+}
 
 } // namespace

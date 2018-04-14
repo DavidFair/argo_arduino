@@ -16,6 +16,14 @@ public:
     return *this;
   }
 
+  constexpr bool operator>=(const Time &other) const {
+    return m_millis >= other.m_millis;
+  }
+
+  constexpr bool operator<=(const Time &other) const {
+    return m_millis <= other.m_millis;
+  }
+
   constexpr bool operator==(const Time &other) const {
     return m_millis == other.m_millis;
   }

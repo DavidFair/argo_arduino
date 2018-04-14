@@ -15,6 +15,19 @@ public:
   constexpr Speed(Distance length, Time time)
       : m_distance(length), m_time(time), m_isOneSecond(m_time == 1_s) {}
 
+  constexpr bool operator<=(const Speed &other) const {
+    return (m_distance <= other.m_distance) && (m_time <= other.m_time);
+  }
+
+  constexpr bool operator>=(const Speed &other) const {
+    return (m_distance >= other.m_distance) && (m_time >= other.m_time);
+  }
+
+  constexpr Speed operator-() const {
+    // Negate the current objects distance
+    return Speed(-getUnitDistance(), 1_s);
+  }
+
   constexpr Speed operator-(const Speed &other) const {
     // We have to do this all in one return statement for
     // c++-11 support.
