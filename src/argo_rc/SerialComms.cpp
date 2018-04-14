@@ -19,6 +19,8 @@ using namespace Libs;
  * strings, and keeps a consistent interface with the unit tests too. */
 namespace {
 
+const unsigned long PING_TIMEOUT = 250; // milliseconds
+
 // Whitespace seperates various data fields we are transmitting
 // A ':' character indicates a key - value pair
 constexpr char K_V_SEPERATOR = ':';
@@ -27,9 +29,11 @@ constexpr char EOL = '\n';
 
 // Transmit prefixes
 constexpr MinString ENCODER_TRANSMIT_PRE = "!e ";
+constexpr MinString PING_TRANSMIT_PRE = "!p";
 constexpr MinString SPEED_TRANSMIT_PRE = "!s ";
 
 // Command prefixes
+constexpr MinString PING_COMMAND_PRE = "!P";
 constexpr MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
 
 // Function specific data
@@ -43,7 +47,8 @@ constexpr MinString SPEED_PREFIX[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
 namespace ArgoRcLib {
 
 SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
-    : m_currentTargetSpeeds(), m_hardwareInterface(hardware) {}
+    : m_currentTargetSpeeds(), m_hardwareInterface(hardware),
+      m_lastPingTime(hardware.millis()) {}
 
 void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   // Prepare our output buffer - prepend that we are sending data
@@ -61,6 +66,11 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   convertValue(convertedNumber, NUM_DEC_PLACES, data.rightEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(EOL);
+}
+
+void SerialComms::addPing() {
+  appendToOutputBuf(PING_TRANSMIT_PRE);
   appendToOutputBuf(EOL);
 }
 
@@ -82,6 +92,11 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   appendToOutputBuf(EOL);
 }
 
+bool SerialComms::isPingGood() const {
+  const auto timeSinceLastPing = m_hardwareInterface.millis() - m_lastPingTime;
+  return (timeSinceLastPing < PING_TIMEOUT);
+}
+
 void SerialComms::parseIncomingBuffer() {
   while (m_hardwareInterface.serialAvailable() > 0) {
     if ((m_inputIndex + 1) >= BUFFER_SIZE) {
@@ -91,9 +106,11 @@ void SerialComms::parseIncomingBuffer() {
       return;
     }
 
-    m_inputBuffer[m_inputIndex++] = m_hardwareInterface.serialRead();
+    m_inputBuffer[m_inputIndex] = m_hardwareInterface.serialRead();
+    m_inputIndex++;
   }
 
+  // Check we have a single complete command before parsing
   bool containsEOLChar = (strchr(m_inputBuffer, EOL) != NULL);
 
   if (m_inputIndex > 0 && containsEOLChar) {
@@ -101,6 +118,12 @@ void SerialComms::parseIncomingBuffer() {
     resetBuffer(m_inputBuffer, BUFFER_SIZE);
     m_inputIndex = 0;
   }
+}
+
+void SerialComms::sendCurrentBuffer() {
+  m_hardwareInterface.serialPrint(m_outBuffer);
+  m_outBuffer[0] = '\0';
+  m_outIndex = 0;
 }
 
 // --------- Private methods ------------
@@ -128,6 +151,28 @@ void SerialComms::appendToOutputBuf(const MinString &s) {
   m_outIndex += sLength;
 }
 
+bool SerialComms::convertBufStrToInt(uint8_t startingPos, int &result) {
+  const uint8_t maxLength = 8;
+
+  uint8_t numDigits = 0;
+
+  char foundChars[maxLength]{0};
+  while (isdigit(m_inputBuffer[startingPos]) && numDigits < maxLength) {
+    foundChars[numDigits] = m_inputBuffer[startingPos];
+    numDigits++;
+    startingPos++;
+  }
+
+  // Check there were any digits
+  if (numDigits == 0) {
+    // Todo warn
+    return false;
+  }
+
+  result = atoi(foundChars);
+  return true;
+}
+
 void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
 // Abuse snprintf to convert our value
 #ifdef UNIT_TESTING
@@ -139,52 +184,78 @@ void SerialComms::convertValue(char *buf, int bufSize, int32_t val) {
 }
 
 void SerialComms::findInputCommands() {
-  Libs::pair<uint8_t, uint8_t> commandIndexes(0, m_inputIndex);
+  // Each time we find a new EOL character split and parse
+  uint8_t startingSearchPos = 0;
+  bool allEolParsed = false;
 
-  if (SPEED_COMMAND_PRE.equalsCString(&m_inputBuffer[commandIndexes.first])) {
-    // We have a command
-    parseTargetSpeed(Libs::move(commandIndexes));
-  }
+  do {
+    char *foundPtr = strchr(&m_inputBuffer[startingSearchPos], EOL);
+    if (foundPtr != nullptr) {
+      const uint8_t positionOfEol = (uint8_t)(foundPtr - m_inputBuffer);
+      // The next char is +1 so create a pair of command index and
+      Libs::pair<uint8_t, uint8_t> foundPair(startingSearchPos, positionOfEol);
+      processIndividualCommand(foundPair);
+
+      startingSearchPos = positionOfEol + 1;
+    } else {
+      allEolParsed = true;
+      const auto finalCharPos = strlen(m_inputBuffer);
+      if (startingSearchPos != finalCharPos) {
+        // There is another outstanding buffer to process
+        Libs::pair<uint8_t, uint8_t> foundPair(startingSearchPos, finalCharPos);
+        processIndividualCommand(foundPair);
+      }
+    }
+  } while (!allEolParsed);
 }
 
-void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
-  char *foundPtr = strchr(&m_inputBuffer[charRange.first], K_V_SEPERATOR);
-  uint8_t currentPos = foundPtr - m_inputBuffer + 1; // Move to next char
+void SerialComms::parseTargetSpeed(
+    const Libs::pair<uint8_t, uint8_t> &charRange) {
 
-  const uint8_t maxLength = 8;
-
-  // Get left number
-  uint8_t leftNumDigits = 0;
-  char leftBuf[maxLength]{0};
-  while (isdigit(m_inputBuffer[currentPos]) && leftNumDigits < maxLength) {
-    leftBuf[leftNumDigits] = m_inputBuffer[currentPos];
-    leftNumDigits++;
-    currentPos++;
-  }
-  // Move forward to the next numbers
-  foundPtr = strchr(&m_inputBuffer[currentPos + 1], K_V_SEPERATOR);
-  currentPos = foundPtr - m_inputBuffer + 1;
-
-  if (currentPos > charRange.second) {
+  char *foundLeftPtr = strchr(&m_inputBuffer[charRange.first], K_V_SEPERATOR);
+  if (foundLeftPtr == nullptr) {
+    // Todo warn
     return;
   }
 
-  uint8_t rightNumDigits = 0;
-  char rightBuf[maxLength]{0};
-  while (isdigit(m_inputBuffer[currentPos]) && rightNumDigits < maxLength) {
-    rightBuf[rightNumDigits] = m_inputBuffer[currentPos];
-    rightNumDigits++;
-    currentPos++;
-  }
-
-  bool isValid = leftNumDigits != 0 && rightNumDigits != 0;
-  if (!isValid) {
+  uint8_t firstLeftDigitPos = (foundLeftPtr - m_inputBuffer) + 1;
+  if (firstLeftDigitPos >= charRange.second) {
+    // Todo warn that there was nothing after K-V seperator
     return;
   }
 
-  // Parse and store as millimeters
-  Distance leftDist(0, atoi(leftBuf)), rightDist(0, atoi(rightBuf));
+  int leftDigit = 0;
+  if (!convertBufStrToInt(firstLeftDigitPos, leftDigit)) {
+    // Todo warn about failed converstion
+    return;
+  }
 
+  // Same again for right wheel now:
+
+  // Move forward to the next K_V seperator and numbers
+  char *foundRightPtr =
+      strchr(&m_inputBuffer[firstLeftDigitPos], K_V_SEPERATOR);
+  if (foundRightPtr == nullptr) {
+    // Todo warn
+    return;
+  }
+
+  uint8_t firstRightDigitPos = (foundRightPtr - m_inputBuffer) + 1;
+  if (firstRightDigitPos >= charRange.second) {
+    // Todo warn that there was nothing after K-V seperator
+    return;
+  }
+
+  int rightDigit = 0;
+  if (!convertBufStrToInt(firstRightDigitPos, rightDigit)) {
+    // Todo warn about failed converstion
+    return;
+  }
+
+  // Parse and store as millimeters which is the second arg in the constructor
+  Distance leftDist(0, leftDigit), rightDist(0, rightDigit);
+
+  // This should have already been normalised to a second by ROS
   Speed leftVal(leftDist, 1_s), rightVal(rightDist, 1_s);
 
   // Store the new target
@@ -192,14 +263,21 @@ void SerialComms::parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange) {
   m_currentTargetSpeeds = newTargets;
 }
 
-void SerialComms::resetBuffer(char *targetBuffer, uint8_t bufferSize) {
-  memset(targetBuffer, 0, sizeof(targetBuffer[0]) * bufferSize);
+void SerialComms::processIndividualCommand(
+    const Libs::pair<uint8_t, uint8_t> &charPosition) {
+  const char *strPtr = &m_inputBuffer[charPosition.first];
+
+  if (PING_COMMAND_PRE.isPresentInString(strPtr)) {
+    m_lastPingTime = m_hardwareInterface.millis();
+  } else if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
+    parseTargetSpeed(charPosition);
+  } else {
+    // TODO add printing a warning here
+  }
 }
 
-void SerialComms::sendCurrentBuffer() {
-  m_hardwareInterface.serialPrint(m_outBuffer);
-  m_outBuffer[0] = '\0';
-  m_outIndex = 0;
+void SerialComms::resetBuffer(char *targetBuffer, uint8_t bufferSize) {
+  memset(targetBuffer, 0, sizeof(targetBuffer[0]) * bufferSize);
 }
 
 } // namespace ArgoRcLib

@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
 #include <string>
+
+#include <gtest/gtest.h>
 
 #include "Distance.hpp"
 #include "Encoder.hpp"
@@ -19,7 +20,7 @@ using namespace Libs;
 
 namespace {
 
-const unsigned long SERIAL_DELAY = 500;
+const unsigned long SERIAL_DELAY = 200; // Milliseconds
 
 unsigned long time = 0;
 unsigned long incrementMillis() {
@@ -92,6 +93,39 @@ TEST_F(SerialCommsFixture, parseSpeedCommand) {
   Speed leftExpectedSpeed(1.2_m, 1_s);
   Speed rightExpectedSpeed(1.3_m, 1_s);
 
-  EXPECT_EQ(targetSpeeds.leftWheel, leftExpectedSpeed);
-  EXPECT_EQ(targetSpeeds.rightWheel, rightExpectedSpeed);
+  EXPECT_EQ(targetSpeeds.leftWheel.getUnitDistance().millimeters(),
+            leftExpectedSpeed.getUnitDistance().millimeters());
+  EXPECT_EQ(targetSpeeds.rightWheel.getUnitDistance().millimeters(),
+            rightExpectedSpeed.getUnitDistance().millimeters());
+}
+
+TEST_F(SerialCommsFixture, goodPingIsDetected) {
+  const std::string pingCommand{"!P\n"};
+
+  InSequence s;
+  EXPECT_CALL(mockObj, serialAvailable())
+      .Times(pingCommand.length())
+      .WillRepeatedly(Return(1));
+  EXPECT_CALL(mockObj, serialAvailable()).WillOnce(Return(0));
+
+  int currentBufferPos = 0;
+  ON_CALL(mockObj, serialRead())
+      .WillByDefault(InvokeWithoutArgs([&currentBufferPos, &pingCommand]() {
+        char nextChar = pingCommand[currentBufferPos];
+        currentBufferPos++;
+
+        return nextChar;
+      }));
+
+  // Each of these calls increment millis by the set amount so order them
+  // that we would fail the test IF we did not send the ping command
+  testInstance.isPingGood();          // Time is below threshold
+  testInstance.parseIncomingBuffer(); // We would now be over if ping fails
+  EXPECT_TRUE(testInstance.isPingGood());
+}
+
+TEST_F(SerialCommsFixture, missedPingDetected) {
+  testInstance.isPingGood();          // Time is below threshold
+  testInstance.parseIncomingBuffer(); // No ping, so we now are over
+  EXPECT_FALSE(testInstance.isPingGood());
 }

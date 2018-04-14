@@ -125,12 +125,14 @@ void returnDeadmanSafe(MockArduino &hardwareInterface) {
 
 // ----------- Test fixture --------------
 
+bool usePingTimeout = false;
+
 class ArgoRcTest : public ::testing::Test {
 protected:
   ArgoRcTest()
       : _forwardedPtr(new NiceMock<MockArduino>),
         hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
-        argoRcLib(*_forwardedPtr) {
+        argoRcLib(*_forwardedPtr, usePingTimeout) {
     returnDeadmanSafe(hardwareMock);
 
     time = 0;

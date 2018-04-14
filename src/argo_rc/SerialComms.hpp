@@ -27,10 +27,13 @@ public:
   // Write methods
   void addEncoderRotation(const Hardware::EncoderPulses &data);
 
+  void addPing();
+
   void addVehicleSpeed(const Hardware::WheelSpeeds &speeds);
 
   // Read methods
   Hardware::WheelSpeeds getTargetSpeeds() { return m_currentTargetSpeeds; }
+  bool isPingGood() const;
 
   // Buffer Management
   void parseIncomingBuffer();
@@ -42,17 +45,20 @@ private:
   void appendToOutputBuf(const char c);
   void appendToOutputBuf(const Libs::MinString &s);
 
+  bool convertBufStrToInt(uint8_t startingPos, int &result);
   void convertValue(char *buf, int bufSize, int32_t val);
 
   void findInputCommands();
 
-  void parseTargetSpeed(Libs::pair<uint8_t, uint8_t> charRange);
+  void parseTargetSpeed(const Libs::pair<uint8_t, uint8_t> &charRange);
+
+  void
+  processIndividualCommand(const Libs::pair<uint8_t, uint8_t> &charPosition);
 
   void resetBuffer(char *targetBuffer, uint8_t bufferSize);
 
-  // Set the output buffer to 64 characters this is reasonable for all
-  // commands and matches the Arduino buffer
-  static const uint8_t BUFFER_SIZE = 64;
+  // Set the output buffer to 100 characters which should be reasonable
+  static const uint8_t BUFFER_SIZE = 100;
 
   // Buffer management
   uint8_t m_outIndex{0};
@@ -62,8 +68,9 @@ private:
 
   // Previous results
   Hardware::WheelSpeeds m_currentTargetSpeeds;
-
   Hardware::ArduinoInterface &m_hardwareInterface;
+
+  unsigned long m_lastPingTime;
 };
 
 } // Namespace ArgoRcLib

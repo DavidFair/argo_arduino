@@ -6,6 +6,7 @@
 #include "Encoder.hpp"
 #include "PidController.hpp"
 #include "SerialComms.hpp"
+#include "Timer.hpp"
 #include "arduino_interface.hpp"
 #include "move.hpp"
 #include "unique_ptr.hpp"
@@ -14,7 +15,8 @@ namespace ArgoRcLib {
 
 class ArgoRc {
 public:
-  explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface);
+  explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
+                  bool usePingTimeout = true);
 
   ~ArgoRc() = default;
 
@@ -24,7 +26,9 @@ public:
 
   // Move constructors - used in unit tests
   ArgoRc(ArgoRc &&other)
-      : m_hardwareInterface(other.m_hardwareInterface),
+      : m_pingTimer(Libs::move(other.m_pingTimer)),
+        m_serialOutputTimer(Libs::move(other.m_serialOutputTimer)),
+        m_hardwareInterface(other.m_hardwareInterface),
         m_encoders(Libs::move(other.m_encoders)),
         m_commsObject(Libs::move(other.m_commsObject)),
         m_pidController(Libs::move(other.m_pidController)) {}
@@ -66,7 +70,10 @@ private:
 
   PwmTargets setMotorTarget(int speed, int steer);
 
-  unsigned long m_serialTimer;
+  bool m_usePingTimeout;
+
+  Libs::Timer m_pingTimer;
+  Libs::Timer m_serialOutputTimer;
 
   Hardware::ArduinoInterface &m_hardwareInterface;
   Hardware::Encoder m_encoders;
