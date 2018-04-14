@@ -159,6 +159,32 @@ TEST_F(PidControllerFixture, calculatePwmTargets) {
   EXPECT_EQ(val.rightPwm, expectedVal);
 }
 
+TEST_F(PidControllerFixture, calculateNegPwmTargets) {
+  Speed zeroSpeed;
+  const Distance oneMeter = -1_m;
+  const Time oneSecond = 1_s;
+  const Speed oneMeterSecond(oneMeter, oneSecond);
+
+  Hardware::WheelSpeeds zeroSpeedCurrent(zeroSpeed, zeroSpeed);
+  Hardware::WheelSpeeds targetSpeed(oneMeterSecond, oneMeterSecond);
+
+  float expectedVal = 0;
+  expectedVal += testInstance.calcProportional(oneMeter);
+  expectedVal += testInstance.calcIntegral(
+      oneMeter, EncoderPositions::LEFT_ENCODER, ONE_UNIT_SEC);
+  expectedVal += testInstance.calcDeriv(
+      oneMeter, EncoderPositions::LEFT_ENCODER, ONE_UNIT_SEC);
+
+  // Create a new instance so we have a fresh state
+  auto mockHardware = createMockHardware();
+  PidController newController(*mockHardware);
+
+  PwmTargets val =
+      newController.calculatePwmTargets(zeroSpeedCurrent, targetSpeed);
+  EXPECT_EQ(val.leftPwm, expectedVal);
+  EXPECT_EQ(val.rightPwm, expectedVal);
+}
+
 TEST_F(PidControllerFixture, resetPid) {
   Speed zeroSpeed;
   const Distance oneMeter = 1_m;

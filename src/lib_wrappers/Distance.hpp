@@ -21,6 +21,10 @@ public:
     return m_micrometers <= other.m_micrometers;
   }
 
+  constexpr bool operator>=(const Distance &other) const {
+    return m_micrometers >= other.m_micrometers;
+  }
+
   constexpr bool operator==(const Distance &other) const {
     return m_micrometers == other.m_micrometers;
   }
@@ -28,6 +32,8 @@ public:
   constexpr Distance operator+(const Distance &other) const {
     return Distance(m_micrometers + other.m_micrometers);
   }
+
+  constexpr Distance operator-() const { return Distance(-m_micrometers); }
 
   constexpr Distance operator-(const Distance &other) const {
     return Distance(m_micrometers - other.m_micrometers);

@@ -54,8 +54,13 @@ PidController &PidController::operator=(PidController &&other) {
 PwmTargets
 PidController::calculatePwmTargets(const Hardware::WheelSpeeds &currentSpeeds,
                                    const Hardware::WheelSpeeds &targetSpeeds) {
-  if (targetSpeeds.leftWheel <= STOP_SPEED &&
-      targetSpeeds.rightWheel <= STOP_SPEED) {
+  const bool stopLeft = targetSpeeds.leftWheel >= -STOP_SPEED &&
+                        targetSpeeds.leftWheel <= STOP_SPEED;
+  const bool stopRight = targetSpeeds.rightWheel >= -STOP_SPEED &&
+                         targetSpeeds.rightWheel <= STOP_SPEED;
+
+  // If we are between -STOP_SPEED and STOP_SPEED interval
+  if (stopLeft && stopRight) {
     // Don't use a PID controller to stop - set the target to 0
     resetPid();
     return m_previousTargets;
