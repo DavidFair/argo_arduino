@@ -25,7 +25,7 @@ void ArduinoHardware::robotSafetyAbort() {
   ::digitalWrite(leftRelayPin, HIGH);
   ::digitalWrite(rightRelayPin, HIGH);
 
-  ::Serial.println("Aborting program. Robot should be in a safe state now.");
+  ::Serial.println("!f Aborting program. Robot should be in a safe state now.");
   exit(-1);
 }
 
@@ -50,7 +50,7 @@ digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
   case LOW:
     return digitalIO::E_LOW;
   default:
-    serialPrintln("Result was unexpected in digitalRead");
+    serialPrintln("!f Result was unexpected in digitalRead");
     ArduinoHardware::robotSafetyAbort();
   }
 }
@@ -64,7 +64,7 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
   case digitalIO::E_LOW:
     return ::digitalWrite(outputPin, LOW);
   default:
-    serialPrintln("Attempted to use a pin state as output");
+    serialPrintln("!f Attempted to use a pin state as output");
     ArduinoHardware::robotSafetyAbort();
   }
 }
@@ -72,7 +72,7 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
 void ArduinoHardware::enterDeadmanSafetyMode() const {
   while (1) {
     // wait here forever - requires a reset
-    serialPrintln(" DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
+    serialPrintln("!f DEADMAN SWITCH RELEASED - RESET ARDUINO! ");
     delay(500);
   }
 }
@@ -90,7 +90,7 @@ void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
     ::pinMode(destPin, OUTPUT);
     break;
   default:
-    serialPrintln("Attempted to set a pin to a state instead of a mode");
+    serialPrintln("!f Attempted to set a pin to a state instead of a mode");
     ArduinoHardware::robotSafetyAbort();
   }
 }
@@ -148,7 +148,7 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   case pinMapping::RC_DEADMAN:
     return 2;
   default:
-    ::Serial.println("Unknown pin in pin mapping");
+    ::Serial.println("!f Unknown pin in pin mapping");
     ArduinoHardware::robotSafetyAbort();
   }
 }

@@ -22,17 +22,17 @@ namespace {
 
 const unsigned long SERIAL_DELAY = 200; // Milliseconds
 
-unsigned long time = 0;
+unsigned long millisTime = 0;
 unsigned long incrementMillis() {
-  time += SERIAL_DELAY;
-  return time;
+  millisTime += SERIAL_DELAY;
+  return millisTime;
 }
 
 class SerialCommsFixture : public ::testing::Test {
 protected:
   SerialCommsFixture()
       : mockObj(), testInstance(static_cast<ArduinoInterface &>(mockObj)) {
-    time = 0;
+    millisTime = 0;
     ON_CALL(mockObj, millis())
         .WillByDefault(InvokeWithoutArgs(&incrementMillis));
   }
@@ -119,13 +119,26 @@ TEST_F(SerialCommsFixture, goodPingIsDetected) {
 
   // Each of these calls increment millis by the set amount so order them
   // that we would fail the test IF we did not send the ping command
-  testInstance.isPingGood();          // Time is below threshold
-  testInstance.parseIncomingBuffer(); // We would now be over if ping fails
+  ASSERT_TRUE(testInstance.isPingGood()); // millisTime is below threshold
+  testInstance.parseIncomingBuffer();     // We would now be over if ping fails
   EXPECT_TRUE(testInstance.isPingGood());
 }
 
 TEST_F(SerialCommsFixture, missedPingDetected) {
-  testInstance.isPingGood();          // Time is below threshold
-  testInstance.parseIncomingBuffer(); // No ping, so we now are over
-  EXPECT_FALSE(testInstance.isPingGood());
+  const unsigned long pingTimeout = 500 + 1;
+
+  ASSERT_TRUE(testInstance.isPingGood()); // millisTime is below threshold
+  millisTime += pingTimeout;
+  EXPECT_FALSE(testInstance.isPingGood()); // We should be over now
+}
+
+TEST_F(SerialCommsFixture, warningIsAdded) {
+  const char *warningStr = "Test warning";
+  std::string expectedString{"!w "};
+  expectedString.append(warningStr);
+  expectedString.append("\n");
+
+  EXPECT_CALL(mockObj, serialPrint(expectedString));
+  testInstance.addWarning(warningStr);
+  testInstance.sendCurrentBuffer();
 }
