@@ -17,7 +17,7 @@ using namespace Libs;
 using namespace Hardware;
 
 namespace {
-constexpr auto ONE_UNIT_SEC = 1_s;
+const auto ONE_UNIT_SEC = 1_s;
 
 unsigned long time = 0;
 unsigned long incrementMillis() {
