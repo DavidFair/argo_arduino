@@ -31,6 +31,7 @@ constexpr char EOL = '\n';
 constexpr MinString ENCODER_TRANSMIT_PRE = "!e ";
 constexpr MinString PING_TRANSMIT_PRE = "!p";
 constexpr MinString SPEED_TRANSMIT_PRE = "!s ";
+constexpr MinString WARN_TRANSMIT_PRE = "!w";
 
 // Command prefixes
 constexpr MinString PING_COMMAND_PRE = "!P";
@@ -92,6 +93,13 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   appendToOutputBuf(EOL);
 }
 
+void SerialComms::addWarning(const char *warningText) {
+  appendToOutputBuf(WARN_TRANSMIT_PRE);
+  appendToOutputBuf(SEPERATOR);
+  appendToOutputBuf(warningText);
+  appendToOutputBuf(EOL);
+}
+
 bool SerialComms::isPingGood() const {
   const auto timeSinceLastPing = m_hardwareInterface.millis() - m_lastPingTime;
   return (timeSinceLastPing < PING_TIMEOUT);
@@ -122,7 +130,7 @@ void SerialComms::parseIncomingBuffer() {
 
 void SerialComms::sendCurrentBuffer() {
   m_hardwareInterface.serialPrint(m_outBuffer);
-  m_outBuffer[0] = '\0';
+  resetBuffer(m_outBuffer, BUFFER_SIZE);
   m_outIndex = 0;
 }
 
@@ -165,7 +173,6 @@ bool SerialComms::convertBufStrToInt(uint8_t startingPos, int &result) {
 
   // Check there were any digits
   if (numDigits == 0) {
-    // Todo warn
     return false;
   }
 
@@ -212,21 +219,26 @@ void SerialComms::findInputCommands() {
 void SerialComms::parseTargetSpeed(
     const Libs::pair<uint8_t, uint8_t> &charRange) {
 
-  char *foundLeftPtr = strchr(&m_inputBuffer[charRange.first], K_V_SEPERATOR);
+  const char *strStart = &m_inputBuffer[charRange.first];
+  const char *foundLeftPtr = strchr(strStart, K_V_SEPERATOR);
+
   if (foundLeftPtr == nullptr) {
-    // Todo warn
+    addWarning("Parsing speed: Could not find l. K-V sep");
+    addWarning(strStart);
     return;
   }
 
   uint8_t firstLeftDigitPos = (foundLeftPtr - m_inputBuffer) + 1;
   if (firstLeftDigitPos >= charRange.second) {
-    // Todo warn that there was nothing after K-V seperator
+    addWarning("Parsing speed: No digits after l. K-V sep");
+    addWarning(strStart);
     return;
   }
 
   int leftDigit = 0;
   if (!convertBufStrToInt(firstLeftDigitPos, leftDigit)) {
-    // Todo warn about failed converstion
+    addWarning("Parsing speed: could not convert l. digit");
+    addWarning(strStart);
     return;
   }
 
@@ -236,19 +248,22 @@ void SerialComms::parseTargetSpeed(
   char *foundRightPtr =
       strchr(&m_inputBuffer[firstLeftDigitPos], K_V_SEPERATOR);
   if (foundRightPtr == nullptr) {
-    // Todo warn
+    addWarning("Parsing speed: Could not find r. K-V sep");
+    addWarning(strStart);
     return;
   }
 
   uint8_t firstRightDigitPos = (foundRightPtr - m_inputBuffer) + 1;
   if (firstRightDigitPos >= charRange.second) {
-    // Todo warn that there was nothing after K-V seperator
+    addWarning("Parsing speed: No digits after r. K-V sep");
+    addWarning(strStart);
     return;
   }
 
   int rightDigit = 0;
   if (!convertBufStrToInt(firstRightDigitPos, rightDigit)) {
-    // Todo warn about failed converstion
+    addWarning("Parsing speed: could not convert r. digit");
+    addWarning(strStart);
     return;
   }
 
@@ -272,7 +287,8 @@ void SerialComms::processIndividualCommand(
   } else if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
     parseTargetSpeed(charPosition);
   } else {
-    // TODO add printing a warning here
+    addWarning("The following command string was unknown:\n");
+    addWarning(strPtr);
   }
 }
 

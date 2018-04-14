@@ -129,3 +129,14 @@ TEST_F(SerialCommsFixture, missedPingDetected) {
   testInstance.parseIncomingBuffer(); // No ping, so we now are over
   EXPECT_FALSE(testInstance.isPingGood());
 }
+
+TEST_F(SerialCommsFixture, warningIsAdded) {
+  const char *warningStr = "Test warning";
+  std::string expectedString{"!w "};
+  expectedString.append(warningStr);
+  expectedString.append("\n");
+
+  EXPECT_CALL(mockObj, serialPrint(expectedString));
+  testInstance.addWarning(warningStr);
+  testInstance.sendCurrentBuffer();
+}

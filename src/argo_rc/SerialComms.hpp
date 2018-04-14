@@ -30,6 +30,7 @@ public:
   void addPing();
 
   void addVehicleSpeed(const Hardware::WheelSpeeds &speeds);
+  void addWarning(const char *warningText);
 
   // Read methods
   Hardware::WheelSpeeds getTargetSpeeds() { return m_currentTargetSpeeds; }
@@ -38,6 +39,7 @@ public:
   // Buffer Management
   void parseIncomingBuffer();
   void sendCurrentBuffer();
+
 
 private:
   void appendKVPair(const char *key, const char *value);

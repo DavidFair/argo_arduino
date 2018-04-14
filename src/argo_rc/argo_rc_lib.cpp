@@ -149,16 +149,16 @@ void ArgoRc::loop() {
   // ---- RC control ----
   auto targetPwmVals = readPwmInput();
 
-  // ------- ROS control ------
+  // // ------- ROS control ------
   // auto targetSpeed = m_commsObject.getTargetSpeeds();
   // if (m_usePingTimeout && !m_commsObject->isPingGood()) {
-  //   // TODO put a warning here for timeout
+  //   m_commsObject.addWarning("Ping timeout. Resetting speed to 0");
   //   targetSpeed.leftWheel = 0;
   //   targetSpeed.rightWheel = 0;
   // }
   // auto targetPwmVals =
   //     m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
-  // --------------
+  // // --------------
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
