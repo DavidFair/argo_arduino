@@ -222,6 +222,7 @@ void SerialComms::findInputCommands() {
 
         // Shift the data back to the beginning of the buffer
         memmove(&m_inputBuffer[0], &m_inputBuffer[startingSearchPos], length);
+        m_inputBuffer[length + 1] = '\0';
       } else {
         // Nothing in the buffer to restore to clean state
         resetBuffer(m_inputBuffer, BUFFER_SIZE);
