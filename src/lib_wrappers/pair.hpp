@@ -2,7 +2,7 @@
 #define PAIR_HPP_
 
 namespace Libs {
-
+/// Pair struct
 template <class T1, class T2> struct pair {
   T1 first;
   T2 second;

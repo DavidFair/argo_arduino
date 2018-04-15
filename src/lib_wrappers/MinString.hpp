@@ -7,6 +7,8 @@
 
 namespace Libs {
 
+// Takes a pointer to a string literal to wrap some functions in
+// better named functions
 class MinString {
 public:
   constexpr MinString(const char *string)

@@ -1,6 +1,4 @@
 add_subdirectory(arduino_hardware)
 add_subdirectory(arduino_interface)
-add_subdirectory(argo_deadman_base)
-add_subdirectory(argo_deadman_remote)
 add_subdirectory(argo_rc)
 add_subdirectory(lib_wrappers)

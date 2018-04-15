@@ -2,49 +2,67 @@
 #include <Arduino.h>
 
 #include "ArduinoGlobals.hpp"
-#include "arduino_hardware.hpp"
+#include "ArduinoHardware.hpp"
 #include "argo_rc_lib.hpp"
 #include "move.hpp"
 
 using namespace Globals;
 
-// Forward deceleration
+// Forward declaration
 void setupInterrupts();
 
 // Instantiate argo_rc library at the global level so it doesn't drop out of
-// scope
-// The hardware abstraction must live as long as the program runs so there
-// is no corresponding free
+// scope the hardware abstraction must live as long as the program runs
+
+/// Pointer to concrete hardware implementation
 Libs::unique_ptr<Hardware::ArduinoInterface>
     hardwareImpl(new Hardware::ArduinoHardware());
 
+/// Main program object
 ArgoRcLib::ArgoRc argoRcLib(*hardwareImpl);
 
-void setup()
-{
+/**
+ * Sets up the main program loop as called by the Arduino library
+ */
+void setup() {
   argoRcLib.setup();
   // Setup interrupts last so they aren't overwritten
   setupInterrupts();
 }
 
+/**
+ * Runs the main program loop as called by the Arduino library
+ */
 void loop() { argoRcLib.loop(); }
 
 // ----- Interrupt Handling - Cannot (easily) be mocked -----
 
-void leftEncoderInterrupt()
-{
+/**
+ * Left encoder interrupt callback. Adds a single pulse count of the current
+ * direction to the global counter
+ */
+void leftEncoderInterrupt() {
   InterruptData::g_pinEncoderData.leftEncoderCount +=
       ArgoData::g_currentVehicleDirection.leftWheelDirection;
 }
 
-void rightEncoderInterrupt()
-{
+/**
+ * Right encoder interrupt callback. Adds a single pulse count of the current
+ * direction to the global counter
+ */
+void rightEncoderInterrupt() {
   InterruptData::g_pinEncoderData.rightEncoderCount +=
       ArgoData::g_currentVehicleDirection.rightWheelDirection;
 }
 
-void setupInterrupts()
-{
+/**
+ * Sets the interrupt handlers up for both encoder pulses and the
+ * remote control input
+ */
+void setupInterrupts() {
+  // These are based off the Arduino interrupt docs here:
+  // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
+  // (bottom of page)
   constexpr int leftPin = 18;
   constexpr int rightPin = 20;
   pinMode(leftPin, INPUT_PULLUP);
@@ -68,9 +86,8 @@ void setupInterrupts()
   // The ISR is defined below
 }
 
-// ISR for the remote control
-ISR(PCINT2_vect)
-{
+/// ISR for the remote control
+ISR(PCINT2_vect) {
   uint8_t bit;
   uint8_t curr;
   uint8_t mask;
@@ -85,28 +102,22 @@ ISR(PCINT2_vect)
   currentTime = micros();
 
   // mask is pcint pins that have changed.
-  for (uint8_t i = 0; i < 6; i++)
-  {
+  for (uint8_t i = 0; i < 6; i++) {
     bit = 0x04 << i;
-    if (bit & mask)
-    {
+    if (bit & mask) {
       // for each pin changed, record time of change
-      if (bit & InterruptData::g_pcIntLast)
-      {
+      if (bit & InterruptData::g_pcIntLast) {
         time = currentTime - InterruptData::g_pinData[i].fallTime;
         InterruptData::g_pinData[i].riseTime = currentTime;
         if ((time >= 10000) && (time <= 26000))
           InterruptData::g_pinData[i].edge = 1;
         else
           InterruptData::g_pinData[i].edge = 0; // invalid rising edge detected
-      }
-      else
-      {
+      } else {
         time = currentTime - InterruptData::g_pinData[i].riseTime;
         InterruptData::g_pinData[i].fallTime = currentTime;
         if ((time >= 800) && (time <= 2200) &&
-            (InterruptData::g_pinData[i].edge == 1))
-        {
+            (InterruptData::g_pinData[i].edge == 1)) {
           InterruptData::g_pinData[i].lastGoodWidth = time;
           InterruptData::g_pinData[i].edge = 0;
         }

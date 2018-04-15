@@ -1,12 +1,19 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include "arduino_hardware.hpp"
+#include "ArduinoHardware.hpp"
 
 using namespace ArduinoEnums;
 
 namespace Hardware {
 
+/**
+ * Called when the robot hits an unrecoverable position such as
+ * falling out of a switch statement
+ * Directly toggles the left and right footswitches to the off
+ * position, emits a fatal error then enters an infinite loop
+ * by calling exit
+ */
 void ArduinoHardware::robotSafetyAbort() {
   /* This should only ever be called if there was a serious bug. We don't call
    * enterDeadmanSafety mode as the program is no longer in a known sane state.
@@ -18,7 +25,7 @@ void ArduinoHardware::robotSafetyAbort() {
   auto leftRelayPin = ArduinoHardware::convertPinEnumToArduino(
       pinMapping::LEFT_FOOTSWITCH_RELAY);
   auto rightRelayPin = ArduinoHardware::convertPinEnumToArduino(
-      pinMapping::LEFT_FOOTSWITCH_RELAY);
+      pinMapping::RIGHT_FOOTSWITCH_RELAY);
 
   // Remember as we are connected to a relay E_HIGH = relay off
   // call direct to Arduino lib for best chances
@@ -27,20 +34,34 @@ void ArduinoHardware::robotSafetyAbort() {
 
   ::Serial.println("!f Aborting program. Robot should be in a safe state now.");
   exit(-1);
-}
+} // namespace Hardware
 
+/**
+ * Reads an int from the given analog pin
+ *
+ * @param pin The pin to read from
+ * @return The int value read
+ */
 int ArduinoHardware::analogRead(pinMapping pin) const {
   return ::analogRead(convertPinEnumToArduino(pin));
 }
 
+/**
+ * Writes an int to the given analog pin
+ *
+ * @param pin The pin to write to
+ * @param value The integer value to write
+ */
 void ArduinoHardware::analogWrite(pinMapping pin, int value) const {
   ::analogWrite(convertPinEnumToArduino(pin), value);
 }
 
-void ArduinoHardware::delay(unsigned long milliseconds) const {
-  ::delay(milliseconds);
-}
-
+/**
+ * Reads a digital state from the given pin
+ *
+ * @param pin The pin to read a state from
+ * @return digitalIO value representing the pin state
+ */
 digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
   int result = ::digitalRead(convertPinEnumToArduino(pin));
 
@@ -55,6 +76,12 @@ digitalIO ArduinoHardware::digitalRead(pinMapping pin) const {
   }
 }
 
+/**
+ * Writes a given state to a digital pin
+ *
+ * @param pin The pin to write the state to
+ * @param mode The digitaIO value to write to the pin
+ */
 void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
   const auto outputPin = convertPinEnumToArduino(pin);
 
@@ -69,6 +96,10 @@ void ArduinoHardware::digitalWrite(pinMapping pin, digitalIO mode) const {
   }
 }
 
+/**
+ * Enters an infinite loop which emits a fatal error over serial
+ * when the deadman switch is triggered
+ */
 void ArduinoHardware::enterDeadmanSafetyMode() const {
   while (1) {
     // wait here forever - requires a reset
@@ -77,6 +108,12 @@ void ArduinoHardware::enterDeadmanSafetyMode() const {
   }
 }
 
+/*
+ * Sets the specified pin to the given digitalIO mode
+ *
+ * @param pin The pin to set the mode on
+ * @param mode The digitalIO mode to set the pin to
+ */
 void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
   const auto destPin = convertPinEnumToArduino(pin);
   switch (mode) {
@@ -95,6 +132,12 @@ void ArduinoHardware::setPinMode(pinMapping pin, digitalIO mode) const {
   }
 }
 
+/**
+ * Converts a pinMapping value to the actual pin used on the Argo
+ *
+ * @param pinToConvert The pinMapping value of the requested pin
+ * @return An unsigned int representing the pin number on the Arduino
+ */
 uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   /* It is not possible to assign a value to an enum class after
    * the definition. However to pull in pins A6/A7 we must include
@@ -139,11 +182,6 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
     return 19;
   case pinMapping::RIGHT_ENCODER:
     return 20;
-
-  case pinMapping::TEST_POT_POSITIVE:
-    return A6;
-  case pinMapping::TEST_POT_WIPER:
-    return A7;
 
   case pinMapping::RC_DEADMAN:
     return 2;

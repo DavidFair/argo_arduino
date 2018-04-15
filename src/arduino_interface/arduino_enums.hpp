@@ -8,6 +8,7 @@ namespace ArduinoEnums {
  * these defines we prefix them with "E_"
  */
 
+/// An enum holding the modes and states a digital pin can take
 enum digitalIO {
   E_INPUT,
   E_INPUT_PULLUP,
@@ -17,8 +18,10 @@ enum digitalIO {
   E_LOW
 };
 
+/// An enum representing vehicle direction and associated value
 enum Direction { FORWARD = 1, STOP = 0, REVERSE = -1 };
 
+/// An enum representing all used pins on the Argo
 enum pinMapping {
   // Digital pins
   LEFT_FORWARD_RELAY,
@@ -34,8 +37,6 @@ enum pinMapping {
 
   RIGHT_ENCODER,
 
-  TEST_POT_POSITIVE,
-
   RC_DEADMAN,
 
   // Analogue pins
@@ -44,16 +45,18 @@ enum pinMapping {
 
   STEERING_PWM_OUTPUT,
   BRAKING_PWM_OUTPUT,
-
-  TEST_POT_WIPER
 };
 
-static const pinMapping allDigitalPins[] = {
-    pinMapping::LEFT_FORWARD_RELAY,    pinMapping::LEFT_REVERSE_RELAY,
-    pinMapping::RIGHT_FORWARD_RELAY,   pinMapping::RIGHT_REVERSE_RELAY,
-    pinMapping::LEFT_FOOTSWITCH_RELAY, pinMapping::RIGHT_FOOTSWITCH_RELAY,
-    pinMapping::LEFT_ENCODER,          pinMapping::RIGHT_ENCODER,
-    pinMapping::TEST_POT_POSITIVE,     pinMapping::RC_DEADMAN};
+/// An array containing all the digital pins available on the device
+static const pinMapping allDigitalPins[] = {pinMapping::LEFT_FORWARD_RELAY,
+                                            pinMapping::LEFT_REVERSE_RELAY,
+                                            pinMapping::RIGHT_FORWARD_RELAY,
+                                            pinMapping::RIGHT_REVERSE_RELAY,
+                                            pinMapping::LEFT_FOOTSWITCH_RELAY,
+                                            pinMapping::RIGHT_FOOTSWITCH_RELAY,
+                                            pinMapping::LEFT_ENCODER,
+                                            pinMapping::RIGHT_ENCODER,
+                                            pinMapping::RC_DEADMAN};
 
 } // namespace ArduinoEnums
 
