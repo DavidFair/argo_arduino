@@ -12,7 +12,6 @@ public:
   explicit constexpr Distance(int32_t micrometers)
       : m_micrometers(micrometers) {}
 
-  // Have to do this all in initialiser for avr-gcc 4.8.x
   explicit constexpr Distance(double meters, int32_t millimeters)
       : m_micrometers((meters * METER_TO_MICRO) +
                       (millimeters * MILLI_TO_MICRO)) {}
@@ -63,6 +62,7 @@ private:
   static const int32_t MILLI_TO_MICRO = 1e+03;
 
   // Internally store this as micrometers so we don't lose precision
+  // when diving two sets of millimeters
   int32_t m_micrometers{0};
 }; // namespace Libs
 
