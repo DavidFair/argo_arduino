@@ -123,9 +123,9 @@ void SerialComms::parseIncomingBuffer() {
 
   if (m_inputIndex > 0 && containsEOLChar) {
     findInputCommands();
-    resetBuffer(m_inputBuffer, BUFFER_SIZE);
-    m_inputIndex = 0;
   }
+
+  m_inputIndex = strlen(m_inputBuffer);
 }
 
 void SerialComms::sendCurrentBuffer() {
@@ -165,6 +165,12 @@ bool SerialComms::convertBufStrToInt(uint8_t startingPos, int &result) {
   uint8_t numDigits = 0;
 
   char foundChars[maxLength]{0};
+
+  const bool isNegative = m_inputBuffer[startingPos] == '-';
+  if (isNegative) {
+    startingPos++;
+  }
+
   while (isdigit(m_inputBuffer[startingPos]) && numDigits < maxLength) {
     foundChars[numDigits] = m_inputBuffer[startingPos];
     numDigits++;
@@ -177,6 +183,9 @@ bool SerialComms::convertBufStrToInt(uint8_t startingPos, int &result) {
   }
 
   result = atoi(foundChars);
+  if (isNegative) {
+    result = -result;
+  }
   return true;
 }
 
@@ -208,9 +217,15 @@ void SerialComms::findInputCommands() {
       allEolParsed = true;
       const auto finalCharPos = strlen(m_inputBuffer);
       if (startingSearchPos != finalCharPos) {
-        // There is another outstanding buffer to process
-        Libs::pair<uint8_t, uint8_t> foundPair(startingSearchPos, finalCharPos);
-        processIndividualCommand(foundPair);
+        // There is an incomplete command pending
+        int length = finalCharPos - startingSearchPos;
+
+        // Shift the data back to the beginning of the buffer
+        memmove(&m_inputBuffer[0], &m_inputBuffer[startingSearchPos], length);
+        m_inputBuffer[length + 1] = '\0';
+      } else {
+        // Nothing in the buffer to restore to clean state
+        resetBuffer(m_inputBuffer, BUFFER_SIZE);
       }
     }
   } while (!allEolParsed);
