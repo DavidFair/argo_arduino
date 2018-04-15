@@ -3,18 +3,20 @@
 
 #include <stdint.h>
 
+#include "ArduinoInterface.hpp"
 #include "Encoder.hpp"
 #include "PidController.hpp"
 #include "SerialComms.hpp"
 #include "Timer.hpp"
-#include "ArduinoInterface.hpp"
 #include "move.hpp"
 #include "unique_ptr.hpp"
 
 namespace ArgoRcLib {
 
+/// Implements main loop to be executed on the vehicle
 class ArgoRc {
 public:
+  /// Constructs an object which uses the given hardwareInterface
   explicit ArgoRc(Hardware::ArduinoInterface &hardwareInterface,
                   bool usePingTimeout = true);
 
@@ -26,7 +28,8 @@ public:
 
   // Move constructors - used in unit tests
   ArgoRc(ArgoRc &&other)
-      : m_pingTimer(Libs::move(other.m_pingTimer)),
+      : m_usePingTimeout(other.m_usePingTimeout),
+        m_pingTimer(Libs::move(other.m_pingTimer)),
         m_serialOutputTimer(Libs::move(other.m_serialOutputTimer)),
         m_hardwareInterface(other.m_hardwareInterface),
         m_encoders(Libs::move(other.m_encoders)),
@@ -40,45 +43,65 @@ public:
     m_pidController = Libs::move(other.m_pidController);
     return *this;
   }
-
+  /// Sets the various pins and serial line up
   void setup();
 
+  /// Switches relays ready to move forward left
   void forward_left();
 
+  /// Switches relays ready to move forward right
   void forward_right();
 
+  /// Switches relays ready to move reverse left
   void reverse_left();
 
+  /// Switches relays ready to move reverse right
   void reverse_right();
 
+  /// Switches relays to engage the footswitch on for driving
   void footswitch_on();
 
+  /// Switches relays to disengage the footswitch
   void footswitch_off();
 
+  /// Main loop which controls the vehicle
   void loop();
 
+  /// Switches all relays off to a safe state
   void direction_relays_off();
 
 private:
+  /// Checks the deadman switch and performs safety actions if required
   bool checkDeadmanSwitch();
 
+  /// Makes the vehicle safe and enters an infinite loop on the Arduino
   void enterDeadmanFail();
 
+  /// Reads the current PWM targets whilst using remote control
   PwmTargets readPwmInput();
 
+  /// Sets the digital pin modes to their apppropriate values
   void setupDigitalPins();
 
+  /// Calculates the PWM targets based on the remote control speed and steering
   PwmTargets setMotorTarget(int speed, int steer);
 
-  bool m_usePingTimeout;
+  /// Holds whether pings are considered for stopping the vehicle
+  const bool m_usePingTimeout;
 
+  /// Time till the next ping is sent
   Libs::Timer m_pingTimer;
+  /// Time until the next serial output is sent
   Libs::Timer m_serialOutputTimer;
 
+  /// Reference to the Arduino hardware
   Hardware::ArduinoInterface &m_hardwareInterface;
+  /// Object which interfaces to the device encoders
   Hardware::Encoder m_encoders;
 
+  /// Object which handles serial communications for the vehicle
   SerialComms m_commsObject;
+  /// Object which handles calculating PWM values under ROS control
   PidController m_pidController;
 };
 

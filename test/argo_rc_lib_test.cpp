@@ -2,8 +2,8 @@
 #include <string>
 
 #include "ArduinoGlobals.hpp"
-#include "Encoder.hpp"
 #include "ArduinoInterface.hpp"
+#include "Encoder.hpp"
 #include "argo_rc_lib.hpp"
 #include "mock_arduino.hpp"
 #include "unique_ptr.hpp"
