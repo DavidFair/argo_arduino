@@ -4,9 +4,10 @@
 //#include <Encoder.h>
 
 #include "ArduinoGlobals.hpp"
-#include "arduino_enums.hpp"
 #include "ArduinoInterface.hpp"
+#include "arduino_enums.hpp"
 #include "arduino_lib_wrapper.hpp"
+
 
 #include "argo_rc_lib.hpp"
 
@@ -57,9 +58,6 @@ void ArgoRc::setup() {
 
   m_hardwareInterface.analogWrite(pinMapping::STEERING_PWM_OUTPUT, 0);
   m_hardwareInterface.analogWrite(pinMapping::BRAKING_PWM_OUTPUT, 128);
-
-  m_hardwareInterface.digitalWrite(pinMapping::TEST_POT_POSITIVE,
-                                   digitalIO::E_HIGH);
 }
 
 void ArgoRc::direction_relays_off() {
@@ -287,9 +285,6 @@ void ArgoRc::setupDigitalPins() {
 
   m_hardwareInterface.setPinMode(pinMapping::RIGHT_ENCODER,
                                  digitalIO::E_INPUT_PULLUP);
-
-  m_hardwareInterface.setPinMode(pinMapping::TEST_POT_POSITIVE,
-                                 digitalIO::E_OUTPUT);
 
   m_hardwareInterface.setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
 }
