@@ -1,13 +1,14 @@
 # Argo Control Software
 
 # Table of Contents
-  1. [Requirements](#Requirements)
-  2. [Building Arduino Firmware](#building-arduino-firmware)  
-    2.1. [Target Names](#target-names)
-  3. [Uploading and Communications](#uploading-and-communications)  
-    3.1 [Getting access to TTY device](#getting-access-to-tty-device)  
-    3.2 [Exiting picocom](#exitting-picocom)
-
+* 1\. [Requirements](#Requirements)
+* 2\. [Building Arduino Firmware](#building-arduino-firmware)
+  * 2.1\. [Target Names](#target-names)
+* 3\. [Uploading and Communications](#uploading-and-communications)
+  * 3.1\. [Getting access to TTY device](#getting-access-to-tty-device)
+  * 3.2\. [(Alternative) Using screen](#\(alternative\)-using-screen)
+  * 3.2\. [Exiting picocom](#exitting-picocom)
+* 4\. [Running Unit Tests](#running-unit-tests)
 
 
 ## Requirements
@@ -20,10 +21,10 @@ The following dependencies are required:
 - picocom
 
 The following are required but installed by the Arduino SDK
-- gcc-avr 
-- binutils-avr 
-- avr-libc 
-- avrdude 
+- gcc-avr
+- binutils-avr
+- avr-libc
+- avrdude
 
 
 These can be installed with the following command
@@ -92,6 +93,24 @@ sudo usermod -a -G dialout $USER
 
 The user may have to log out and in to join the new group.
 
+### (Alternative) Using Screen
+Alternatively users can use screen to have read-only communications with
+the Arduino.
+
+To use screen the format is as follows:
+
+*screen </dev/ttyPath> \<baudRate>*
+
+Where /dev/ttyPath and baudRate are replaced with appropriate values. For example:
+
+```sh
+sudo apt-get install screen
+
+screen /dev/ttyACM0 115200
+```
+
+To exit screen the command is **Ctrl+A -> Shift+K**
+
 ### Exiting Picocom
 
 To exit picocom the following keys are used
@@ -100,3 +119,35 @@ To exit picocom the following keys are used
 - CTRL-X
 
 *Note: CTRL-C will be sent to the device and appear to do nothing*
+
+## Running Unit Tests
+
+A separate build folder is required to build unit tests. Folders
+cannot switch between the AVR and X86 compilers without first deleting
+the CMake cache.
+
+1. Clone the repository - for example into `argo_src`
+2. Create a build folder - for example `argo_tests`
+3. `cd` into the build folder
+4. Run `cmake ../<your src folder name> -DUNIT_TESTING=ON`
+5. Run `make` to compile the unit tests
+6. Run `ctest` in to run the unit tests *OR*
+7. Run `ctest -V` the see individual tests completed
+
+
+For example:
+
+```sh
+git clone https://github.com/DavidFair/argo_arduino argo_src
+mkdir argo_tests
+cd argo_tests
+cmake ../argo_src -DUNIT_TESTING=ON
+make -j4
+ctest -V
+```
+
+A single set of tests can be run instead using the `-R` flag. For example
+
+```sh
+ctest -R SerialComms_test
+```
