@@ -5,7 +5,7 @@
 
 #include "ArduinoGlobals.hpp"
 #include "arduino_enums.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 #include "arduino_lib_wrapper.hpp"
 
 #include "argo_rc_lib.hpp"

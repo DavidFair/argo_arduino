@@ -3,7 +3,7 @@
 
 #include "ArduinoGlobals.hpp"
 #include "Encoder.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 #include "argo_rc_lib.hpp"
 #include "mock_arduino.hpp"
 #include "unique_ptr.hpp"

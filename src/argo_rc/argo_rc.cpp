@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 #include "ArduinoGlobals.hpp"
-#include "arduino_hardware.hpp"
+#include "ArduinoHardware.hpp"
 #include "argo_rc_lib.hpp"
 #include "move.hpp"
 
@@ -20,8 +20,7 @@ Libs::unique_ptr<Hardware::ArduinoInterface>
 
 ArgoRcLib::ArgoRc argoRcLib(*hardwareImpl);
 
-void setup()
-{
+void setup() {
   argoRcLib.setup();
   // Setup interrupts last so they aren't overwritten
   setupInterrupts();
@@ -31,20 +30,17 @@ void loop() { argoRcLib.loop(); }
 
 // ----- Interrupt Handling - Cannot (easily) be mocked -----
 
-void leftEncoderInterrupt()
-{
+void leftEncoderInterrupt() {
   InterruptData::g_pinEncoderData.leftEncoderCount +=
       ArgoData::g_currentVehicleDirection.leftWheelDirection;
 }
 
-void rightEncoderInterrupt()
-{
+void rightEncoderInterrupt() {
   InterruptData::g_pinEncoderData.rightEncoderCount +=
       ArgoData::g_currentVehicleDirection.rightWheelDirection;
 }
 
-void setupInterrupts()
-{
+void setupInterrupts() {
   constexpr int leftPin = 18;
   constexpr int rightPin = 20;
   pinMode(leftPin, INPUT_PULLUP);
@@ -69,8 +65,7 @@ void setupInterrupts()
 }
 
 // ISR for the remote control
-ISR(PCINT2_vect)
-{
+ISR(PCINT2_vect) {
   uint8_t bit;
   uint8_t curr;
   uint8_t mask;
@@ -85,28 +80,22 @@ ISR(PCINT2_vect)
   currentTime = micros();
 
   // mask is pcint pins that have changed.
-  for (uint8_t i = 0; i < 6; i++)
-  {
+  for (uint8_t i = 0; i < 6; i++) {
     bit = 0x04 << i;
-    if (bit & mask)
-    {
+    if (bit & mask) {
       // for each pin changed, record time of change
-      if (bit & InterruptData::g_pcIntLast)
-      {
+      if (bit & InterruptData::g_pcIntLast) {
         time = currentTime - InterruptData::g_pinData[i].fallTime;
         InterruptData::g_pinData[i].riseTime = currentTime;
         if ((time >= 10000) && (time <= 26000))
           InterruptData::g_pinData[i].edge = 1;
         else
           InterruptData::g_pinData[i].edge = 0; // invalid rising edge detected
-      }
-      else
-      {
+      } else {
         time = currentTime - InterruptData::g_pinData[i].riseTime;
         InterruptData::g_pinData[i].fallTime = currentTime;
         if ((time >= 800) && (time <= 2200) &&
-            (InterruptData::g_pinData[i].edge == 1))
-        {
+            (InterruptData::g_pinData[i].edge == 1)) {
           InterruptData::g_pinData[i].lastGoodWidth = time;
           InterruptData::g_pinData[i].edge = 0;
         }

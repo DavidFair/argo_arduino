@@ -6,7 +6,7 @@ set(SRC_FILES
 set(HDR_FILES
     ArduinoGlobals.hpp
     arduino_enums.hpp
-    arduino_interface.hpp
+    ArduinoInterface.hpp
     Encoder.hpp
 )
 
@@ -17,15 +17,15 @@ if (NOT UNIT_TESTING)
     include_directories("${PROJECT_SOURCE_DIR}/src/arduino_hardware")
 
     generate_arduino_library(
-    arduino_interface
-    LIBS arduino_hardware
+    ArduinoInterface
+    LIBS ArduinoHardware
     SRCS ${SRC_FILES}
     HDRS ${HDR_FILES}
     BOARD ${BOARD_TYPE}
     )
 else()
     add_library(
-    arduino_interface STATIC
+    ArduinoInterface STATIC
     ${SRC_FILES} ${HDR_FILES}
     )
 endif()

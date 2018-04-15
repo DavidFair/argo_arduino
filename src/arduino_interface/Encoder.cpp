@@ -2,9 +2,8 @@
 #include <stdint.h>
 
 #include "ArduinoGlobals.hpp"
+#include "ArduinoInterface.hpp"
 #include "Distance.hpp"
-#include "arduino_interface.hpp"
-
 #include "Encoder.hpp"
 
 using namespace Globals;

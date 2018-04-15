@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include "arduino_hardware.hpp"
+#include "ArduinoHardware.hpp"
 
 using namespace ArduinoEnums;
 

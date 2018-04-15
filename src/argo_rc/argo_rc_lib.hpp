@@ -7,7 +7,7 @@
 #include "PidController.hpp"
 #include "SerialComms.hpp"
 #include "Timer.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 #include "move.hpp"
 #include "unique_ptr.hpp"
 

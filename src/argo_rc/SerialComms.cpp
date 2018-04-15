@@ -6,7 +6,7 @@
 #include "Encoder.hpp"
 #include "MinString.hpp"
 #include "Speed.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 #include "cstring_wrapper.hpp"
 
 #include "SerialComms.hpp"

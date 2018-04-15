@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 
 namespace Hardware {
 

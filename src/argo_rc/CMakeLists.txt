@@ -1,9 +1,9 @@
-set(ARGO_LIB_SRC 
+set(ARGO_LIB_SRC
     argo_rc_lib.cpp
     PidController.cpp
     SerialComms.cpp)
 
-set(ARGO_LIB_HDR 
+set(ARGO_LIB_HDR
     argo_rc_lib.hpp
     PidController.hpp
     SerialComms.hpp)
@@ -19,7 +19,7 @@ if (UNIT_TESTING)
     # Building on X86 target
     add_library(
         argo_lib STATIC
-        ${ARGO_LIB_SRC} 
+        ${ARGO_LIB_SRC}
         ${ARGO_LIB_HDR}
         )
 
@@ -28,8 +28,8 @@ else()
     include_directories("${PROJECT_SOURCE_DIR}/src/arduino_hardware")
 
     set(REQUIRED_LIBS
-        arduino_interface 
-        arduino_hardware 
+        ArduinoInterface
+        ArduinoHardware
         lib_wrappers
     )
 

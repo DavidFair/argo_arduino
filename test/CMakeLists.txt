@@ -51,9 +51,9 @@ add_executable(PidControllerTest PidControllerTest.cpp)
 
 set(REQUIRED_LIBS
   test_main
-  gmock_main 
-  argo_lib 
-  arduino_interface
+  gmock_main
+  argo_lib
+  ArduinoInterface
   lib_wrappers
 )
 

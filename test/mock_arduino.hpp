@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "arduino_enums.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 #include "arduino_lib_wrapper.hpp"
 
 class MockArduino : public Hardware::ArduinoInterface {

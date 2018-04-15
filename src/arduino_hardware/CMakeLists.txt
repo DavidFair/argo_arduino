@@ -2,11 +2,11 @@
 if (NOT UNIT_TESTING)
 
 set(SRC_FILES
-    arduino_hardware.cpp 
+    ArduinoHardware.cpp
 )
 
 set(HDR_FILES
-    arduino_hardware.hpp
+    ArduinoHardware.hpp
 )
 
 include_directories(
@@ -15,8 +15,8 @@ include_directories(
 )
 
 generate_arduino_library(
-  arduino_hardware
-  LIBS arduino_interface
+  ArduinoHardware
+  LIBS ArduinoInterface
   SRCS ${SRC_FILES}
   HDRS ${HDR_FILES}
   BOARD ${BOARD_TYPE}

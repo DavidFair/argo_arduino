@@ -3,7 +3,7 @@
 
 #include "Encoder.hpp"
 #include "MinString.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 #include "move.hpp"
 #include "pair.hpp"
 

@@ -5,7 +5,7 @@
 
 #include "Distance.hpp"
 #include "Encoder.hpp"
-#include "arduino_interface.hpp"
+#include "ArduinoInterface.hpp"
 
 namespace ArgoRcLib {
 
