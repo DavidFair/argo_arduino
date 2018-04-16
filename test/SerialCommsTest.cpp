@@ -10,6 +10,7 @@
 
 using ::testing::InSequence;
 using ::testing::InvokeWithoutArgs;
+using ::testing::Mock;
 using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::Test;
@@ -141,4 +142,54 @@ TEST_F(SerialCommsFixture, warningIsAdded) {
   EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addWarning(warningStr);
   testInstance.sendCurrentBuffer();
+}
+
+TEST_F(SerialCommsFixture, partialReadHandled) {
+  const std::string partOne("!T L_SPEED:1000 R_SPEED:2000\n!T L_SPEED:2000");
+  const std::string partTwo(" R_SPEED:3000\n");
+
+  InSequence s;
+  EXPECT_CALL(mockObj, serialAvailable())
+      .Times(partOne.length())
+      .WillRepeatedly(Return(1));
+
+  EXPECT_CALL(mockObj, serialAvailable()).WillOnce(Return(0));
+
+  int partOneBufPos = 0;
+  ON_CALL(mockObj, serialRead())
+      .WillByDefault(InvokeWithoutArgs([&partOneBufPos, &partOne]() {
+        char nextChar = partOne[partOneBufPos];
+        partOneBufPos++;
+
+        return nextChar;
+      }));
+
+  testInstance.parseIncomingBuffer();
+  auto parsedSpeeds = testInstance.getTargetSpeeds();
+  ASSERT_EQ(parsedSpeeds.leftWheel.getUnitDistance().millimeters(), 1000);
+  ASSERT_EQ(parsedSpeeds.rightWheel.getUnitDistance().millimeters(), 2000);
+
+  // Reset and send buffer again
+  ASSERT_TRUE(Mock::VerifyAndClear(&mockObj));
+
+  EXPECT_CALL(mockObj, serialAvailable())
+      .Times(partTwo.length())
+      .WillRepeatedly(Return(1));
+
+  EXPECT_CALL(mockObj, serialAvailable()).WillOnce(Return(0));
+
+  int partTwoBufPos = 0;
+  ON_CALL(mockObj, serialRead())
+      .WillByDefault(InvokeWithoutArgs([&partTwoBufPos, &partTwo]() {
+        char nextChar = partTwo[partTwoBufPos];
+        partTwoBufPos++;
+
+        return nextChar;
+      }));
+
+  testInstance.parseIncomingBuffer();
+  auto secondSpeeds = testInstance.getTargetSpeeds();
+
+  EXPECT_EQ(secondSpeeds.leftWheel.getUnitDistance().millimeters(), 2000);
+  EXPECT_EQ(secondSpeeds.rightWheel.getUnitDistance().millimeters(), 3000);
 }
