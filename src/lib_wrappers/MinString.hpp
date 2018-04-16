@@ -11,15 +11,14 @@ namespace Libs {
 // better named functions
 class MinString {
 public:
-  constexpr MinString(const char *string)
-      : m_string(string), m_length(strlen(string)) {}
+  MinString(const char *string) : m_string(string), m_length(strlen(string)) {}
 
-  constexpr bool isPresentInString(const char *cStr) const {
+  bool isPresentInString(const char *cStr) const {
     return (strncmp(cStr, m_string, m_length) == 0);
   }
 
-  constexpr const char *str() const { return m_string; }
-  constexpr uint8_t length() const { return m_length; }
+  const char *str() const { return m_string; }
+  uint8_t length() const { return m_length; }
 
 private:
   const char *m_string;

@@ -33,27 +33,27 @@ constexpr char EOL = '\n';
 
 // Transmit prefixes
 /// Prefix for transmitting the current encoder data
-constexpr MinString ENCODER_TRANSMIT_PRE = "!e ";
+const MinString ENCODER_TRANSMIT_PRE = "!e ";
 /// Prefix for transmitting an outgoing ping
-constexpr MinString PING_TRANSMIT_PRE = "!p";
+const MinString PING_TRANSMIT_PRE = "!p";
 /// Prefix for transmitting the current vehicle speed
-constexpr MinString SPEED_TRANSMIT_PRE = "!s ";
+const MinString SPEED_TRANSMIT_PRE = "!s ";
 /// Prefix for transmitting a warning
-constexpr MinString WARN_TRANSMIT_PRE = "!w";
+const MinString WARN_TRANSMIT_PRE = "!w";
 
 // Command prefixes
 /// Prefix for an incoming ping
-constexpr MinString PING_COMMAND_PRE = "!P";
+const MinString PING_COMMAND_PRE = "!P";
 /// Prefix to a target speed command
-constexpr MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
+const MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
 
 // Function specific data
 constexpr int NUM_ENCODER = EncoderPositions::_NUM_OF_ENCODERS;
 
 /// Names of the left and right encoders when sending encoder data
-constexpr MinString ENCODER_NAMES[NUM_ENCODER] = {"L_ENC", "R_ENC"};
+const MinString ENCODER_NAMES[NUM_ENCODER] = {"L_ENC", "R_ENC"};
 /// Names of the left and right wheels when sending speed data
-constexpr MinString SPEED_PREFIX[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
+const MinString SPEED_PREFIX[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
 
 } // namespace
 
