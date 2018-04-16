@@ -43,14 +43,16 @@ project(ARGO C CXX)
 # Add directories depending on whether we are targeting hardware
 if(UNIT_TESTING)
     # We can only set Werror on Unit test target as Arduino libs have warnings
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror" CACHE STRING "" FORCE)
+    add_compile_options(-Werror)
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_STATIC_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -fsanitize=address")
 
     # Use native compiler and add test directory
     enable_testing()
     add_definitions(-DUNIT_TESTING)
     add_subdirectory(test)
 else()
-    # Sized deallocation was introduced in C++-14 standard however the 
+    # Sized deallocation was introduced in C++-14 standard however the
     # avr std lib does not understand it so force GCC to not use it
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-fno-sized-deallocation" COMPILER_NEEDS_NOSIZE_DEALLOC)

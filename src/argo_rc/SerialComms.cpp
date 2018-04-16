@@ -215,6 +215,11 @@ void SerialComms::appendToOutputBuf(const char c) {
 /// Appends a copy of a string to the output buffer.
 void SerialComms::appendToOutputBuf(const MinString &s) {
   auto sLength = s.length();
+
+  if (strstr(m_outBuffer, "!P") != nullptr) {
+    m_hardwareInterface.serialPrintln("P found in outgoing buffer");
+  }
+
   if (sLength + m_outIndex >= BUFFER_SIZE) {
     // Flush the current buffer regardless
     sendCurrentBuffer();
@@ -311,7 +316,8 @@ void SerialComms::findInputCommands() {
 
         // Shift the data back to the beginning of the buffer
         memmove(&m_inputBuffer[0], &m_inputBuffer[startingSearchPos], length);
-        m_inputBuffer[length + 1] = '\0';
+        m_inputBuffer[length] = '\0';
+        resetBuffer(&m_inputBuffer[length], (BUFFER_SIZE - length));
       } else {
         // Nothing in the buffer to restore to clean state
         resetBuffer(m_inputBuffer, BUFFER_SIZE);
@@ -423,7 +429,9 @@ void SerialComms::processIndividualCommand(
  * @param bufferSize The size of the buffer to reset
  */
 void SerialComms::resetBuffer(char *targetBuffer, uint8_t bufferSize) {
-  memset(targetBuffer, 0, sizeof(targetBuffer[0]) * bufferSize);
+  for (uint8_t i = 0; i < bufferSize; i++) {
+    targetBuffer[i] = 0;
+  }
 }
 
 } // namespace ArgoRcLib

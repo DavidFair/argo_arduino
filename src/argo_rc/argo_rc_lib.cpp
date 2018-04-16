@@ -189,27 +189,20 @@ void ArgoRc::loop() {
 
   auto currentSpeed = m_encoders.calculateSpeed();
 
-  // Check if were ready to send our buffer details over serial yet
-  if (m_serialOutputTimer.hasTimerFired(currentTime)) {
-    m_serialOutputTimer.reset(currentTime);
-    m_commsObject.addEncoderRotation(m_encoders.read());
-    m_commsObject.addVehicleSpeed(currentSpeed);
-  }
-
   // Deadman switch is high at this point
   // ---- RC control ----
   auto targetPwmVals = readPwmInput();
+  const bool pingTimedOut = false;
 
-  // // ------- ROS control ------
-  // auto targetSpeed = m_commsObject.getTargetSpeeds();
-  // if (m_usePingTimeout && !m_commsObject->isPingGood()) {
-  //   m_commsObject.addWarning("Ping timeout. Resetting speed to 0");
-  //   targetSpeed.leftWheel = 0;
-  //   targetSpeed.rightWheel = 0;
-  // }
+  // ------- ROS control ------
+  // const bool pingTimedOut = m_usePingTimeout && !m_commsObject.isPingGood();
+  // auto targetSpeed =
+  //     pingTimedOut ? Hardware::WheelSpeeds() :
+  //     m_commsObject.getTargetSpeeds();
+
   // auto targetPwmVals =
   //     m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
-  // // --------------
+  // --------------
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
@@ -235,8 +228,20 @@ void ArgoRc::loop() {
                                   abs(rightPwmValue));
 
   if (m_pingTimer.hasTimerFired(currentTime)) {
-    m_commsObject.addPing();
+    if (pingTimedOut) {
+      m_commsObject.addWarning("Ping timeout. Resetting speed to 0");
+    } else {
+      m_commsObject.addPing();
+    }
     m_pingTimer.reset(currentTime);
+  }
+
+  // Check if were ready to send our buffer details over serial yet
+  // if we still have comms
+  if (!pingTimedOut && m_serialOutputTimer.hasTimerFired(currentTime)) {
+    m_serialOutputTimer.reset(currentTime);
+    m_commsObject.addEncoderRotation(m_encoders.read());
+    m_commsObject.addVehicleSpeed(currentSpeed);
   }
 
   m_commsObject.sendCurrentBuffer();
