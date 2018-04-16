@@ -10,7 +10,10 @@
 namespace Hardware {
 
 /// Provides a concrete implementation to the Arduino hardware
-class ArduinoHardware : public ArduinoInterface {
+
+// By specifying final we hint to the compiler to de-virtualise
+// This saves 100 bytes in the final program overhead
+class ArduinoHardware final : public ArduinoInterface {
 
 public:
   /// Constructs a new ArduinoHardware object
