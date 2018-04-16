@@ -216,10 +216,6 @@ void SerialComms::appendToOutputBuf(const char c) {
 void SerialComms::appendToOutputBuf(const MinString &s) {
   auto sLength = s.length();
 
-  if (strstr(m_outBuffer, "!P") != nullptr) {
-    m_hardwareInterface.serialPrintln("P found in outgoing buffer");
-  }
-
   if (sLength + m_outIndex >= BUFFER_SIZE) {
     // Flush the current buffer regardless
     sendCurrentBuffer();
