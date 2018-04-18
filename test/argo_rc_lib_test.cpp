@@ -125,12 +125,12 @@ void returnDeadmanSafe(MockArduino &hardwareInterface) {
 
 void setToRcControl() {
   const int RC_PWM_VAL = 2000;
-  InterruptData::g_pinData[3].lastGoodWidth = RC_PWM_VAL;
+  InterruptData::g_pinData[2].lastGoodWidth = RC_PWM_VAL;
 }
 
 // void setToRosControl() {
 //   const int ROS_PWM_VAL = 0;
-//   InterruptData::g_pinData[3].lastGoodWidth = ROS_PWM_VAL;
+//   InterruptData::g_pinData[2].lastGoodWidth = ROS_PWM_VAL;
 // }
 
 // ----------- Test fixture --------------
@@ -290,7 +290,7 @@ TEST_F(ArgoRcTest, leftReverse) {
 
   checkReverseRightIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
       .Times(1);
 
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
@@ -310,7 +310,7 @@ TEST_F(ArgoRcTest, rightReverse) {
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
       .Times(1);
 
   argoRcLib.loop();
@@ -325,7 +325,7 @@ TEST_F(ArgoRcTest, rightForward) {
 
   checkForwardRightIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
       .Times(1);
 
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
@@ -346,7 +346,7 @@ TEST_F(ArgoRcTest, leftForward) {
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
       .Times(1);
 
   argoRcLib.loop();
