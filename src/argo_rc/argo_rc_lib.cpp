@@ -16,10 +16,13 @@ const unsigned long OUTPUT_DELAY = 200;
 const unsigned long PING_DELAY = 100;
 
 /// The minimum PWM value before engaging the vehicles drive
-const int MIN_PWM_VAL = 20;
+const int MIN_PWM_VAL = 5;
 
 /// THe maximum value a PWM output can hold
 const int PWM_MAXIMUM_OUTPUT = 255;
+
+const int PWM_RC_CENTER_VAL = 1520;
+const int PWM_RC_RANGE = 500;
 
 /**
  * Constrains a given input to be between the min and max value
@@ -177,32 +180,30 @@ void ArgoRc::footswitch_off() {
  * and writes out the target PWM values to the motor controls.
  */
 void ArgoRc::loop() {
-  if (!checkDeadmanSwitch()) {
-    // This is for unit testing - enterDeadmanSafetyMode on hardware gets
-    // stuck in an infinite loop
-    return;
-  }
-
   auto currentTime = m_hardwareInterface.millis();
 
   m_commsObject.parseIncomingBuffer();
 
   auto currentSpeed = m_encoders.calculateSpeed();
 
-  // Deadman switch is high at this point
-  // ---- RC control ----
-  auto targetPwmVals = readPwmInput();
-  const bool pingTimedOut = false;
+  // If channel is more than threshold we use RC
+  const bool usingRcInput =
+      InterruptData::g_pinData[2].lastGoodWidth >= PWM_RC_CENTER_VAL;
 
-  // ------- ROS control ------
-  // const bool pingTimedOut = m_usePingTimeout && !m_commsObject.isPingGood();
-  // auto targetSpeed =
-  //     pingTimedOut ? Hardware::WheelSpeeds() :
-  //     m_commsObject.getTargetSpeeds();
+  bool pingTimedOut = false;
+  PwmTargets targetPwmVals;
 
-  // auto targetPwmVals =
-  //     m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
-  // --------------
+  if (usingRcInput) {
+    targetPwmVals = readPwmInput();
+  } else {
+    // Ros control
+    pingTimedOut = m_usePingTimeout && !m_commsObject.isPingGood();
+    // If ping has timed out reset speed to 0 else get target speed
+    auto targetSpeed = pingTimedOut ? Hardware::WheelSpeeds()
+                                    : m_commsObject.getTargetSpeeds();
+    targetPwmVals =
+        m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
+  }
 
   int leftPwmValue = targetPwmVals.leftPwm;
   int rightPwmValue = targetPwmVals.rightPwm;
@@ -230,9 +231,9 @@ void ArgoRc::loop() {
   if (m_pingTimer.hasTimerFired(currentTime)) {
     if (pingTimedOut) {
       m_commsObject.addWarning("Ping timeout. Resetting speed to 0");
-    } else {
-      m_commsObject.addPing();
     }
+    m_commsObject.addPing();
+
     m_pingTimer.reset(currentTime);
   }
 
@@ -248,39 +249,6 @@ void ArgoRc::loop() {
 }
 
 // ---------- Private Methods --------------
-
-/**
- * Checks whether the deadman switch has toggled. If it has it proceeds
- * to check if the switch toggles off within a specified time
- * (see DEADMAN_TIMEOUT_DELAY). If the switch is safe true is returned.
- * If the switch is failed and on the Arduino an infinite loop is entered
- * after making the vehicle safe.
- * If the switch is failed and unit testing the function returns false
- *
- * @return True if the switch is safe, false if unit testing and the
- * switch has failed.
- */
-bool ArgoRc::checkDeadmanSwitch() {
-
-  if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH) {
-    return true;
-  }
-
-  unsigned long startingTime = m_hardwareInterface.millis();
-
-  while ((m_hardwareInterface.millis() - startingTime) <
-         DEADMAN_TIMEOUT_DELAY) {
-    // Check its not a switch bounce
-    if (m_hardwareInterface.digitalRead(RC_DEADMAN) == digitalIO::E_HIGH)
-      return true;
-  }
-
-  // Pin still has not driven high after DEADMAN_TIMEOUT seconds
-  enterDeadmanFail();
-
-  // For unit testing
-  return false;
-} // namespace ArgoRcLib
 
 /**
  * Sets the PWM values for the left and right wheels based on
@@ -306,26 +274,6 @@ PwmTargets ArgoRc::setMotorTarget(int speed, int steer) {
 }
 
 /**
- * Enters a safety mode when the deadman switch has toggled. The
- * remote control input is set to 0, the vehicle is stopped and
- * all relays are switched to a safe position.
- * If this is executed on the Arduino it enters an infinite loop
- * which emits a fatal message.
- * If this is executed whilst unit testing it returns
- */
-void ArgoRc::enterDeadmanFail() {
-  InterruptData::g_pinData[0].lastGoodWidth = 0;
-  InterruptData::g_pinData[1].lastGoodWidth = 0;
-  m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0);
-  m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0);
-
-  // turn off all direction relays and footswitch
-  footswitch_off();
-  direction_relays_off();
-  m_hardwareInterface.enterDeadmanSafetyMode();
-}
-
-/**
  * Reads the PWM input from the remote control based on the last
  * interrupt data received
  *
@@ -340,11 +288,8 @@ PwmTargets ArgoRc::readPwmInput() {
     return PwmTargets(0, 0);
   }
 
-  constexpr int centerPoint = 1520;
-  constexpr int range = 330;
-
-  constexpr int minValue = centerPoint - range;
-  constexpr int maxValue = centerPoint + range;
+  constexpr int minValue = PWM_RC_CENTER_VAL - PWM_RC_RANGE;
+  constexpr int maxValue = PWM_RC_CENTER_VAL + PWM_RC_RANGE;
 
   rcPwmThrottleRaw = constrainInput(rcPwmThrottleRaw, minValue, maxValue);
   rcPwmSteeringRaw = constrainInput(rcPwmSteeringRaw, minValue, maxValue);

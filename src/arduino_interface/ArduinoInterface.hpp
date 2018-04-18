@@ -33,9 +33,6 @@ public:
   virtual void digitalWrite(ArduinoEnums::pinMapping pin,
                             ArduinoEnums::digitalIO mode) const = 0;
 
-  /// Enters an infinite loop when the deadman switch triggers
-  virtual void enterDeadmanSafetyMode() const = 0;
-
   /// Gets the current microsecond elapsed since start
   virtual unsigned long micros() const = 0;
 
