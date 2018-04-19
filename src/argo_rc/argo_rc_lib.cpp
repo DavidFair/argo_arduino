@@ -8,8 +8,6 @@
 #include "argo_rc_lib.hpp"
 
 namespace {
-/// The time between the deadman switch first toggling and it being tested again
-const unsigned long DEADMAN_TIMEOUT_DELAY = 500;
 /// The delay before the vehicles telemtry is sent
 const unsigned long OUTPUT_DELAY = 200;
 /// The delay before another pint is sent
@@ -229,6 +227,10 @@ void ArgoRc::loop() {
                                   abs(rightPwmValue));
 
   if (m_pingTimer.hasTimerFired(currentTime)) {
+    if (pingTimedOut) {
+      m_commsObject.addWarning("Ping has timed out");
+    }
+
     m_commsObject.addPing();
 
     m_pingTimer.reset(currentTime);

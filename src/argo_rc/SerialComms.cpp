@@ -108,7 +108,7 @@ void SerialComms::addPing() {
 
 void SerialComms::addPwmValues(const PwmTargets &targetVals) {
   appendToOutputBuf(PWM_TRANSMIT_PRE);
-  constexpr int NUM_DEC_PLACES = 3; // Can only go to 255
+  constexpr int NUM_DEC_PLACES = 5;
   char convertedNumber[NUM_DEC_PLACES];
 
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.leftPwm);

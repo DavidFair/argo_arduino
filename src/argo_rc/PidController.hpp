@@ -7,7 +7,6 @@
 #include "Distance.hpp"
 #include "Encoder.hpp"
 
-
 namespace ArgoRcLib {
 
 struct PID_CONSTANTS {
@@ -15,14 +14,14 @@ struct PID_CONSTANTS {
   constexpr static float timeBetween{50};
 
   /// The proportional component
-  constexpr static float prop{0.2};
+  constexpr static float prop{3.8};
 
   /// The integral component
-  constexpr static float integral{0.01};
+  constexpr static float integral{1.7};
 
   // Controls how quickly the acceleration ramps up preventing large spikes
   /// Derivative on measurement component
-  constexpr static float deriv{0.01};
+  constexpr static float deriv{1.7};
 };
 
 /// Struct describing PWM targets for the left and right wheel
