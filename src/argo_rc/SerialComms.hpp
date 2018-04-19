@@ -9,6 +9,9 @@
 
 namespace ArgoRcLib {
 
+// Forward declarations
+struct PwmTargets;
+
 /// Class that implements handling serial communications
 class SerialComms {
 public:
@@ -32,6 +35,8 @@ public:
   void addEncoderRotation(const Hardware::EncoderPulses &data);
   /// Adds a ping to the outgoing buffer
   void addPing();
+  /// Adds PWM values to the outgoing buffer
+  void addPwmValues(const PwmTargets &targetVals);
   /// Adds the given wheel speeds to the outgoing buffer
   void addVehicleSpeed(const Hardware::WheelSpeeds &speeds);
   /// Adds a warning from a string literal to the outgoing buffer

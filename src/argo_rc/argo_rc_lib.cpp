@@ -229,9 +229,6 @@ void ArgoRc::loop() {
                                   abs(rightPwmValue));
 
   if (m_pingTimer.hasTimerFired(currentTime)) {
-    if (pingTimedOut) {
-      m_commsObject.addWarning("Ping timeout. Resetting speed to 0");
-    }
     m_commsObject.addPing();
 
     m_pingTimer.reset(currentTime);
@@ -243,6 +240,7 @@ void ArgoRc::loop() {
     m_serialOutputTimer.reset(currentTime);
     m_commsObject.addEncoderRotation(m_encoders.read());
     m_commsObject.addVehicleSpeed(currentSpeed);
+    m_commsObject.addPwmValues(targetPwmVals);
   }
 
   m_commsObject.sendCurrentBuffer();
