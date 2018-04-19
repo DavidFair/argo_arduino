@@ -71,12 +71,6 @@ public:
   void direction_relays_off();
 
 private:
-  /// Checks the deadman switch and performs safety actions if required
-  bool checkDeadmanSwitch();
-
-  /// Makes the vehicle safe and enters an infinite loop on the Arduino
-  void enterDeadmanFail();
-
   /// Reads the current PWM targets whilst using remote control
   PwmTargets readPwmInput();
 

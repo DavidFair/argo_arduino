@@ -123,6 +123,16 @@ void returnDeadmanSafe(MockArduino &hardwareInterface) {
       .WillByDefault(Return(digitalIO::E_HIGH));
 }
 
+void setToRcControl() {
+  const int RC_PWM_VAL = 2000;
+  InterruptData::g_pinData[2].lastGoodWidth = RC_PWM_VAL;
+}
+
+// void setToRosControl() {
+//   const int ROS_PWM_VAL = 0;
+//   InterruptData::g_pinData[2].lastGoodWidth = ROS_PWM_VAL;
+// }
+
 // ----------- Test fixture --------------
 
 bool usePingTimeout = false;
@@ -219,48 +229,25 @@ TEST_F(ArgoRcTest, footSwitchOff) {
   argoRcLib.footswitch_off();
 }
 
-// ------- Deadman switch tests ------
-TEST_F(ArgoRcTest, deadmanSwitchTriggers) {
-  const unsigned long LOOP_MAX_DELAY = 500;
-  // We return 0, 499 and 500 to the loop
-  EXPECT_CALL(hardwareMock, millis()).WillOnce(Return(LOOP_MAX_DELAY));
-  EXPECT_CALL(hardwareMock, millis())
-      .WillOnce(Return(LOOP_MAX_DELAY - 1))
-      .RetiresOnSaturation();
-  EXPECT_CALL(hardwareMock, millis()).WillOnce(Return(0)).RetiresOnSaturation();
-
-  // At least 2 calls - one before and in the loop
-  EXPECT_CALL(hardwareMock, digitalRead(pinMapping::RC_DEADMAN))
-      .Times(2)
-      .WillRepeatedly(Return(digitalIO::E_LOW));
-
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0));
-  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0));
-
-  checkFootSwitchesAreOff(hardwareMock);
-  checkDirectionRelaysAreOff(hardwareMock);
-
-  EXPECT_CALL(hardwareMock, enterDeadmanSafetyMode());
-
-  argoRcLib.loop();
-}
-
 // -------- PWM input tests ----------
 
-// Maps to 20/-20 through the PWM mapping
-const unsigned int negBoundary = 1495;
-const unsigned int posBounds = 1546;
+const unsigned int negBoundary = 1200;
+const unsigned int posBounds = 1700;
 
+// The RC interrupt timings
 const unsigned int zeroValue = 1520;
-const unsigned int minValue = 1190;
-const unsigned int maxValue = 1850;
-
-const int mappedValue = 20;
+const unsigned int range = 500;
+const unsigned int minValue = zeroValue - range;
+const unsigned int maxValue = zeroValue + range;
 
 const size_t throttlePwmIndex = 0;
 const size_t steeringPwmIndex = 1;
 
+const int mappedValue = 0;
+
 TEST_F(ArgoRcTest, throttleIsForward) {
+  setToRcControl();
+
   // Set timing data to the boundary value
   InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posBounds;
   InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
@@ -268,36 +255,36 @@ TEST_F(ArgoRcTest, throttleIsForward) {
   checkForwardLeftIsOn(hardwareMock);
   checkForwardRightIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
   argoRcLib.loop();
 }
 
 TEST_F(ArgoRcTest, throttleIsReverse) {
+  setToRcControl();
+
   InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negBoundary;
   InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkReverseLeftIsOn(hardwareMock);
   checkReverseRightIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
   argoRcLib.loop();
 }
 
 TEST_F(ArgoRcTest, leftReverse) {
+  setToRcControl();
+
   InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negBoundary;
   InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
 
@@ -306,21 +293,21 @@ TEST_F(ArgoRcTest, leftReverse) {
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 2 * mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
   argoRcLib.loop();
 }
 
 TEST_F(ArgoRcTest, rightReverse) {
+  setToRcControl();
+
   InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negBoundary;
   InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
 
   checkReverseLeftIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, 2 * mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
@@ -330,6 +317,8 @@ TEST_F(ArgoRcTest, rightReverse) {
 }
 
 TEST_F(ArgoRcTest, rightForward) {
+  setToRcControl();
+
   // Set timing data to the boundary value
   InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posBounds;
   InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = minValue;
@@ -339,22 +328,22 @@ TEST_F(ArgoRcTest, rightForward) {
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, 0))
       .Times(1);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 2 * mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
   argoRcLib.loop();
 }
 
 TEST_F(ArgoRcTest, leftForward) {
+  setToRcControl();
+
   // Set timing data to the boundary value
   InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posBounds;
   InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = maxValue;
 
   checkForwardLeftIsOn(hardwareMock);
 
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, 2 * mappedValue))
+  EXPECT_CALL(hardwareMock, analogWrite(pinMapping::LEFT_PWM_OUTPUT, Gt(0)))
       .Times(1);
 
   EXPECT_CALL(hardwareMock, analogWrite(pinMapping::RIGHT_PWM_OUTPUT, 0))
@@ -365,63 +354,15 @@ TEST_F(ArgoRcTest, leftForward) {
 
 // ------------- PWM switch off tests --------------
 
-TEST_F(ArgoRcTest, pwmNegativeOff) {
+TEST_F(ArgoRcTest, pwmOff) {
+  setToRcControl();
+
   // Set timing data to the boundary value
-  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = negBoundary + 1;
-  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = negBoundary + 1;
+  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
+  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = zeroValue;
 
   checkDirectionRelaysAreOff(hardwareMock);
   checkFootSwitchesAreOff(hardwareMock);
-
-  argoRcLib.loop();
-}
-
-TEST_F(ArgoRcTest, pwmPositiveOff) {
-  // Set timing data to the boundary value
-  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = posBounds - 1;
-  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = posBounds - 1;
-
-  checkDirectionRelaysAreOff(hardwareMock);
-  checkFootSwitchesAreOff(hardwareMock);
-
-  argoRcLib.loop();
-}
-
-// ---------------- PWM turn on the spot ------------
-TEST_F(ArgoRcTest, leftTurnOnSpot) {
-  // Set timing data to the boundary value
-  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
-  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = negBoundary;
-
-  checkReverseLeftIsOn(hardwareMock);
-  checkForwardRightIsOn(hardwareMock);
-
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
-      .Times(1);
-
-  argoRcLib.loop();
-}
-
-TEST_F(ArgoRcTest, rightTurnOnSpot) {
-  // Set timing data to the boundary value
-  InterruptData::g_pinData[throttlePwmIndex].lastGoodWidth = zeroValue;
-  InterruptData::g_pinData[steeringPwmIndex].lastGoodWidth = posBounds;
-
-  checkForwardLeftIsOn(hardwareMock);
-  checkReverseRightIsOn(hardwareMock);
-
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::LEFT_PWM_OUTPUT, mappedValue))
-      .Times(1);
-
-  EXPECT_CALL(hardwareMock,
-              analogWrite(pinMapping::RIGHT_PWM_OUTPUT, mappedValue))
-      .Times(1);
 
   argoRcLib.loop();
 }
