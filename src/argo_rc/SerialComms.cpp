@@ -86,7 +86,7 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   appendToOutputBuf(ENCODER_TRANSMIT_PRE);
 
   // The maximum number of digits in either encoder output
-  constexpr int NUM_DEC_PLACES = 10;
+  constexpr int NUM_DEC_PLACES = 8;
   char convertedNumber[NUM_DEC_PLACES]{0};
 
   // Convert each number and forward as a K-V pair
@@ -108,7 +108,7 @@ void SerialComms::addPing() {
 
 void SerialComms::addPwmValues(const PwmTargets &targetVals) {
   appendToOutputBuf(PWM_TRANSMIT_PRE);
-  constexpr int NUM_DEC_PLACES = 5;
+  constexpr int NUM_DEC_PLACES = 8;
   char convertedNumber[NUM_DEC_PLACES];
 
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.leftPwm);
@@ -129,7 +129,7 @@ void SerialComms::addPwmValues(const PwmTargets &targetVals) {
 void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   appendToOutputBuf(SPEED_TRANSMIT_PRE);
 
-  constexpr int NUM_DEC_PLACES = 6;
+  constexpr int NUM_DEC_PLACES = 9;
   char convertedNumber[NUM_DEC_PLACES];
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
