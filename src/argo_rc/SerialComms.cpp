@@ -6,10 +6,10 @@
 #include "Distance.hpp"
 #include "Encoder.hpp"
 #include "MinString.hpp"
+#include "PidController.hpp"
+#include "SerialComms.hpp"
 #include "Speed.hpp"
 #include "cstring_wrapper.hpp"
-
-#include "SerialComms.hpp"
 
 using namespace Hardware;
 using namespace Libs;
@@ -36,6 +36,9 @@ constexpr char EOL = '\n';
 const MinString ENCODER_TRANSMIT_PRE = "!e ";
 /// Prefix for transmitting an outgoing ping
 const MinString PING_TRANSMIT_PRE = "!p";
+/// Prefix for PWM transmitting
+const MinString PWM_TRANSMIT_PRE = "!m "; // As in pw'M' or M for motor
+
 /// Prefix for transmitting the current vehicle speed
 const MinString SPEED_TRANSMIT_PRE = "!s ";
 /// Prefix for transmitting a warning
@@ -50,10 +53,12 @@ const MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
 // Function specific data
 constexpr int NUM_ENCODER = EncoderPositions::_NUM_OF_ENCODERS;
 
+/// Names of the left and right PWM when sending encoder PWM values
+const MinString PWM_NAMES[NUM_ENCODER] = {"L_PWM", "R_PWM"};
 /// Names of the left and right encoders when sending encoder data
 const MinString ENCODER_NAMES[NUM_ENCODER] = {"L_ENC", "R_ENC"};
 /// Names of the left and right wheels when sending speed data
-const MinString SPEED_PREFIX[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
+const MinString SPEED_NAMES[NUM_ENCODER] = {"L_SPEED", "R_SPEED"};
 
 } // namespace
 
@@ -81,7 +86,7 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   appendToOutputBuf(ENCODER_TRANSMIT_PRE);
 
   // The maximum number of digits in either encoder output
-  constexpr int NUM_DEC_PLACES = 6;
+  constexpr int NUM_DEC_PLACES = 8;
   char convertedNumber[NUM_DEC_PLACES]{0};
 
   // Convert each number and forward as a K-V pair
@@ -101,6 +106,21 @@ void SerialComms::addPing() {
   appendToOutputBuf(EOL);
 }
 
+void SerialComms::addPwmValues(const PwmTargets &targetVals) {
+  appendToOutputBuf(PWM_TRANSMIT_PRE);
+  constexpr int NUM_DEC_PLACES = 8;
+  char convertedNumber[NUM_DEC_PLACES];
+
+  convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.leftPwm);
+  appendKVPair(PWM_NAMES[EncoderPositions::LEFT_ENCODER].str(),
+               convertedNumber);
+
+  convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.rightPwm);
+  appendKVPair(PWM_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
+               convertedNumber);
+  appendToOutputBuf(EOL);
+}
+
 /**
  * Adds the vehicles current speed for both wheels to the outgoing buffer
  *
@@ -109,17 +129,17 @@ void SerialComms::addPing() {
 void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
   appendToOutputBuf(SPEED_TRANSMIT_PRE);
 
-  constexpr int NUM_DEC_PLACES = 10;
+  constexpr int NUM_DEC_PLACES = 9;
   char convertedNumber[NUM_DEC_PLACES];
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
                speeds.leftWheel.getUnitDistance().millimeters());
-  appendKVPair(SPEED_PREFIX[EncoderPositions::LEFT_ENCODER].str(),
+  appendKVPair(SPEED_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
                speeds.rightWheel.getUnitDistance().millimeters());
-  appendKVPair(SPEED_PREFIX[EncoderPositions::RIGHT_ENCODER].str(),
+  appendKVPair(SPEED_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
   appendToOutputBuf(EOL);
 }

@@ -191,9 +191,6 @@ float PidController::calcDeriv(const Distance &errorPerSec,
   const auto errorDelta = errorDifference.meters();
   float derivVal = (errorDelta * PID_CONSTANTS::deriv) / timeDiff.seconds();
 
-  // As we want to resist kicking the motors up power when the set
-  // point changes this is a negative contribution
-  derivVal = -derivVal;
   return derivVal;
 }
 

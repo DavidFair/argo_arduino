@@ -99,7 +99,7 @@ TEST_F(PidControllerFixture, integralIsCumulative) {
 TEST_F(PidControllerFixture, derivMin) {
   constexpr Distance error = 0.1_m;
 
-  constexpr float expectedResult = PID_CONSTANTS::deriv * error.meters() * -1;
+  constexpr float expectedResult = PID_CONSTANTS::deriv * error.meters();
 
   auto result = testInstance.calcDeriv(error, EncoderPositions::LEFT_ENCODER,
                                        ONE_UNIT_SEC);
@@ -112,23 +112,13 @@ TEST_F(PidControllerFixture, derivTracksPrevious) {
 
   constexpr Distance difference = errorTwo - errorOne;
 
-  constexpr float expectedResult =
-      PID_CONSTANTS::deriv * difference.meters() * -1;
+  constexpr float expectedResult = PID_CONSTANTS::deriv * difference.meters();
 
   testInstance.calcDeriv(errorOne, EncoderPositions::LEFT_ENCODER,
                          ONE_UNIT_SEC);
   auto result = testInstance.calcDeriv(errorTwo, EncoderPositions::LEFT_ENCODER,
                                        ONE_UNIT_SEC);
   EXPECT_EQ(result, expectedResult);
-}
-
-TEST_F(PidControllerFixture, derivMax) {
-  constexpr Distance error = 10_m;
-
-  auto result = testInstance.calcDeriv(error, EncoderPositions::LEFT_ENCODER,
-                                       ONE_UNIT_SEC);
-  // We should see a resistive contribution
-  EXPECT_LT(result, 0);
 }
 
 // -------- Other methods on class --------------
