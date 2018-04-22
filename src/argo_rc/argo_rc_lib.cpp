@@ -204,20 +204,21 @@ void ArgoRc::loop() {
       InterruptData::g_pinData[2].lastGoodWidth >= PWM_RC_CENTER_VAL;
 
   bool pingTimedOut = false;
-  PwmTargets targetPwmVals;
+
+  Hardware::WheelSpeeds targetSpeed;
 
   if (usingRcInput) {
-    auto targetSpeed = mapRcInput();
-    m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
+    targetSpeed = mapRcInput();
   } else {
     // Ros control
     pingTimedOut = m_usePingTimeout && !m_commsObject.isPingGood();
     // If ping has timed out reset speed to 0 else get target speed
-    auto targetSpeed = pingTimedOut ? Hardware::WheelSpeeds()
-                                    : m_commsObject.getTargetSpeeds();
-    targetPwmVals =
-        m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
+    targetSpeed = pingTimedOut ? Hardware::WheelSpeeds()
+                               : m_commsObject.getTargetSpeeds();
   }
+
+  PwmTargets targetPwmVals =
+      m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
 
   applyPwmOutput(targetPwmVals);
 
