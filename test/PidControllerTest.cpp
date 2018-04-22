@@ -204,7 +204,7 @@ TEST_F(PidControllerFixture, resetPid) {
 
 TEST_F(PidControllerFixture, speedUnderThresholdStops) {
   Speed zeroSpeed;
-  const Distance thresholdDistance(0, 100);
+  const Distance thresholdDistance(100);
   const Time oneSecond = 1_s;
   const Speed stopThreshold(thresholdDistance, oneSecond);
 

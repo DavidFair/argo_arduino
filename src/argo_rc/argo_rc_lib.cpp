@@ -1,8 +1,12 @@
 
+#include "math.h"
 #include <stdint.h>
 
 #include "ArduinoGlobals.hpp"
 #include "ArduinoInterface.hpp"
+#include "Encoder.hpp"
+#include "Speed.hpp"
+#include "Time.hpp"
 #include "arduino_enums.hpp"
 #include "arduino_lib_wrapper.hpp"
 #include "argo_rc_lib.hpp"
@@ -15,12 +19,22 @@ const unsigned long PING_DELAY = 100;
 
 /// The minimum PWM value before engaging the vehicles drive
 const int MIN_PWM_VAL = 5;
-
-/// THe maximum value a PWM output can hold
+/// The maximum value a motor PWM output can hold
 const int PWM_MAXIMUM_OUTPUT = 255;
 
+/// The central PWM value received from the RC receiver
 const int PWM_RC_CENTER_VAL = 1520;
+/// The range of PWM values which the RC receiver can send
 const int PWM_RC_RANGE = 500;
+
+/// The maximum linear speed under RC control
+const int MAX_RC_LINEAR_VEL = 10000; // in millimeters/s or 10 meters/s
+/// The maximum rotational velocity under RC control
+// One rotation per second in milli units
+const int MAX_ROTATIONAL_VEL = M_PI * 2 * 100;
+
+/// The length between the wheels on the Argo
+const double LEN_BETWEEN_WHEELS = 1.473; // Meters
 
 /**
  * Constrains a given input to be between the min and max value
@@ -53,6 +67,7 @@ int constrainInput(int initialValue, int minValue, int maxValue,
 using namespace ArduinoEnums;
 using namespace Globals;
 using namespace Hardware;
+using namespace Libs;
 
 namespace ArgoRcLib {
 /**
@@ -189,42 +204,23 @@ void ArgoRc::loop() {
       InterruptData::g_pinData[2].lastGoodWidth >= PWM_RC_CENTER_VAL;
 
   bool pingTimedOut = false;
-  PwmTargets targetPwmVals;
+
+  Hardware::WheelSpeeds targetSpeed;
 
   if (usingRcInput) {
-    targetPwmVals = readPwmInput();
+    targetSpeed = mapRcInput();
   } else {
     // Ros control
     pingTimedOut = m_usePingTimeout && !m_commsObject.isPingGood();
     // If ping has timed out reset speed to 0 else get target speed
-    auto targetSpeed = pingTimedOut ? Hardware::WheelSpeeds()
-                                    : m_commsObject.getTargetSpeeds();
-    targetPwmVals =
-        m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
+    targetSpeed = pingTimedOut ? Hardware::WheelSpeeds()
+                               : m_commsObject.getTargetSpeeds();
   }
 
-  int leftPwmValue = targetPwmVals.leftPwm;
-  int rightPwmValue = targetPwmVals.rightPwm;
+  PwmTargets targetPwmVals =
+      m_pidController.calculatePwmTargets(currentSpeed, targetSpeed);
 
-  if ((leftPwmValue > -MIN_PWM_VAL && leftPwmValue < MIN_PWM_VAL) &&
-      (rightPwmValue > -MIN_PWM_VAL && rightPwmValue < MIN_PWM_VAL)) {
-    footswitch_off();
-    direction_relays_off();
-  }
-
-  if (leftPwmValue >= MIN_PWM_VAL)
-    forward_left();
-  if (rightPwmValue >= MIN_PWM_VAL)
-    forward_right();
-  if (leftPwmValue <= -MIN_PWM_VAL)
-    reverse_left();
-  if (rightPwmValue <= -MIN_PWM_VAL)
-    reverse_right();
-
-  m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT,
-                                  abs(leftPwmValue));
-  m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
-                                  abs(rightPwmValue));
+  applyPwmOutput(targetPwmVals);
 
   if (m_pingTimer.hasTimerFired(currentTime)) {
     if (pingTimedOut) {
@@ -250,56 +246,91 @@ void ArgoRc::loop() {
 
 // ---------- Private Methods --------------
 
+void ArgoRc::applyPwmOutput(const PwmTargets &pwmValues) {
+  int leftPwmValue = pwmValues.leftPwm;
+  int rightPwmValue = pwmValues.rightPwm;
+
+  if ((leftPwmValue > -MIN_PWM_VAL && leftPwmValue < MIN_PWM_VAL) &&
+      (rightPwmValue > -MIN_PWM_VAL && rightPwmValue < MIN_PWM_VAL)) {
+    footswitch_off();
+    direction_relays_off();
+  }
+
+  if (leftPwmValue >= MIN_PWM_VAL) {
+    forward_left();
+  } else if (leftPwmValue <= -MIN_PWM_VAL) {
+    reverse_left();
+  }
+
+  if (rightPwmValue >= MIN_PWM_VAL) {
+    forward_right();
+  } else if (rightPwmValue <= -MIN_PWM_VAL) {
+    reverse_right();
+  }
+
+  m_hardwareInterface.analogWrite(pinMapping::LEFT_PWM_OUTPUT,
+                                  abs(leftPwmValue));
+  m_hardwareInterface.analogWrite(pinMapping::RIGHT_PWM_OUTPUT,
+                                  abs(rightPwmValue));
+}
+
 /**
  * Sets the PWM values for the left and right wheels based on
  * the target speed and steering values. This is used when the
  * vehicle is under remote control
  *
- * @param speed The target speed of the vehicle
- * @param steer The target steering angle of the vehicle
+ * @param velocity The target velocity in millis / s of the vehicle
+ * @param angular The target anglar momentum (rad * 100) / s of the vehicle
  *
- * @return An object representing the left and right PWM targets
+ * @return An object representing the left and right speed targets
  */
-PwmTargets ArgoRc::setMotorTarget(int speed, int steer) {
-  PwmTargets targetPwmVals;
+Hardware::WheelSpeeds ArgoRc::calculateVelocities(int velocity,
+                                                  int angularMomentum) {
+  // Divide difference by two to add component to each wheel
+  int velocityDifference = (angularMomentum * LEN_BETWEEN_WHEELS) / 2;
 
-  if (abs(speed) < 20 && abs(steer) > 2) {
-    targetPwmVals.leftPwm = steer;
-    targetPwmVals.rightPwm = -steer;
-  } else {
-    targetPwmVals.leftPwm = speed * ((-255 - steer) / -255.0);
-    targetPwmVals.rightPwm = speed * ((255 - steer) / 255.0);
-  }
-  return targetPwmVals;
+  Distance leftWheel(0, velocity + velocityDifference);
+  Distance rightWheel(0, velocity - velocityDifference);
+
+  Speed leftSpeed(leftWheel, 1_s);
+  Speed rightSpeed(rightWheel, 1_s);
+
+  Hardware::WheelSpeeds newSpeeds(leftSpeed, rightSpeed);
+
+  return newSpeeds;
 }
 
 /**
  * Reads the PWM input from the remote control based on the last
- * interrupt data received
+ * interrupt data received and maps it to a target speed
  *
- * @return An object representing the left and right wheel PWM values
+ * @return An object representing the left and right wheel speeds
  */
-PwmTargets ArgoRc::readPwmInput() {
+Hardware::WheelSpeeds ArgoRc::mapRcInput() {
+  // Get PWM high edge times
   int rcPwmThrottleRaw = InterruptData::g_pinData[0].lastGoodWidth;
   int rcPwmSteeringRaw = InterruptData::g_pinData[1].lastGoodWidth;
 
   if (rcPwmThrottleRaw == 0 && rcPwmSteeringRaw == 0) {
     // Pin probably not connected or no data. Bail setting the PWM to 0
-    return PwmTargets(0, 0);
+    return WheelSpeeds(Speed(), Speed());
   }
 
   constexpr int minValue = PWM_RC_CENTER_VAL - PWM_RC_RANGE;
   constexpr int maxValue = PWM_RC_CENTER_VAL + PWM_RC_RANGE;
 
+  // Clamp to expected min and max values before mapping
   rcPwmThrottleRaw = constrainInput(rcPwmThrottleRaw, minValue, maxValue);
   rcPwmSteeringRaw = constrainInput(rcPwmSteeringRaw, minValue, maxValue);
 
-  int throttleTarget = map(rcPwmThrottleRaw, minValue, maxValue,
-                           -PWM_MAXIMUM_OUTPUT, PWM_MAXIMUM_OUTPUT);
-  int steeringTarget = map(rcPwmSteeringRaw, minValue, maxValue,
-                           -PWM_MAXIMUM_OUTPUT, PWM_MAXIMUM_OUTPUT);
+  // Map onto min and max linear speeds
+  int targetVel = map(rcPwmThrottleRaw, minValue, maxValue, -MAX_RC_LINEAR_VEL,
+                      MAX_RC_LINEAR_VEL);
+  // Map onto min and max angular momentums
+  int targetAngMomentum = map(rcPwmSteeringRaw, minValue, maxValue,
+                              -MAX_ROTATIONAL_VEL, MAX_ROTATIONAL_VEL);
 
-  return setMotorTarget(throttleTarget, steeringTarget);
+  return calculateVelocities(targetVel, targetAngMomentum);
 }
 
 /**
