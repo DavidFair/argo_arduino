@@ -5,6 +5,7 @@
 #include "ArduinoHardware.hpp"
 #include "argo_rc_lib.hpp"
 #include "move.hpp"
+#include "unique_ptr.hpp"
 
 using namespace Globals;
 

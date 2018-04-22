@@ -9,7 +9,6 @@
 #include "SerialComms.hpp"
 #include "Timer.hpp"
 #include "move.hpp"
-#include "unique_ptr.hpp"
 
 namespace ArgoRcLib {
 
@@ -71,14 +70,17 @@ public:
   void direction_relays_off();
 
 private:
-  /// Reads the current PWM targets whilst using remote control
-  PwmTargets readPwmInput();
+  /// Applies the specified PWM targets to the motors
+  void applyPwmOutput(const PwmTargets &pwmValues);
+
+  /// Calculates the target speeds based on RC velocity and angular momentum
+  Hardware::WheelSpeeds calculateVelocities(int velocity, int angularMomentum);
+
+  /// Reads the current speed targets whilst using remote control
+  Hardware::WheelSpeeds mapRcInput();
 
   /// Sets the digital pin modes to their apppropriate values
   void setupDigitalPins();
-
-  /// Calculates the PWM targets based on the remote control speed and steering
-  PwmTargets setMotorTarget(int speed, int steer);
 
   /// Holds whether pings are considered for stopping the vehicle
   const bool m_usePingTimeout;
