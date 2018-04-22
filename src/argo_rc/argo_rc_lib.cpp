@@ -327,8 +327,6 @@ void ArgoRc::setupDigitalPins() {
 
   m_hardwareInterface.setPinMode(pinMapping::RIGHT_ENCODER,
                                  digitalIO::E_INPUT_PULLUP);
-
-  m_hardwareInterface.setPinMode(pinMapping::RC_DEADMAN, digitalIO::E_INPUT);
 }
 
 } // namespace ArgoRcLib
