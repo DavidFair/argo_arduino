@@ -34,10 +34,7 @@ enum pinMapping {
   RIGHT_FOOTSWITCH_RELAY,
 
   LEFT_ENCODER,
-
   RIGHT_ENCODER,
-
-  RC_DEADMAN,
 
   // Analogue pins
   LEFT_PWM_OUTPUT,
@@ -48,15 +45,11 @@ enum pinMapping {
 };
 
 /// An array containing all the digital pins available on the device
-static const pinMapping allDigitalPins[] = {pinMapping::LEFT_FORWARD_RELAY,
-                                            pinMapping::LEFT_REVERSE_RELAY,
-                                            pinMapping::RIGHT_FORWARD_RELAY,
-                                            pinMapping::RIGHT_REVERSE_RELAY,
-                                            pinMapping::LEFT_FOOTSWITCH_RELAY,
-                                            pinMapping::RIGHT_FOOTSWITCH_RELAY,
-                                            pinMapping::LEFT_ENCODER,
-                                            pinMapping::RIGHT_ENCODER,
-                                            pinMapping::RC_DEADMAN};
+static const pinMapping allDigitalPins[] = {
+    pinMapping::LEFT_FORWARD_RELAY,    pinMapping::LEFT_REVERSE_RELAY,
+    pinMapping::RIGHT_FORWARD_RELAY,   pinMapping::RIGHT_REVERSE_RELAY,
+    pinMapping::LEFT_FOOTSWITCH_RELAY, pinMapping::RIGHT_FOOTSWITCH_RELAY,
+    pinMapping::LEFT_ENCODER,          pinMapping::RIGHT_ENCODER};
 
 } // namespace ArduinoEnums
 

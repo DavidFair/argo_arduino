@@ -54,11 +54,9 @@ make -j 4
 
 ### Arduino Target Names
 
-The following targets build firmware for the Arduino:
+The following target builds firmware for the Arduino:
 
 - `argo_rc`
-- `argo_deadman_base`
-- `argo_deadman_remote`
 
 ## Uploading and Communications
 
@@ -67,10 +65,10 @@ From the build folder targets to upload and open serial communications the follo
 - `<target_name>-upload` - To upload firmware
 - `<target_name>-serial` - To communicate over serial
 
-For example to upload the `argo_deadman_base` firmware the following would be used
+For example to upload the `argo_rc` firmware the following would be used
 
 ```sh
-make argo_deadman_base-upload
+make argo_rc-upload
 ```
 
 To communicate with the Arduino the following opens a serial console

@@ -118,11 +118,6 @@ unsigned long incrementMillis() {
   return time;
 }
 
-void returnDeadmanSafe(MockArduino &hardwareInterface) {
-  ON_CALL(hardwareInterface, digitalRead(pinMapping::RC_DEADMAN))
-      .WillByDefault(Return(digitalIO::E_HIGH));
-}
-
 void setToRcControl() {
   const int RC_PWM_VAL = 2000;
   InterruptData::g_pinData[2].lastGoodWidth = RC_PWM_VAL;
@@ -143,8 +138,6 @@ protected:
       : _forwardedPtr(new NiceMock<MockArduino>),
         hardwareMock(static_cast<NiceMock<MockArduino> &>(*_forwardedPtr)),
         argoRcLib(*_forwardedPtr, usePingTimeout) {
-    returnDeadmanSafe(hardwareMock);
-
     time = 0;
     ON_CALL(hardwareMock, millis())
         .WillByDefault(InvokeWithoutArgs(&incrementMillis));

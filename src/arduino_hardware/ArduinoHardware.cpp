@@ -171,8 +171,6 @@ uint8_t ArduinoHardware::convertPinEnumToArduino(pinMapping pinToConvert) {
   case pinMapping::RIGHT_ENCODER:
     return 20;
 
-  case pinMapping::RC_DEADMAN:
-    return 2;
   default:
     ::Serial.println("!f Unknown pin in pin mapping");
     ArduinoHardware::robotSafetyAbort();
