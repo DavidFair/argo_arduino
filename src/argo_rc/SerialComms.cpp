@@ -50,6 +50,9 @@ const MinString PING_COMMAND_PRE = "!P";
 /// Prefix to a target speed command
 const MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
 
+/// Checksum prefix for K-V pair
+const MinString CHECKSUM_PRE = "chk";
+
 // Function specific data
 constexpr int NUM_ENCODER = EncoderPositions::_NUM_OF_ENCODERS;
 
@@ -83,6 +86,8 @@ SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
  */
 void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   // Prepare our output buffer - prepend that we are sending data
+  auto startOfCommand = m_outIndex;
+
   appendToOutputBuf(ENCODER_TRANSMIT_PRE);
 
   // The maximum number of digits in either encoder output
@@ -93,20 +98,28 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   convertValue(convertedNumber, NUM_DEC_PLACES, data.leftEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
 
   convertValue(convertedNumber, NUM_DEC_PLACES, data.rightEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
+
+  auto endOfCommand = m_outIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
   appendToOutputBuf(EOL);
 }
 
 /// Adds a ping to the outgoing buffer
 void SerialComms::addPing() {
   appendToOutputBuf(PING_TRANSMIT_PRE);
+  // Pings do not require checksumming
   appendToOutputBuf(EOL);
 }
 
 void SerialComms::addPwmValues(const PwmTargets &targetVals) {
+  auto startOfCommand = m_outIndex;
+
   appendToOutputBuf(PWM_TRANSMIT_PRE);
   constexpr int NUM_DEC_PLACES = 8;
   char convertedNumber[NUM_DEC_PLACES];
@@ -114,10 +127,15 @@ void SerialComms::addPwmValues(const PwmTargets &targetVals) {
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.leftPwm);
   appendKVPair(PWM_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
 
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.rightPwm);
   appendKVPair(PWM_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
+
+  auto endOfCommand = m_outIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
   appendToOutputBuf(EOL);
 }
 
@@ -127,6 +145,8 @@ void SerialComms::addPwmValues(const PwmTargets &targetVals) {
  * @param speeds The vehicles current speed
  */
 void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
+  auto startOfCommand = m_outIndex;
+
   appendToOutputBuf(SPEED_TRANSMIT_PRE);
 
   constexpr int NUM_DEC_PLACES = 9;
@@ -136,11 +156,17 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
                speeds.leftWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
                speeds.rightWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
+
+  auto endOfCommand = m_outIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
+
   appendToOutputBuf(EOL);
 }
 
@@ -154,10 +180,41 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
  * @param warningText Null terminated warning to send
  */
 void SerialComms::addWarning(const char *warningText) {
+  auto startOfCommand = m_inputIndex;
   appendToOutputBuf(WARN_TRANSMIT_PRE);
   appendToOutputBuf(SEPARATOR);
   appendToOutputBuf(warningText);
+  appendToOutputBuf(SEPARATOR);
+
+  auto endOfCommand = m_inputIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
+
   appendToOutputBuf(EOL);
+}
+
+/**
+ * Calculates the message checksum between the two given pointers
+ * of the string. It is the callers responsibility to ensure
+ * the pointers refer to the same string.
+ *
+ * The end pointer must not include the EOL character or the
+ * preceeding checksum values.
+ *
+ * @param msgStart Pointer to start of string
+ * @param msgEnd Pointer to the end of string
+ * @return A checksum value of uint8_t for the current string
+ */
+uint8_t SerialComms::calcMsgChecksum(const char *msgStart,
+                                     const char *msgEnd) const {
+  // This MUST be a unsigned type - overflow on signed types is UB
+  uint8_t sum = 0;
+
+  const int lengthOfString = msgEnd - msgStart;
+  for (int i = 0; i < lengthOfString; i++) {
+    sum += (int)msgStart[i];
+  }
+
+  return sum;
 }
 
 /**
@@ -212,6 +269,30 @@ void SerialComms::sendCurrentBuffer() {
 // --------- Private methods ------------
 
 /**
+ * Appends the calculated checksum for the buffer after final char
+ * in the outgoing message. This must be called before the EOL
+ * character is appended. The caller must then append the EOL
+ * character afterwards
+ *
+ * @param startOfMsg Index to the start of the command
+ * @param endOfMsg Index to the end of the command
+ */
+void SerialComms::appendChecksumValue(const int commandStart,
+                                      const int commandEnd) {
+  const char *startOfMsg = &m_outBuffer[commandStart];
+  const char *endOfMsg = &m_outBuffer[commandEnd];
+
+  uint8_t checksumVal = calcMsgChecksum(startOfMsg, endOfMsg);
+
+  constexpr int CHECKSUM_LEN = 11; // Min 11 bytes is required
+  char serialisedChecksum[CHECKSUM_LEN] = {0};
+
+  convertValue(serialisedChecksum, CHECKSUM_LEN, checksumVal);
+
+  appendKVPair(CHECKSUM_PRE.str(), serialisedChecksum);
+}
+
+/**
  * Appends a copy of the given key and value to a
  * key-value pair in the output buffer
  *
@@ -222,7 +303,6 @@ void SerialComms::appendKVPair(const char *key, const char *value) {
   appendToOutputBuf(key);
   appendToOutputBuf(K_V_SEPARATOR);
   appendToOutputBuf(value);
-  appendToOutputBuf(SEPARATOR);
 }
 
 /// Appends a single character to the output buffer

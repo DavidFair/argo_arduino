@@ -8,8 +8,11 @@
 #include "Speed.hpp"
 #include "mock_arduino.hpp"
 
+using ::testing::HasSubstr;
 using ::testing::InSequence;
 using ::testing::InvokeWithoutArgs;
+using ::testing::Matcher;
+using ::testing::MatchesRegex;
 using ::testing::Mock;
 using ::testing::NiceMock;
 using ::testing::Return;
@@ -22,6 +25,15 @@ using namespace Libs;
 namespace {
 
 const unsigned long SERIAL_DELAY = 200; // Milliseconds
+
+// Allows expectations to be set without handling checksums too
+void checkPrintWithoutChecksum(NiceMock<MockArduino> &mockObj,
+                               std::string expectedStr) {
+  expectedStr.append(" chk:[0-9]{1,3}\n");
+
+  EXPECT_CALL(mockObj, serialPrint(Matcher<const std::string &>(
+                           MatchesRegex(expectedStr))));
+}
 
 unsigned long millisTime = 0;
 unsigned long incrementMillis() {
@@ -49,9 +61,9 @@ TEST_F(SerialCommsFixture, writesEncoderData) {
   expectedData.leftEncoderVal = 101;
   expectedData.rightEncoderVal = 102;
 
-  const std::string expectedString = "!e L_ENC:101 R_ENC:102 \n";
+  const std::string outString = "!e L_ENC:101 R_ENC:102";
+  checkPrintWithoutChecksum(mockObj, outString);
 
-  EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addEncoderRotation(expectedData);
   testInstance.sendCurrentBuffer();
 }
@@ -64,15 +76,15 @@ TEST_F(SerialCommsFixture, writesSpeedData) {
 
   WheelSpeeds expectedSpeeds{oneMeterSecond, twoMeterSecond};
 
-  const std::string expectedString = "!s L_SPEED:1000 R_SPEED:2000 \n";
+  const std::string outString = "!s L_SPEED:1000 R_SPEED:2000";
+  checkPrintWithoutChecksum(mockObj, outString);
 
-  EXPECT_CALL(mockObj, serialPrint(expectedString));
   testInstance.addVehicleSpeed(expectedSpeeds);
   testInstance.sendCurrentBuffer();
 }
 
 TEST_F(SerialCommsFixture, parseSpeedCommand) {
-  const std::string speedCommand = "!T L_SPEED:1200 R_SPEED:1300 \n";
+  const std::string speedCommand = "!T L_SPEED:1200 R_SPEED:1300\n";
 
   InSequence s;
   EXPECT_CALL(mockObj, serialAvailable())
@@ -135,11 +147,10 @@ TEST_F(SerialCommsFixture, missedPingDetected) {
 
 TEST_F(SerialCommsFixture, warningIsAdded) {
   const char *warningStr = "Test warning";
-  std::string expectedString{"!w "};
-  expectedString.append(warningStr);
-  expectedString.append("\n");
+  std::string outString{"!w "};
+  outString.append(warningStr);
 
-  EXPECT_CALL(mockObj, serialPrint(expectedString));
+  checkPrintWithoutChecksum(mockObj, outString);
   testInstance.addWarning(warningStr);
   testInstance.sendCurrentBuffer();
 }
@@ -192,4 +203,31 @@ TEST_F(SerialCommsFixture, partialReadHandled) {
 
   EXPECT_EQ(secondSpeeds.leftWheel.getUnitDistance().millimeters(), 2000);
   EXPECT_EQ(secondSpeeds.rightWheel.getUnitDistance().millimeters(), 3000);
+}
+
+TEST_F(SerialCommsFixture, outgoingChecksumIsValid) {
+  auto sumChars = [](const std::string &s) {
+    uint8_t sum = 0;
+    for (auto &character : s) {
+      sum += (int)character;
+    }
+    return sum;
+  };
+
+  const Distance oneMeter = 1.0_m;
+  const auto oneSecond = 1_s;
+  const Speed oneMeterSecond(oneMeter, oneSecond);
+  const Speed twoMeterSecond(oneMeter * 2, oneSecond);
+
+  WheelSpeeds expectedSpeeds{oneMeterSecond, twoMeterSecond};
+
+  std::string outString = "!s L_SPEED:1000 R_SPEED:2000 ";
+  uint8_t expectedChecksum = sumChars(outString);
+
+  std::string expectedString = "chk:" + std::to_string(expectedChecksum);
+
+  EXPECT_CALL(mockObj, serialPrint(Matcher<const std::string &>(
+                           HasSubstr(expectedString))));
+  testInstance.addVehicleSpeed(expectedSpeeds);
+  testInstance.sendCurrentBuffer();
 }
