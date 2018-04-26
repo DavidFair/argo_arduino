@@ -42,9 +42,15 @@ public:
   /// Adds a warning from a string literal to the outgoing buffer
   void addWarning(const char *warningText);
 
+  /// Calculates a checksum for a given message in the buffer
+  uint8_t calcMsgChecksum(const char *msgStart, const char *msgEnd) const;
+
   // Read methods
   /// Returns the last parsed target wheel speeds
-  Hardware::WheelSpeeds getTargetSpeeds() { return m_currentTargetSpeeds; }
+  Hardware::WheelSpeeds getTargetSpeeds() const {
+    return m_currentTargetSpeeds;
+  }
+
   /// Returns whether a ping has been received within the elapsed time
   bool isPingGood() const;
 
@@ -55,6 +61,9 @@ public:
   void sendCurrentBuffer();
 
 private:
+  /// Appends a checksum value to the end of the outgoing buffer position
+  void appendChecksumValue(const int commandStart, const int commandEnd);
+
   /// Appends a key and value pair to the outgoing buffer
   void appendKVPair(const char *key, const char *value);
 
@@ -62,6 +71,9 @@ private:
   void appendToOutputBuf(const char c);
   /// Appends a MinString to the current outgoing buffer
   void appendToOutputBuf(const Libs::MinString &s);
+
+  /// Checks an incoming command's checksum
+  bool checkIncomingChecksum(const Libs::pair<uint8_t, uint8_t> &commandRange);
 
   /// Converts a value in the incoming buffer into an integer
   bool convertBufStrToInt(uint8_t startingPos, int &result);

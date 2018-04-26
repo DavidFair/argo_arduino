@@ -50,6 +50,9 @@ const MinString PING_COMMAND_PRE = "!P";
 /// Prefix to a target speed command
 const MinString SPEED_COMMAND_PRE = "!T"; // As in 'T'arget speed
 
+/// Checksum prefix for K-V pair
+const MinString CHECKSUM_PRE = "chk";
+
 // Function specific data
 constexpr int NUM_ENCODER = EncoderPositions::_NUM_OF_ENCODERS;
 
@@ -83,6 +86,8 @@ SerialComms::SerialComms(Hardware::ArduinoInterface &hardware)
  */
 void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   // Prepare our output buffer - prepend that we are sending data
+  auto startOfCommand = m_outIndex;
+
   appendToOutputBuf(ENCODER_TRANSMIT_PRE);
 
   // The maximum number of digits in either encoder output
@@ -93,20 +98,27 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   convertValue(convertedNumber, NUM_DEC_PLACES, data.leftEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
 
   convertValue(convertedNumber, NUM_DEC_PLACES, data.rightEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+
+  auto endOfCommand = m_outIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
   appendToOutputBuf(EOL);
 }
 
 /// Adds a ping to the outgoing buffer
 void SerialComms::addPing() {
   appendToOutputBuf(PING_TRANSMIT_PRE);
+  // Pings do not require checksumming
   appendToOutputBuf(EOL);
 }
 
 void SerialComms::addPwmValues(const PwmTargets &targetVals) {
+  auto startOfCommand = m_outIndex;
+
   appendToOutputBuf(PWM_TRANSMIT_PRE);
   constexpr int NUM_DEC_PLACES = 8;
   char convertedNumber[NUM_DEC_PLACES];
@@ -114,10 +126,14 @@ void SerialComms::addPwmValues(const PwmTargets &targetVals) {
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.leftPwm);
   appendKVPair(PWM_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
 
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.rightPwm);
   appendKVPair(PWM_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+
+  auto endOfCommand = m_outIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
   appendToOutputBuf(EOL);
 }
 
@@ -127,6 +143,8 @@ void SerialComms::addPwmValues(const PwmTargets &targetVals) {
  * @param speeds The vehicles current speed
  */
 void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
+  auto startOfCommand = m_outIndex;
+
   appendToOutputBuf(SPEED_TRANSMIT_PRE);
 
   constexpr int NUM_DEC_PLACES = 9;
@@ -136,11 +154,16 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
                speeds.leftWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_NAMES[EncoderPositions::LEFT_ENCODER].str(),
                convertedNumber);
+  appendToOutputBuf(SEPARATOR);
 
   convertValue(convertedNumber, NUM_DEC_PLACES,
                speeds.rightWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
+
+  auto endOfCommand = m_outIndex;
+  appendChecksumValue(startOfCommand, endOfCommand);
+
   appendToOutputBuf(EOL);
 }
 
@@ -158,6 +181,31 @@ void SerialComms::addWarning(const char *warningText) {
   appendToOutputBuf(SEPARATOR);
   appendToOutputBuf(warningText);
   appendToOutputBuf(EOL);
+}
+
+/**
+ * Calculates the message checksum between the two given pointers
+ * of the string. It is the callers responsibility to ensure
+ * the pointers refer to the same string.
+ *
+ * The end pointer must not include the EOL character or the
+ * preceeding checksum values.
+ *
+ * @param msgStart Pointer to start of string
+ * @param msgEnd Pointer to the end of string
+ * @return A checksum value of uint8_t for the current string
+ */
+uint8_t SerialComms::calcMsgChecksum(const char *msgStart,
+                                     const char *msgEnd) const {
+  // This MUST be a unsigned type - overflow on signed types is UB
+  uint8_t sum = 0;
+
+  const int lengthOfString = msgEnd - msgStart;
+  for (int i = 0; i < lengthOfString; i++) {
+    sum += (int)msgStart[i];
+  }
+
+  return sum;
 }
 
 /**
@@ -212,6 +260,32 @@ void SerialComms::sendCurrentBuffer() {
 // --------- Private methods ------------
 
 /**
+ * Appends the calculated checksum for the buffer after final char
+ * in the outgoing message. This must be called before the EOL
+ * character is appended. The caller must then append the EOL
+ * character afterwards
+ *
+ * @param startOfMsg Index to the start of the command
+ * @param endOfMsg Index to the end of the command
+ */
+void SerialComms::appendChecksumValue(const int commandStart,
+                                      const int commandEnd) {
+  const char *startOfMsg = &m_outBuffer[commandStart];
+  const char *endOfMsg = &m_outBuffer[commandEnd];
+
+  uint8_t checksumVal = calcMsgChecksum(startOfMsg, endOfMsg);
+
+  constexpr int CHECKSUM_LEN = 11; // Min 11 bytes is required
+  char serialisedChecksum[CHECKSUM_LEN] = {0};
+
+  convertValue(serialisedChecksum, CHECKSUM_LEN, checksumVal);
+
+  // The checksum does not include the space before "chk"
+  appendToOutputBuf(SEPARATOR);
+  appendKVPair(CHECKSUM_PRE.str(), serialisedChecksum);
+}
+
+/**
  * Appends a copy of the given key and value to a
  * key-value pair in the output buffer
  *
@@ -222,7 +296,6 @@ void SerialComms::appendKVPair(const char *key, const char *value) {
   appendToOutputBuf(key);
   appendToOutputBuf(K_V_SEPARATOR);
   appendToOutputBuf(value);
-  appendToOutputBuf(SEPARATOR);
 }
 
 /// Appends a single character to the output buffer
@@ -245,12 +318,69 @@ void SerialComms::appendToOutputBuf(const MinString &s) {
 }
 
 /**
+ * Checks an incoming command's checksum. If it is correct and matches
+ * the string contents a true is returned. Otherwise a specific warning
+ * is added to the outgoing buffer
+ *
+ * @param commandRange Start and end position in the outgoing buffer
+ * @return True if checksum is correct, otherwise false in all other cases
+ */
+bool SerialComms::checkIncomingChecksum(
+    const Libs::pair<uint8_t, uint8_t> &commandRange) {
+  // Temporaily swap the \n char will null terminator so that strstr
+  // respects our bounds
+  const char *startOfCommand = &m_inputBuffer[commandRange.first];
+  char *lastDigitOfCommand = &m_inputBuffer[commandRange.second];
+  m_inputBuffer[commandRange.second] = '\0';
+
+  const int LEN_OF_CHKSUM = 4; // For 'chk:'
+  const char *foundChecksumKey = strstr(startOfCommand, "chk:");
+
+  auto failedChk = [this, startOfCommand, lastDigitOfCommand]() {
+    addWarning(startOfCommand);
+    *lastDigitOfCommand = '\n';
+    return false;
+  };
+
+  if (foundChecksumKey == nullptr) {
+    addWarning("No checksum found in the following command");
+    return failedChk();
+  } else if (foundChecksumKey + LEN_OF_CHKSUM >= lastDigitOfCommand) {
+    addWarning("Checksum was missing value in the following command");
+    return failedChk();
+  }
+
+  const char *ptrToChecksumVal = foundChecksumKey + LEN_OF_CHKSUM;
+  const int posOfChecksumVal = ptrToChecksumVal - startOfCommand;
+
+  // Attempt to convert now
+  int checksumValue = 0;
+  if (!convertBufStrToInt(posOfChecksumVal, checksumValue)) {
+    addWarning("Could not convert checksum this command");
+    return failedChk();
+  }
+
+  // Dont include checksum in the calculation
+  uint8_t calculatedChecksum =
+      calcMsgChecksum(startOfCommand, (foundChecksumKey - 1));
+
+  if (checksumValue != calculatedChecksum) {
+    addWarning("Calculated checksum did not match");
+    return failedChk();
+  }
+  // Ensure null terminator is reset
+  *lastDigitOfCommand = '\n';
+  return true;
+}
+
+/**
  * Converts the input buffer characters at a given position to an
  * integer returned through a referenced parameters. If the buffer fails
  * to parse a false is returned to the caller and the value of result
  * is undefined
  *
- * @param startingPos The position in the input buffer where the value starts
+ * @param startingPos The position in the input buffer where the value
+ * starts
  * @param result The integer to write the parsed value to on success
  * @return True if successful, otherwise false
  */
@@ -427,9 +557,18 @@ void SerialComms::processIndividualCommand(
     const Libs::pair<uint8_t, uint8_t> &charPosition) {
   const char *strPtr = &m_inputBuffer[charPosition.first];
 
+  // Ping commands do not contain checksums
   if (PING_COMMAND_PRE.isPresentInString(strPtr)) {
     m_lastPingTime = m_hardwareInterface.millis();
-  } else if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
+    return;
+  }
+
+  // Ensure checksum works correctly
+  if (!checkIncomingChecksum(charPosition)) {
+    return;
+  }
+
+  if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
     parseTargetSpeed(charPosition);
   } else {
     addWarning("The following command string was unknown:\n");
