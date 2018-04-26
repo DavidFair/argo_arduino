@@ -212,7 +212,7 @@ TEST_F(SerialCommsFixture, outgoingChecksumIsValid) {
 
   WheelSpeeds expectedSpeeds{oneMeterSecond, twoMeterSecond};
 
-  std::string outString = "!s L_SPEED:1000 R_SPEED:2000 ";
+  std::string outString = "!s L_SPEED:1000 R_SPEED:2000";
   uint8_t expectedChecksum = calculateChecksum(outString);
 
   std::string expectedString = "chk:" + std::to_string(expectedChecksum);

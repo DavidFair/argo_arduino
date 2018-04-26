@@ -103,7 +103,6 @@ void SerialComms::addEncoderRotation(const EncoderPulses &data) {
   convertValue(convertedNumber, NUM_DEC_PLACES, data.rightEncoderVal);
   appendKVPair(ENCODER_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
-  appendToOutputBuf(SEPARATOR);
 
   auto endOfCommand = m_outIndex;
   appendChecksumValue(startOfCommand, endOfCommand);
@@ -132,7 +131,6 @@ void SerialComms::addPwmValues(const PwmTargets &targetVals) {
   convertValue(convertedNumber, NUM_DEC_PLACES, targetVals.rightPwm);
   appendKVPair(PWM_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
-  appendToOutputBuf(SEPARATOR);
 
   auto endOfCommand = m_outIndex;
   appendChecksumValue(startOfCommand, endOfCommand);
@@ -162,7 +160,6 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
                speeds.rightWheel.getUnitDistance().millimeters());
   appendKVPair(SPEED_NAMES[EncoderPositions::RIGHT_ENCODER].str(),
                convertedNumber);
-  appendToOutputBuf(SEPARATOR);
 
   auto endOfCommand = m_outIndex;
   appendChecksumValue(startOfCommand, endOfCommand);
@@ -283,6 +280,8 @@ void SerialComms::appendChecksumValue(const int commandStart,
 
   convertValue(serialisedChecksum, CHECKSUM_LEN, checksumVal);
 
+  // The checksum does not include the space before "chk"
+  appendToOutputBuf(SEPARATOR);
   appendKVPair(CHECKSUM_PRE.str(), serialisedChecksum);
 }
 
