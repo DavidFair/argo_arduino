@@ -72,6 +72,9 @@ private:
   /// Appends a MinString to the current outgoing buffer
   void appendToOutputBuf(const Libs::MinString &s);
 
+  /// Checks an incoming command's checksum
+  bool checkIncomingChecksum(const Libs::pair<uint8_t, uint8_t> &commandRange);
+
   /// Converts a value in the incoming buffer into an integer
   bool convertBufStrToInt(uint8_t startingPos, int &result);
   /// Converts a value into a char array whose buffer provided by the caller

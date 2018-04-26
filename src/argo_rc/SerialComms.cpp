@@ -180,15 +180,9 @@ void SerialComms::addVehicleSpeed(const Hardware::WheelSpeeds &speeds) {
  * @param warningText Null terminated warning to send
  */
 void SerialComms::addWarning(const char *warningText) {
-  auto startOfCommand = m_inputIndex;
   appendToOutputBuf(WARN_TRANSMIT_PRE);
   appendToOutputBuf(SEPARATOR);
   appendToOutputBuf(warningText);
-  appendToOutputBuf(SEPARATOR);
-
-  auto endOfCommand = m_inputIndex;
-  appendChecksumValue(startOfCommand, endOfCommand);
-
   appendToOutputBuf(EOL);
 }
 
@@ -325,12 +319,69 @@ void SerialComms::appendToOutputBuf(const MinString &s) {
 }
 
 /**
+ * Checks an incoming command's checksum. If it is correct and matches
+ * the string contents a true is returned. Otherwise a specific warning
+ * is added to the outgoing buffer
+ *
+ * @param commandRange Start and end position in the outgoing buffer
+ * @return True if checksum is correct, otherwise false in all other cases
+ */
+bool SerialComms::checkIncomingChecksum(
+    const Libs::pair<uint8_t, uint8_t> &commandRange) {
+  // Temporaily swap the \n char will null terminator so that strstr
+  // respects our bounds
+  const char *startOfCommand = &m_inputBuffer[commandRange.first];
+  char *lastDigitOfCommand = &m_inputBuffer[commandRange.second];
+  m_inputBuffer[commandRange.second] = '\0';
+
+  const int LEN_OF_CHKSUM = 4; // For 'chk:'
+  const char *foundChecksumKey = strstr(startOfCommand, "chk:");
+
+  auto failedChk = [this, startOfCommand, lastDigitOfCommand]() {
+    addWarning(startOfCommand);
+    *lastDigitOfCommand = '\n';
+    return false;
+  };
+
+  if (foundChecksumKey == nullptr) {
+    addWarning("No checksum found in the following command");
+    return failedChk();
+  } else if (foundChecksumKey + LEN_OF_CHKSUM >= lastDigitOfCommand) {
+    addWarning("Checksum was missing value in the following command");
+    return failedChk();
+  }
+
+  const char *ptrToChecksumVal = foundChecksumKey + LEN_OF_CHKSUM;
+  const int posOfChecksumVal = ptrToChecksumVal - startOfCommand;
+
+  // Attempt to convert now
+  int checksumValue = 0;
+  if (!convertBufStrToInt(posOfChecksumVal, checksumValue)) {
+    addWarning("Could not convert checksum this command");
+    return failedChk();
+  }
+
+  // Dont include checksum in the calculation
+  uint8_t calculatedChecksum =
+      calcMsgChecksum(startOfCommand, (foundChecksumKey - 1));
+
+  if (checksumValue != calculatedChecksum) {
+    addWarning("Calculated checksum did not match");
+    return failedChk();
+  }
+  // Ensure null terminator is reset
+  *lastDigitOfCommand = '\n';
+  return true;
+}
+
+/**
  * Converts the input buffer characters at a given position to an
  * integer returned through a referenced parameters. If the buffer fails
  * to parse a false is returned to the caller and the value of result
  * is undefined
  *
- * @param startingPos The position in the input buffer where the value starts
+ * @param startingPos The position in the input buffer where the value
+ * starts
  * @param result The integer to write the parsed value to on success
  * @return True if successful, otherwise false
  */
@@ -507,9 +558,18 @@ void SerialComms::processIndividualCommand(
     const Libs::pair<uint8_t, uint8_t> &charPosition) {
   const char *strPtr = &m_inputBuffer[charPosition.first];
 
+  // Ping commands do not contain checksums
   if (PING_COMMAND_PRE.isPresentInString(strPtr)) {
     m_lastPingTime = m_hardwareInterface.millis();
-  } else if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
+    return;
+  }
+
+  // Ensure checksum works correctly
+  if (!checkIncomingChecksum(charPosition)) {
+    return;
+  }
+
+  if (SPEED_COMMAND_PRE.isPresentInString(strPtr)) {
     parseTargetSpeed(charPosition);
   } else {
     addWarning("The following command string was unknown:\n");
