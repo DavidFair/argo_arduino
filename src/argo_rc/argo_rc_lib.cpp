@@ -28,7 +28,7 @@ const int PWM_RC_CENTER_VAL = 1520;
 const int PWM_RC_RANGE = 500;
 
 /// The maximum linear speed under RC control
-const int MAX_RC_LINEAR_VEL = 10000; // in millimeters/s or 10 meters/s
+const int MAX_RC_LINEAR_VEL = 1000; // in millimeters/s or 3 meters/s
 /// The maximum rotational velocity under RC control
 // One rotation per second in milli units
 const int MAX_ROTATIONAL_VEL = M_PI * 2 * 100;
@@ -313,6 +313,18 @@ Hardware::WheelSpeeds ArgoRc::mapRcInput() {
 
   if (rcPwmThrottleRaw == 0 && rcPwmSteeringRaw == 0) {
     // Pin probably not connected or no data. Bail setting the PWM to 0
+    return WheelSpeeds(Speed(), Speed());
+  }
+
+  const int pwmDeadzone = PWM_RC_RANGE * 0.01; // 1% deadzone
+  const int deadzoneUpper = pwmDeadzone + PWM_RC_CENTER_VAL;
+  const int deadzoneLower = PWM_RC_CENTER_VAL - pwmDeadzone;
+
+  // Check steering OR throttle exceed deadzone
+  if ((((rcPwmThrottleRaw > deadzoneLower) &&
+        (rcPwmThrottleRaw < deadzoneUpper))) &&
+      ((rcPwmSteeringRaw > deadzoneLower) &&
+       ((rcPwmSteeringRaw < deadzoneUpper)))) {
     return WheelSpeeds(Speed(), Speed());
   }
 
